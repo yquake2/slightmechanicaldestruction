@@ -9,6 +9,12 @@ floater
 #include "g_local.h"
 #include "m_float.h"
 
+//CW+++
+#define BOLT_BASESPEED		700
+#define BOLT_SKILLSPEED		100
+#define AIM_R_BASE			1300
+#define AIM_R_SKILL			250
+//CW---
 
 static int	sound_attack2;
 static int	sound_attack3;
@@ -26,7 +32,7 @@ void floater_sight (edict_t *self, edict_t *other)
 
 void floater_idle (edict_t *self)
 {
-	if(!(self->spawnflags & SF_MONSTER_AMBUSH))
+	if (!(self->spawnflags & SF_MONSTER_AMBUSH))
 		gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
 
@@ -41,32 +47,75 @@ void floater_zap (edict_t *self);
 
 void floater_fire_blaster (edict_t *self)
 {
+//CW+++
+	vec3_t	forward;
+	vec3_t	right;
+	vec3_t	up;
 	vec3_t	start;
-	vec3_t	forward, right;
 	vec3_t	end;
 	vec3_t	dir;
+	vec3_t	aim;
+	float	time;
+	float	r;
+	float	xy_velsq;
+	int		bolt_speed;
+//CW---
 	int		effect;
+	int		damage;
+
+	if (!self->enemy || !self->enemy->inuse)	//CW
+		return;
 
 	if ((self->s.frame == FRAME_attak104) || (self->s.frame == FRAME_attak107))
 		effect = EF_HYPERBLASTER;
 	else
 		effect = 0;
+
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[MZ2_FLOAT_BLASTER_1], forward, right, start);
-
 	VectorCopy (self->enemy->s.origin, end);
 	end[2] += self->enemy->viewheight;
 
-	// Lazarus fog reduction of accuracy
-	if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+//	Lazarus: fog reduction of accuracy.
+
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
 		end[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		end[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		end[2] += crandom() * 320 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 	}
-	
-	VectorSubtract (end, start, dir);
-	monster_fire_blaster (self, start, dir, 1, 1000, MZ2_FLOAT_BLASTER_1, effect);
+	VectorSubtract (end, start, aim);
+
+//CW+++
+//	Lead the target...
+
+	bolt_speed = BOLT_BASESPEED + (BOLT_SKILLSPEED * skill->value);
+	time = VectorLength(aim) / bolt_speed;
+	VectorMA(end, time, self->enemy->velocity, end);
+	VectorSubtract(end, start, aim);
+
+//	...and degrade accuracy based on skill level and target velocity.
+
+	vectoangles(aim, dir);
+	AngleVectors(dir, forward, right, up);
+	xy_velsq = (self->enemy->velocity[0]*self->enemy->velocity[0]) + (self->enemy->velocity[1]*self->enemy->velocity[1]);
+	r = crandom() * (AIM_R_BASE - (AIM_R_SKILL * skill->value)) * (xy_velsq / 90000);
+	VectorMA(start, 8192, forward, end);
+	VectorMA(end, r, right, end);
+	VectorSubtract(end, start, aim);
+	VectorNormalize(aim);
+
+//	Beefier blaster bolts if monster is flagged as special.
+
+	if (self->spawnflags & SF_MONSTER_SPECIAL)
+	{
+		effect |= EF_PENT;
+		damage = 6;
+	}
+	else
+		damage = 3;
+//CW---
+	monster_fire_blaster(self, start, aim, damage, bolt_speed, MZ2_FLOAT_BLASTER_1, effect);	//CW: dmg was 1, speed was 1000
 }
 
 
@@ -516,6 +565,9 @@ void floater_zap (edict_t *self)
 	vec3_t	dir;
 	vec3_t	offset;
 
+	if (!self->enemy || !self->enemy->inuse)	//CW
+		return;
+
 	VectorSubtract (self->enemy->s.origin, self->s.origin, dir);
 
 	AngleVectors (self->s.angles, forward, right, NULL);
@@ -552,6 +604,55 @@ void floater_melee(edict_t *self)
 		self->monsterinfo.currentmove = &floater_move_attack2;
 }
 
+//CW+++
+void floater_dodge(edict_t *self, edict_t *attacker, float eta)
+{
+	vec3_t		v_rollend;
+	trace_t		trace;
+	qboolean	leftOK = false;
+	qboolean	rightOK = false;
+
+	if (!self->enemy)
+		self->enemy = attacker;
+
+	if (random() > (0.3 + (0.15 * skill->value)))
+		return;
+
+//	Check that left hand side is clear for dodge.
+
+	v_rollend[0] = self->s.origin[0] + (64.0 * cos((self->s.angles[1]+90)*PI/180));
+	v_rollend[1] = self->s.origin[1] + (64.0 * sin((self->s.angles[1]+90)*PI/180));
+	v_rollend[2] = self->s.origin[2];
+	trace = gi.trace(self->s.origin, self->mins, self->maxs, v_rollend, self, MASK_MONSTERSOLID);
+	if (trace.fraction == 1.0)
+		leftOK = true;
+
+//	Check that right hand side is clear for dodge.
+
+	v_rollend[0] = self->s.origin[0] + (64.0 * cos((self->s.angles[1]-90)*PI/180));
+	v_rollend[1] = self->s.origin[1] + (64.0 * sin((self->s.angles[1]-90)*PI/180));
+	trace = gi.trace(self->s.origin, self->mins, self->maxs, v_rollend, self, MASK_MONSTERSOLID);
+	if (trace.fraction == 1.0)
+		rightOK = true;
+
+	if (!(leftOK || rightOK))
+		return;
+	
+	if (leftOK && rightOK)
+	{
+		if (random() <= 0.5)
+			self->moreflags = 1;
+		else
+			self->moreflags = -1;
+	}
+	else if (leftOK)
+		self->moreflags = 1;
+	else
+		self->moreflags = -1;
+
+	ai_strafe(self, 32.0);
+}
+//CW---
 
 void floater_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
@@ -564,8 +665,12 @@ void floater_pain (edict_t *self, edict_t *other, float kick, int damage)
 		return;
 
 	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 10)	//CW: shrug off low damage
+		return;
 
 	n = (rand() + 1) % 3;
 	if (n == 0)
@@ -605,7 +710,6 @@ void SP_monster_floater (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_FLOATER;
 
 	sound_attack2 = gi.soundindex ("floater/fltatck2.wav");
 	sound_attack3 = gi.soundindex ("floater/fltatck3.wav");
@@ -634,11 +738,11 @@ void SP_monster_floater (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	// Lazarus: mapper-configurable health
-	if(!self->health)
+	if (!self->health)
 		self->health = 200;
-	if(!self->gib_health)
+	if (!self->gib_health)
 		self->gib_health = -80;
-	if(!self->mass)
+	if (!self->mass)
 		self->mass = 300;
 
 	self->pain = floater_pain;
@@ -647,26 +751,36 @@ void SP_monster_floater (edict_t *self)
 	self->monsterinfo.stand = floater_stand;
 	self->monsterinfo.walk = floater_walk;
 	self->monsterinfo.run = floater_run;
-//	self->monsterinfo.dodge = floater_dodge;
+	self->monsterinfo.dodge = floater_dodge;		//CW:
 	self->monsterinfo.attack = floater_attack;
 	self->monsterinfo.melee = floater_melee;
 	self->monsterinfo.sight = floater_sight;
 	self->monsterinfo.idle = floater_idle;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
+
 	self->common_name = "Technician";
 
 	gi.linkentity (self);
 
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&floater_move_death,
 								 NULL};
-		if(!M_SetDeath(self,(mmove_t **)&deathmoves))
+		if (!M_SetDeath(self,(mmove_t **)&deathmoves))
 			self->monsterinfo.currentmove = &floater_move_stand1;
 	}
 	else

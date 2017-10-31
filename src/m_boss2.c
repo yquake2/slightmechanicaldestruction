@@ -41,8 +41,13 @@ void Boss2Rocket (edict_t *self)
 	vec3_t	vec;
 	int		rocketSpeed;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if((self->spawnflags & SF_MONSTER_SPECIAL))
-		rocketSpeed = 400; // Lazarus: Homing rockets are tougher if slow
+		rocketSpeed = 400; // Lazarus: Homing rockets are tougher when slower
 	else
 		rocketSpeed = 500 + (100 * skill->value);	// PGM rock & roll.... :)
 
@@ -93,9 +98,14 @@ void boss2_firebullet_right (edict_t *self)
 	vec3_t	forward, right, target;
 	vec3_t	start;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[MZ2_BOSS2_MACHINEGUN_R1], forward, right, start);
-	VectorMA (self->enemy->s.origin, -0.2, self->enemy->velocity, target);
+	VectorMA (self->enemy->s.origin, -0.05*(3-skill->value), self->enemy->velocity, target);	//CW vary projection scale factor based on skill
 	target[2] += self->enemy->viewheight;
 
 	// Lazarus fog reduction of accuracy
@@ -116,9 +126,14 @@ void boss2_firebullet_left (edict_t *self)
 	vec3_t	forward, right, target;
 	vec3_t	start;
 	
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[MZ2_BOSS2_MACHINEGUN_L1], forward, right, start);
-	VectorMA (self->enemy->s.origin, -0.2, self->enemy->velocity, target);
+	VectorMA (self->enemy->s.origin, -0.05*(3-skill->value), self->enemy->velocity, target);	//CW vary projection scale factor based on skill
 	target[2] += self->enemy->viewheight;
 
 	// Lazarus fog reduction of accuracy
@@ -425,19 +440,24 @@ void boss2_attack (edict_t *self)
 	vec3_t	vec;
 	float	range;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	VectorSubtract (self->enemy->s.origin, self->s.origin, vec);
 	range = VectorLength (vec);
 	
-	if (range <= 125)
+	if (range <= 128)
 	{
 		self->monsterinfo.currentmove = &boss2_move_attack_pre_mg;
 	}
 	else 
 	{
-		if (random() <= 0.6)
-			self->monsterinfo.currentmove = &boss2_move_attack_pre_mg;
-		else
+		if (random() <= ((self->spawnflags & SF_MONSTER_SPECIAL) ? (0.5+0.1*skill->value) : 0.4)) //CW: was <= 0.6 for mg
 			self->monsterinfo.currentmove = &boss2_move_attack_rocket;
+		else
+			self->monsterinfo.currentmove = &boss2_move_attack_pre_mg;
 	}
 }
 
@@ -448,32 +468,40 @@ void boss2_attack_mg (edict_t *self)
 
 void boss2_reattack_mg (edict_t *self)
 {
-	if ( infront(self, self->enemy) )
-		if (random() <= 0.7)
-			self->monsterinfo.currentmove = &boss2_move_attack_mg;
-		else
-			self->monsterinfo.currentmove = &boss2_move_attack_post_mg;
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
+	if ((infront(self, self->enemy)) && (random() <= (0.6 + 0.1*skill->value)))	//CW: was <= 0.7
+		self->monsterinfo.currentmove = &boss2_move_attack_mg;
 	else
 		self->monsterinfo.currentmove = &boss2_move_attack_post_mg;
 }
 
-
 void boss2_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
-	if (self->health < (self->max_health / 2))
+	if (self->health < (self->max_health * 0.5))
 		self->s.skinnum |= 1;
 
 	if (level.time < self->pain_debounce_time)
 		return;
 
 	self->pain_debounce_time = level.time + 3;
+
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 30)	//CW: shrug off low damage
+		return;
+
 // American wanted these at no attenuation
-	if (damage < 10)
+	if (damage < 45)		//CW: was 10
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain3, 1, ATTN_NONE, 0);
 		self->monsterinfo.currentmove = &boss2_move_pain_light;
 	}
-	else if (damage < 30)
+	else if (damage < 60)	//CW: was 30
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NONE, 0);
 		self->monsterinfo.currentmove = &boss2_move_pain_light;
@@ -538,6 +566,9 @@ qboolean Boss2_CheckAttack (edict_t *self)
 	qboolean	enemy_infront;
 	int			enemy_range;
 	float		enemy_yaw;
+
+	if (!self->enemy)		//CW: paranoia check
+		return false;
 
 	if (self->enemy->health > 0)
 	{
@@ -633,7 +664,6 @@ void SP_monster_boss2 (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_MONSTER_BOSS2;
 	// Lazarus: special purpose skins
 	if ( (self->spawnflags & SF_MONSTER_SPECIAL) && self->style )
 	{
@@ -693,11 +723,21 @@ void SP_monster_boss2 (edict_t *self)
 	}
 	self->monsterinfo.scale = MODEL_SCALE;
 
-	// Lazarus power armor
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
+
 	self->common_name = "Flying Boss";
 
 	flymonster_start (self);

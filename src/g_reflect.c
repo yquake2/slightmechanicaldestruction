@@ -66,7 +66,7 @@ void ReflectExplosion (int type, vec3_t origin)
 		gi.WriteByte (svc_temp_entity);
 		gi.WriteByte (type);
 		gi.WritePosition (org);
-		gi.multicast (org, MULTICAST_PHS);
+		gi.multicast (org, MULTICAST_PVS);
 	}
 }
 
@@ -131,7 +131,7 @@ void ReflectTrail (int type, vec3_t start, vec3_t end)
 		gi.WriteByte (type);
 		gi.WritePosition (p1);
 		gi.WritePosition (p2);
-		gi.multicast (p1, MULTICAST_PHS);
+		gi.multicast (p1, MULTICAST_PVS);
 	}
 }
 
@@ -189,6 +189,9 @@ void ReflectSteam (vec3_t origin,vec3_t movedir,int count,int sounds,int speed, 
 		if(org[2] < mirror->absmin[2]) continue;
 		if(org[2] > mirror->absmax[2]) continue;
 
+		// If p1 is within func_reflect, we assume p2 is also. If map is constructed 
+		// properly this should always be true.
+
 		gi.WriteByte (svc_temp_entity);
 		gi.WriteByte (TE_STEAM);
 		gi.WriteShort (nextid);
@@ -198,7 +201,7 @@ void ReflectSteam (vec3_t origin,vec3_t movedir,int count,int sounds,int speed, 
 		gi.WriteByte (sounds&0xff);
 		gi.WriteShort (speed);
 		gi.WriteLong (wait);
-		gi.multicast (org, MULTICAST_PHS);
+		gi.multicast (org, MULTICAST_PVS);
 	}
 }
 
@@ -265,7 +268,7 @@ void ReflectSparks (int type,vec3_t origin,vec3_t movedir)
 		gi.WritePosition(org);
 		if(type != TE_CHAINFIST_SMOKE) 
 			gi.WriteDir(dir);
-		gi.multicast(org, MULTICAST_PHS);
+		gi.multicast(org, MULTICAST_PVS);
 
 	}
 }
@@ -316,7 +319,7 @@ void AddReflection (edict_t *ent)
 	int			i, m;
 	qboolean	is_reflected;
 	vec3_t		forward;
-	vec3_t		org, oldorg;
+	vec3_t		org;
 
 	for(i=0; i<6; i++)
 	{
@@ -353,8 +356,6 @@ void AddReflection (edict_t *ent)
 			if (!ent->reflection[i])
 			{			
 				ent->reflection[i] = G_Spawn();
-				ent->reflection[i]->owner = ent;
-				ent->reflection[i]->activator = mirror;
 			
 				if(ent->s.effects & EF_ROTATE)
 				{
@@ -395,43 +396,27 @@ void AddReflection (edict_t *ent)
 			{
 			case 0:
 			case 1:
-				ent->reflection[i]->s.angles[PITCH]+=180;
-				ent->reflection[i]->s.angles[YAW]  +=180;
-				ent->reflection[i]->s.angles[ROLL] =360-ent->reflection[i]->s.angles[ROLL];
+				ent->reflection[i]->s.angles[0]+=180;
+				ent->reflection[i]->s.angles[1]+=180;
+				ent->reflection[i]->s.angles[2]=360-ent->reflection[i]->s.angles[2];
 				break;
 			case 2:
 			case 3:
 				AngleVectors(ent->reflection[i]->s.angles,forward,NULL,NULL);
-				roll = ent->reflection[i]->s.angles[ROLL];
+				roll = ent->reflection[i]->s.angles[2];
 				forward[0] = -forward[0];
 				vectoangles(forward,ent->reflection[i]->s.angles);
-				if((ent->s.angles[PITCH] > 90) && (ent->s.angles[PITCH] < 270))
-				{
-					ent->reflection[i]->s.angles[YAW] += 180;
-					ent->reflection[i]->s.angles[PITCH] = 180-ent->reflection[i]->s.angles[PITCH];
-				}
-				ent->reflection[i]->s.angles[ROLL] = 360-roll;
+				ent->reflection[i]->s.angles[2] = 360-roll;
 				break;
 			case 4:
 			case 5:
 				AngleVectors(ent->reflection[i]->s.angles,forward,NULL,NULL);
-				roll = ent->reflection[i]->s.angles[ROLL];
+				roll = ent->reflection[i]->s.angles[2];
 				forward[1] = -forward[1];
 				vectoangles(forward,ent->reflection[i]->s.angles);
-				if((ent->s.angles[PITCH] > 90) && (ent->s.angles[PITCH] < 270))
-				{
-					ent->reflection[i]->s.angles[YAW] += 180;
-					ent->reflection[i]->s.angles[PITCH] = 180-ent->reflection[i]->s.angles[PITCH];
-				}
-				ent->reflection[i]->s.angles[ROLL] = 360-roll;
+				ent->reflection[i]->s.angles[2] = 360-roll;
 			}
 
-			// Move player floor reflections down an additional bit so that their
-			// feet don't poke through the floor when looking down.
-			if(ent->client && i==0)
-				org[2] -= 4;
-
-			VectorCopy (ent->reflection[i]->s.origin,oldorg);
 			VectorCopy (org, ent->reflection[i]->s.origin);
 			if(ent->s.renderfx & RF_BEAM)
 			{
@@ -441,11 +426,7 @@ void AddReflection (edict_t *ent)
 				VectorAdd(ent->s.old_origin,delta,ent->reflection[i]->s.old_origin);
 			}
 			else
-			{
-//				VectorCopy(oldorg, ent->reflection[i]->s.old_origin);
-				VectorCopy(org,ent->reflection[i]->s.old_origin);
-			}
-				
+				VectorCopy(ent->reflection[i]->s.origin, ent->reflection[i]->s.old_origin);
 			gi.linkentity (ent->reflection[i]);
 		}
 		else if (ent->reflection[i])
@@ -479,7 +460,6 @@ void SP_func_reflect (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_FUNC_REFLECT;
 	gi.setmodel (self, self->model);
 	self->svflags = SVF_NOCLIENT;
 	g_mirror[level.num_reflectors] = self;

@@ -416,7 +416,6 @@ void turn_vehicle (edict_t *self)
 }
 void SP_func_vehicle (edict_t *self)
 {
-	self->class_id = ENTITY_FUNC_VEHICLE;
 	self->ideal_yaw = self->s.angles[YAW];
 	VectorClear (self->s.angles);
 	self->solid = SOLID_BSP;

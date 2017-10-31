@@ -7,6 +7,7 @@ void InitiallyDead (edict_t *self);
 //          30 seconds after death
 
 #define SINKAMT			1
+
 void FadeSink (edict_t *ent)
 {
 	ent->count++;
@@ -43,22 +44,22 @@ qboolean M_SetDeath(edict_t *self, mmove_t **deathmoves)
 	mmove_t	*move=NULL;
 	mmove_t *dmove;
 
-	if(self->health > 0)
+	if (self->health > 0)
 		return false;
 
 	while(*deathmoves && !move)
 	{
 		dmove = *deathmoves;
-		if( (self->s.frame >= dmove->firstframe) &&
+		if ( (self->s.frame >= dmove->firstframe) &&
 			(self->s.frame <= dmove->lastframe)     )
 			move = dmove;
 		else
 			deathmoves++;
 	}
-	if(move)
+	if (move)
 	{
 		self->monsterinfo.currentmove = move;
-		if(self->monsterinfo.currentmove->endfunc)
+		if (self->monsterinfo.currentmove->endfunc)
 			self->monsterinfo.currentmove->endfunc(self);
 		self->s.frame = move->lastframe;
 		self->s.skinnum |= 1;
@@ -70,11 +71,6 @@ qboolean M_SetDeath(edict_t *self, mmove_t **deathmoves)
 //
 // monster weapons
 //
-
-//FIXME monsters should call these with a totally accurate direction
-// and we can mess it up based on skill.  Spread should be for normal
-// and we can tighten or loosen based on skill.  We could muck with
-// the damages too, but I'm not sure that's such a good idea.
 void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, int kick, int hspread, int vspread, int flashtype)
 {
 	fire_bullet (self, start, dir, damage, kick, hspread, vspread, MOD_UNKNOWN);
@@ -103,7 +99,18 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	gi.WriteShort (self - g_edicts);
 	gi.WriteByte (flashtype);
 	gi.multicast (start, MULTICAST_PVS);
-}	
+}
+
+//CW+++ Generate plasma bolts.
+void monster_fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, int effect)
+{
+	fire_plasma(self, start, dir, damage, speed, effect);
+	gi.WriteByte(svc_muzzleflash2);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+}
+//CW---
 
 void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype)
 {
@@ -144,7 +151,6 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	gi.WriteByte (flashtype);
 	gi.multicast (start, MULTICAST_PVS);
 }
-
 
 
 //
@@ -191,7 +197,6 @@ void AttackFinished (edict_t *self, float time)
 {
 	self->monsterinfo.attack_finished = level.time + time;
 }
-
 
 void M_CheckGround (edict_t *ent)
 {
@@ -441,7 +446,7 @@ void M_MoveFrame (edict_t *self)
 
 	// Lazarus: For live monsters weaker than gladiator who aren't already running from
 	//          something, evade live grenades on the ground.
-	if((self->health > 0) && (self->max_health < 400) && !(self->monsterinfo.aiflags & AI_CHASE_THING) && self->monsterinfo.run)
+	if ((self->health > 0) && (self->max_health < 400) && !(self->monsterinfo.aiflags & AI_CHASE_THING) && self->monsterinfo.run)
 		Grenade_Evade (self);
 
 	move = self->monsterinfo.currentmove;
@@ -536,7 +541,7 @@ void monster_use (edict_t *self, edict_t *other, edict_t *activator)
 	{
 		self->spawnflags &= ~SF_MONSTER_GOODGUY;
 		self->monsterinfo.aiflags &= ~(AI_GOOD_GUY + AI_FOLLOW_LEADER);
-		if(self->dmgteam && !Q_stricmp(self->dmgteam,"player"))
+		if (self->dmgteam && !Q_stricmp(self->dmgteam,"player"))
 			self->dmgteam = NULL;
 	}
 
@@ -564,7 +569,7 @@ void monster_triggered_spawn (edict_t *self)
 
 	if (self->enemy && !(self->spawnflags & SF_MONSTER_SIGHT) && !(self->enemy->flags & FL_NOTARGET))
 	{
-		if(!(self->enemy->flags & FL_DISGUISED))
+		if (!(self->enemy->flags & FL_DISGUISED))
 			FoundTarget (self);
 		else
 			self->enemy = NULL;
@@ -581,7 +586,7 @@ void monster_triggered_spawn_use (edict_t *self, edict_t *other, edict_t *activa
 	if (activator->client)
 		self->enemy = activator;
 	// Lazarus: Add 'em up
-	if(!(self->monsterinfo.aiflags & AI_GOOD_GUY))
+	if (!(self->monsterinfo.aiflags & AI_GOOD_GUY))
 		level.total_monsters++;
 	self->use = monster_use;
 }
@@ -617,7 +622,7 @@ void monster_death_use (edict_t *self)
 	// Lazarus: If actor/monster is being used as a camera by a player,
 	// turn camera off for that player
 	for(i=0,player=g_edicts+1; i<maxclients->value; i++, player++) {
-		if(player->client && player->client->spycam == self)
+		if (player->client && player->client->spycam == self)
 			camera_off(player);
 	}
 
@@ -660,14 +665,14 @@ qboolean monster_start (edict_t *self)
 	// Lazarus: Good guys
 	if (self->spawnflags & SF_MONSTER_GOODGUY) {
 		self->monsterinfo.aiflags |= AI_GOOD_GUY;
-		if(!self->dmgteam) {
+		if (!self->dmgteam) {
 			self->dmgteam = gi.TagMalloc(8*sizeof(char), TAG_LEVEL);
 			strcpy(self->dmgteam,"player");
 		}
 	}
 
 	// Lazarus: Max range for sight/attack
-	if(st.distance)
+	if (st.distance)
 		self->monsterinfo.max_range = max(500,st.distance);
 	else
 		self->monsterinfo.max_range = 1280;	// Q2 default is 1000. We're mean.
@@ -689,15 +694,10 @@ qboolean monster_start (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 	self->svflags |= SVF_MONSTER;
 	self->s.renderfx |= RF_FRAMELERP;
-
-	// Lazarus - map-settable renderfx and effects
-	self->s.renderfx |= self->renderfx;
-	self->s.effects  |= self->effects;
-
 	self->air_finished = level.time + 12;
 	self->use = monster_use;
 	// Lazarus - don't reset max_health unnecessarily
-	if(!self->max_health)
+	if (!self->max_health)
 		self->max_health = self->health;
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum |= 1;
@@ -705,28 +705,28 @@ qboolean monster_start (edict_t *self)
 		self->s.skinnum &= ~1;
 	self->clipmask = MASK_MONSTERSOLID;
 
-	if(self->monsterinfo.flies > 1.0)
+	if (self->monsterinfo.flies > 1.0)
 	{
 		self->s.effects |= EF_FLIES;
 		self->s.sound = gi.soundindex ("infantry/inflies1.wav");
 	}
 
 	// Lazarus
-	if(self->health <=0)
+	if (self->health <=0)
 	{
 		self->svflags |= SVF_DEADMONSTER;
 		self->movetype = MOVETYPE_TOSS;
 		self->takedamage = DAMAGE_YES;
 		self->monsterinfo.pausetime = 100000000;
 		self->monsterinfo.aiflags &= ~AI_RESPAWN_FINDPLAYER;
-		if(self->max_health > 0)
+		if (self->max_health > 0)
 		{
 			// This must be a dead monster who changed levels
 			// via trigger_transition
 			self->nextthink = 0;
 			self->deadflag = DEAD_DEAD;
 		}
-		if(self->s.effects & EF_FLIES && self->monsterinfo.flies <= 1.0)
+		if (self->s.effects & EF_FLIES && self->monsterinfo.flies <= 1.0)
 		{
 			self->think = M_FliesOff;
 			self->nextthink = level.time + 1 + random()*60;
@@ -747,7 +747,7 @@ qboolean monster_start (edict_t *self)
 
 	if (st.item)
 	{
-		self->item = FindItemByClassname (st.item);
+		self->item = FindItemByClassname(st.item);
 		if (!self->item)
 			gi.dprintf("%s at %s has bad item: %s\n", self->classname, vtos(self->s.origin), st.item);
 	}
@@ -775,7 +775,7 @@ void monster_start_go (edict_t *self)
 	}
 
 	// Lazarus: move_origin for func_monitor
-	if(!VectorLength(self->move_origin))
+	if (!VectorLength(self->move_origin))
 		VectorSet(self->move_origin,0,0,self->viewheight);
 
 	// check for target to point_combat and change to combattarget
@@ -790,7 +790,7 @@ void monster_start_go (edict_t *self)
 		fixup = false;
 		while ((target = G_Find (target, FOFS(targetname), self->target)) != NULL)
 		{
-			if (target->class_id == ENTITY_POINT_COMBAT)
+			if (strcmp(target->classname, "point_combat") == 0)
 			{
 				self->combattarget = self->target;
 				fixup = true;
@@ -814,7 +814,7 @@ void monster_start_go (edict_t *self)
 		target = NULL;
 		while ((target = G_Find (target, FOFS(targetname), self->combattarget)) != NULL)
 		{
-			if (target->class_id != ENTITY_POINT_COMBAT)
+			if (strcmp(target->classname, "point_combat") != 0)
 			{
 				gi.dprintf("%s at (%i %i %i) has a bad combattarget %s : %s at (%i %i %i)\n",
 					self->classname, (int)self->s.origin[0], (int)self->s.origin[1], (int)self->s.origin[2],
@@ -834,11 +834,11 @@ void monster_start_go (edict_t *self)
 			self->monsterinfo.pausetime = 100000000;
 			self->monsterinfo.stand (self);
 		}
-		else if (self->movetarget->class_id == ENTITY_PATH_CORNER)
+		else if (strcmp (self->movetarget->classname, "path_corner") == 0)
 		{
 			// Lazarus: Don't wipe out target for trigger spawned monsters
 			//          that aren't triggered yet
-			if( ! (self->spawnflags & SF_MONSTER_TRIGGER_SPAWN) ) {
+			if ( ! (self->spawnflags & SF_MONSTER_TRIGGER_SPAWN) ) {
 				VectorSubtract (self->goalentity->s.origin, self->s.origin, v);
 				self->ideal_yaw = self->s.angles[YAW] = vectoyaw(v);
 				self->monsterinfo.walk (self);
@@ -877,11 +877,6 @@ void walkmonster_start_go (edict_t *self)
 	if (!self->yaw_speed)
 		self->yaw_speed = 20;
 	self->viewheight = 25;
-
-	// Lazarus: monster_chick model is different from all others, in that origin of model
-	// is at the feet. So viewheight=25 puts her eyeballs at her waist, which is crippling
-	if(self->class_id == ENTITY_MONSTER_CHICK)
-		self->viewheight = 49;
 
 	monster_start_go (self);
 
@@ -963,7 +958,7 @@ void stationarymonster_triggered_spawn (edict_t *self)
 
 	if (self->enemy && !(self->spawnflags & SF_MONSTER_SIGHT) && !(self->enemy->flags & FL_NOTARGET))
 	{
-		if(!(self->enemy->flags & FL_DISGUISED))		// PGM
+		if (!(self->enemy->flags & FL_DISGUISED))		// PGM
 			FoundTarget (self);
 		else // PMM - just in case, make sure to clear the enemy so FindTarget doesn't get confused
 			self->enemy = NULL;
@@ -982,7 +977,7 @@ void stationarymonster_triggered_spawn_use (edict_t *self, edict_t *other, edict
 	if (activator->client)
 		self->enemy = activator;
 	// Lazarus: Add 'em
-	if(!(self->monsterinfo.aiflags & AI_GOOD_GUY))
+	if (!(self->monsterinfo.aiflags & AI_GOOD_GUY))
 		level.total_monsters++;
 	self->use = monster_use;
 }
@@ -1025,24 +1020,24 @@ void InitiallyDead (edict_t *self)
 {
 	int	damage;
 
-	if(self->max_health > 0)
+	if (self->max_health > 0)
 		return;
 
 //	gi.dprintf("InitiallyDead on %s at %s\n",self->classname,vtos(self->s.origin));
 	
 	// initially dead bad guys shouldn't count against totals
-	if((self->max_health <= 0) && !(self->monsterinfo.aiflags & AI_GOOD_GUY))
+	if ((self->max_health <= 0) && !(self->monsterinfo.aiflags & AI_GOOD_GUY))
 	{
 		level.total_monsters--;
-		if(self->deadflag != DEAD_DEAD)
+		if (self->deadflag != DEAD_DEAD)
 			level.killed_monsters--;
 	}
-	if(self->deadflag != DEAD_DEAD)
+	if (self->deadflag != DEAD_DEAD)
 	{
 		damage = 1 - self->health;
 		self->health = 1;
 		T_Damage (self, world, world, vec3_origin, self->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ARMOR, 0);
-		if(self->svflags & SVF_MONSTER)
+		if (self->svflags & SVF_MONSTER)
 		{
 			self->svflags |= SVF_DEADMONSTER;
 			self->think = monster_think;
@@ -1060,6 +1055,8 @@ void InitiallyDead (edict_t *self)
 
 int PatchMonsterModel (char *modelname)
 {
+	return 1;	//CSW++		//DEBUG: Modified files cause problems with some Q2 clients
+
 	cvar_t		*gamedir;
 	int			j;
 	int			numskins;			// number of skin entries
@@ -1093,12 +1090,12 @@ int PatchMonsterModel (char *modelname)
 
 	numskins = 8;
 	// special cases
-	if(!strcmp(modelname,"models/monsters/tank/tris.md2"))
+	if (!strcmp(modelname,"models/monsters/tank/tris.md2"))
 	{
 		is_tank = true;
 		numskins = 16;
 	}
-	else if(!strcmp(modelname,"models/monsters/soldier/tris.md2"))
+	else if (!strcmp(modelname,"models/monsters/soldier/tris.md2"))
 	{
 		is_soldier = true;
 		numskins = 24;
@@ -1109,14 +1106,14 @@ int PatchMonsterModel (char *modelname)
 		memset (skins[j], 0, MAX_SKINNAME);
 		strcpy( skins[j], modelname );
 		p = strstr( skins[j], "tris.md2" );
-		if(!p)
+		if (!p)
 		{
 			fclose (outfile);
 			gi.dprintf( "Error patching %s\n",modelname);
 			return 0;
 		}
 		*p = 0;
-		if(is_soldier)
+		if (is_soldier)
 		{
 			switch (j) {
 			case 0:
@@ -1169,7 +1166,7 @@ int PatchMonsterModel (char *modelname)
 				strcat (skins[j], "custompain3_ss.pcx"); break;
 			}
 		}
-		else if(is_tank)
+		else if (is_tank)
 		{
 			switch (j) {
 			case 0:
@@ -1242,7 +1239,7 @@ int PatchMonsterModel (char *modelname)
 		int				k, numitems;
 
 		fpak = fopen("baseq2/pak0.pak","rb");
-		if(!fpak)
+		if (!fpak)
 		{
 			cvar_t	*cddir;
 			char	pakfile[MAX_OSPATH];
@@ -1250,7 +1247,7 @@ int PatchMonsterModel (char *modelname)
 			cddir = gi.cvar("cddir", "", 0);
 			sprintf(pakfile,"%s/baseq2/pak0.pak",cddir->string);
 			fpak = fopen(pakfile,"rb");
-			if(!fpak)
+			if (!fpak)
 			{
 				gi.dprintf("PatchMonsterModel: Cannot find pak0.pak\n");
 				return 0;
@@ -1263,7 +1260,7 @@ int PatchMonsterModel (char *modelname)
 		for(k=0; k<numitems && !data; k++)
 		{
 			fread(&pakitem,1,sizeof(pak_item_t),fpak);
-			if(!stricmp(pakitem.name,modelname))
+			if (!stricmp(pakitem.name,modelname))
 			{
 				fseek(fpak,pakitem.start,SEEK_SET);
 				fread(&model, sizeof(dmdl_t), 1, fpak);
@@ -1278,7 +1275,7 @@ int PatchMonsterModel (char *modelname)
 			}
 		}
 		fclose(fpak);
-		if(!data)
+		if (!data)
 		{
 			gi.dprintf("PatchMonsterModel: Could not find %s in baseq2/pak0.pak\n",modelname);
 			return 0;
@@ -1346,23 +1343,23 @@ void HintTestNext (edict_t *self, edict_t *hint)
 	vec3_t		dir;
 
 	self->monsterinfo.aiflags &= ~AI_HINT_TEST;
-	if(self->goalentity == hint)
+	if (self->goalentity == hint)
 		self->goalentity = NULL;
-	if(self->movetarget == hint)
+	if (self->movetarget == hint)
 		self->movetarget = NULL;
-	if(self->monsterinfo.pathdir == 1)
+	if (self->monsterinfo.pathdir == 1)
 	{
-		if(hint->hint_chain)
+		if (hint->hint_chain)
 			next = hint->hint_chain;
 		else
 			self->monsterinfo.pathdir = -1;
 	}
-	if(self->monsterinfo.pathdir == -1)
+	if (self->monsterinfo.pathdir == -1)
 	{
 		e = hint_path_start[hint->hint_chain_id];
 		while(e)
 		{
-			if(e->hint_chain == hint)
+			if (e->hint_chain == hint)
 			{
 				next = e;
 				break;
@@ -1370,12 +1367,12 @@ void HintTestNext (edict_t *self, edict_t *hint)
 			e = e->hint_chain;
 		}
 	}
-	if(!next)
+	if (!next)
 	{
 		self->monsterinfo.pathdir = 1;
 		next = hint->hint_chain;
 	}
-	if(next)
+	if (next)
 	{
 		self->hint_chain_id = next->hint_chain_id;
 		VectorSubtract(next->s.origin, self->s.origin, dir);
@@ -1412,32 +1409,32 @@ int HintTestStart (edict_t *self)
 	int		i;
 	float	bestdistance=99999;
 
-	if(!hint_paths_present)
+	if (!hint_paths_present)
 		return 0;
 
 	for(i=game.maxclients+1; i<globals.num_edicts; i++)
 	{
 			e = &g_edicts[i];
-			if(!e->inuse)
+			if (!e->inuse)
 				continue;
-			if(e->class_id != ENTITY_HINT_PATH)
+			if (Q_stricmp(e->classname,"hint_path"))
 				continue;
-			if(!visible(self,e))
+			if (!visible(self,e))
 				continue;
-			if(!canReach(self,e))
+			if (!canReach(self,e))
 				continue;
 			VectorSubtract(e->s.origin,self->s.origin,dir);
 			dist = VectorLength(dir);
-			if(dist < bestdistance)
+			if (dist < bestdistance)
 			{
 				hint = e;
 				bestdistance = dist;
 			}
 	}
-	if(hint)
+	if (hint)
 	{
 		self->hint_chain_id = hint->hint_chain_id;
-		if(!self->monsterinfo.pathdir)
+		if (!self->monsterinfo.pathdir)
 			self->monsterinfo.pathdir = 1;
 		VectorSubtract(hint->s.origin, self->s.origin, dir);
 		self->ideal_yaw = vectoyaw(dir);

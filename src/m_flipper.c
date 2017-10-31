@@ -213,8 +213,11 @@ void flipper_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 	
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 6)	//CW: shrug off low damage
+		return;
 
 	n = (rand() + 1) % 2;
 	if (n == 0)
@@ -354,8 +357,6 @@ void SP_monster_flipper (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_FLIPPER;
-	self->spawnflags |= SF_MONSTER_KNOWS_MIRRORS;
 
 	sound_pain1		= gi.soundindex ("flipper/flppain1.wav");	
 	sound_pain2		= gi.soundindex ("flipper/flppain2.wav");	
@@ -384,7 +385,7 @@ void SP_monster_flipper (edict_t *self)
 	if(!self->health)
 		self->health = 50;
 	if(!self->gib_health)
-		self->gib_health = -30;
+		self->gib_health = -50;		//CW: was -30
 	if(!self->mass)
 		self->mass = 100;
 
@@ -400,9 +401,10 @@ void SP_monster_flipper (edict_t *self)
 	gi.linkentity (self);
 
 	self->monsterinfo.currentmove = &flipper_move_stand;	
-	if(!self->monsterinfo.flies)
+	if (!self->monsterinfo.flies)
 		self->monsterinfo.flies = 0.90;
-	if(self->health < 0)
+
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&flipper_move_death,
 								 NULL};

@@ -185,7 +185,7 @@ void crane_light_off(edict_t *light)
 
 void Crane_Move_Done (edict_t *ent)
 {
-	if(ent->class_id == ENTITY_CRANE_HOOK)
+	if(!Q_stricmp(ent->classname,"crane_hook"))
 	{
 		edict_t *cable;
 		edict_t *light;
@@ -217,7 +217,7 @@ void Crane_Move_Done (edict_t *ent)
 	}
 // Lazarus: ACK! If crate is being carried, it's NOT a MOVETYPE_PUSHABLE!!!!
 //	        if(ent->movetype == MOVETYPE_PUSHABLE)
-	if(ent->class_id == ENTITY_FUNC_PUSHABLE)
+	if(!stricmp(ent->classname,"func_pushable"))
 	{
 		edict_t *e;
 
@@ -421,7 +421,7 @@ void Crane_Move_Final (edict_t *ent)
 	}
 
 	VectorScale (ent->moveinfo.dir, ent->moveinfo.remaining_distance / FRAMETIME, ent->velocity);
-	if(ent->class_id == ENTITY_CRANE_HOOK)
+	if(!stricmp(ent->classname,"crane_hook"))
 	{
 		VectorCopy(ent->velocity,ent->crane_cable->velocity);
 		ent->crane_cable->velocity[2] = 0;
@@ -450,7 +450,7 @@ void Crane_Move_Begin (edict_t *ent)
 	VectorScale (ent->moveinfo.dir, ent->moveinfo.speed, ent->velocity);
 	frames = floor((ent->moveinfo.remaining_distance / ent->moveinfo.speed) / FRAMETIME);
 	ent->moveinfo.remaining_distance -= frames * ent->moveinfo.speed * FRAMETIME;
-	if(ent->class_id == ENTITY_CRANE_HOOK)
+	if(!stricmp(ent->classname,"crane_hook"))
 	{
 		if((ent->crane_light) && (ent->crane_cargo==NULL))
 		{
@@ -494,7 +494,7 @@ void G_FindCraneParts()
 			continue;
 		if (!e->classname)
 			continue;
-		if (e->class_id != ENTITY_CRANE_CONTROL)
+		if (stricmp(e->classname,"crane_control"))
 			continue;
 
 		control = e;
@@ -1331,7 +1331,6 @@ void SP_crane_control (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_CRANE_CONTROL;
 	self->classname = "crane_control";
 	self->solid     = SOLID_BSP;
 	self->movetype  = MOVETYPE_PUSH;
@@ -1355,7 +1354,6 @@ void SP_crane_hook (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_CRANE_HOOK;
 	self->classname = "crane_hook";
 	self->solid     = SOLID_BSP;
 	self->movetype  = MOVETYPE_PUSH;
@@ -1408,7 +1406,6 @@ void SP_crane_hoist (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_CRANE_HOIST;
 	self->classname = "crane_hoist";
 	self->solid     = SOLID_BSP;
 	self->movetype  = MOVETYPE_PUSH;
@@ -1467,7 +1464,6 @@ void SP_crane_beam (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_CRANE_BEAM;
 	self->classname = "crane_beam";
 	self->solid     = SOLID_BSP;
 	self->movetype  = MOVETYPE_PUSH;
@@ -1699,7 +1695,6 @@ void SP_crane_reset (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_CRANE_RESET;
 	self->use = crane_reset_use;
 }
 

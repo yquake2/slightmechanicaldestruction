@@ -13,7 +13,9 @@
 #define JETPACK_MOD
 
 // the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	"lazarus"
+#define	GAMEVERSION	"lazarus_smd"
+
+#define PI		3.14159265359
 
 // protocol bytes that can be directly added to messages
 #define	svc_muzzleflash		1
@@ -107,7 +109,6 @@ typedef enum
 	AMMO_HOMING_MISSILES
 } ammo_t;
 
-
 //deadflag
 #define DEAD_NO					0
 #define DEAD_DYING				1
@@ -165,7 +166,6 @@ typedef enum
 #define AI_HINT_TEST            0x10000000
 #define AI_CROUCH               0x20000000
 #define AI_EVADE_GRENADE		0x40000000
-#define AI_SEEK_ENEMY           0x80000000
 
 //monster attack state
 #define AS_STRAIGHT				1
@@ -250,12 +250,13 @@ typedef struct
 
 
 // gitem_t->flags
-#define	IT_WEAPON		1		// use makes active weapon
-#define	IT_AMMO			2
-#define IT_ARMOR		4
-#define IT_STAY_COOP	8
-#define IT_KEY			16
-#define IT_POWERUP		32
+#define	IT_WEAPON			1		// use makes active weapon
+#define	IT_AMMO				2
+#define IT_ARMOR			4
+#define IT_STAY_COOP		8
+#define IT_KEY				16
+#define IT_POWERUP			32
+#define IT_INDESTRUCTABLE	64		//CW++
 
 // gitem_t->weapmodel for weapons indicates model index
 #define WEAP_BLASTER			1 
@@ -336,6 +337,11 @@ typedef struct
 
 	// items
 	int			num_items;
+
+//CW++
+	int			clock_count;
+	int			clock_ticking;
+//CW--
 
 	qboolean	autosaved;
 } game_locals_t;
@@ -427,7 +433,7 @@ typedef struct
 
 
 // spawn_temp_t is only used to hold entity field values that
-// can be set from the editor, but aren't actualy present
+// can be set from the editor, but aren't actually present
 // in edict_t during gameplay
 typedef struct
 {
@@ -654,6 +660,7 @@ extern	int	hml_index;
 #define MOD_TARGET_BLASTER	33
 #define MOD_VEHICLE         34
 #define MOD_KICK            35
+#define	MOD_PLASMA			36			//CW
 #define MOD_FRIENDLY_FIRE	0x8000000
 
 extern	int	meansOfDeath;
@@ -746,7 +753,6 @@ extern	cvar_t	*m_pitch;
 extern	cvar_t	*m_yaw;
 extern	cvar_t	*monsterjump;
 extern	cvar_t	*packet_fmod_playback;
-extern	cvar_t	*player_vampire;
 extern	cvar_t	*readout;
 extern	cvar_t	*rocket_strafe;
 extern	cvar_t	*rotate_distance;
@@ -774,6 +780,16 @@ extern	int		max_soundindex;
 #define DROPPED_ITEM			0x00010000
 #define	DROPPED_PLAYER_ITEM		0x00020000
 #define ITEM_TARGETS_USED		0x00040000
+
+
+//CW++
+//func_force_wall spawnflags
+#define FWALL_START_ON		1
+#define FWALL_DOUBLE		2
+#define FWALL_REFLECT		4
+#define FWALL_IMPACTSOUND	8
+//CW--
+
 
 //
 // fields are needed for spawning from the entity string
@@ -830,6 +846,7 @@ extern	spawn_t	spawns[];
 void AI_SetSightClient (void);
 void ai_stand (edict_t *self, float dist);
 void ai_move (edict_t *self, float dist);
+void ai_strafe(edict_t *self, float dist);	//CW
 void ai_walk (edict_t *self, float dist);
 void ai_turn (edict_t *self, float dist);
 void ai_run (edict_t *self, float dist);
@@ -987,6 +1004,7 @@ void barrel_delay (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 void barrel_explode (edict_t *self);
 void func_explosive_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 void PrecacheDebris (int style);
+
 //
 // g_monster.c
 //
@@ -996,16 +1014,17 @@ void PrecacheDebris (int style);
 #define SF_MONSTER_GOODGUY         8
 #define SF_MONSTER_NOGIB          16
 #define SF_MONSTER_SPECIAL        32
+#define SF_MONSTER_NOHINT		  64	//CW: if set, don't look for path_hints
 #define SF_ACTOR_BAD_GUY          64
 #define SF_MONSTER_FLIES         128	// only used for monster_commander_body
 #define SF_MONSTER_IGNORESHOTS   128
-#define SF_MONSTER_KNOWS_MIRRORS 0x00010000
 
 void FadeSink (edict_t *ent);
 void FadeDieSink (edict_t *ent);
 void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, int kick, int hspread, int vspread, int flashtype);
 void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int count, int flashtype);
 void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, int effect);
+void monster_fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, int effect);	//CW
 void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype);
 void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, edict_t *homing_target);
 void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
@@ -1027,6 +1046,7 @@ void M_FliesOn (edict_t *self);
 void M_CheckGround (edict_t *ent);
 qboolean M_SetDeath (edict_t *ent,mmove_t **moves);
 int  PatchMonsterModel (char *model);
+
 //
 // g_patchplayermodels.c
 //
@@ -1115,6 +1135,7 @@ char	*G_CopyString (char *in);
 void	stuffcmd(edict_t *ent,char *command);
 float	*tv (float x, float y, float z);
 char	*vtos (vec3_t v);
+char	*vtosf (vec3_t v);		//CW++
 float vectoyaw (vec3_t vec);
 void vectoangles (vec3_t vec, vec3_t angles);
 qboolean point_infront (edict_t *self, vec3_t point);
@@ -1140,6 +1161,7 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick);
 void fire_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int mod);
 void fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int count, int mod);
 void fire_blaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect, qboolean hyper);
+void fire_plasma (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);	//CW
 void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius);
 void fire_grenade2 (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
 void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage, edict_t *home_target);
@@ -1176,6 +1198,14 @@ mmove_t	actor_move_walk_back;
 #define	MEDIC_MIN_DISTANCE	32
 #define MEDIC_MAX_HEAL_DISTANCE	400
 #define	MEDIC_TRY_TIME		10.0
+
+//CW++
+// m_chick.c
+void chick_dodge(edict_t *self, edict_t *attacker, float eta);
+
+// m_infantry.c
+void infantry_dodge(edict_t *self, edict_t *attacker, float eta);
+//CW--
 
 void abortHeal (edict_t *ent,qboolean mark);
 void medic_NextPatrolPoint(edict_t *ent,edict_t *hintpath);
@@ -1236,6 +1266,9 @@ edict_t	*PlayerTrail_LastSpot (void);
 //
 // p_view.c
 //
+#define FALL_HURTBAD		55				//CWL was harcoded as 55 in P_FallingDamage()
+#define MAX_SAFE_FALLDIST	30				//CW: was hardcoded as 30
+#define FALLDAMAGE_FACTOR	1				//CW: was hardcoded as 0.5
 void ClientEndServerFrame (edict_t *ent);
 //
 // p_weapon.c
@@ -1507,6 +1540,12 @@ struct gclient_s
 	int			jumping;			// 0 or 1, used for jumpkick
 
 	edict_t		*homing_rocket;		// used to limit firing frequency
+
+	qboolean	in_func_air;		//CW: inside a func_air
+	qboolean	entered_func_air;	//CW: just entered a func_air
+	int			func_air_frame;		//CW: time at which func_air was entered
+	qboolean	airy_sound;			//CW: alternate between func_air breathing sounds
+
 #ifdef JETPACK_MOD
 	qboolean	jetpack;
 	float		jetpack_framenum;
@@ -1555,9 +1594,6 @@ struct edict_s
 	// EXPECTS THE FIELDS IN THAT ORDER!
 
 	//================================
-	entity_id	class_id;			// Lazarus: Added in lieu of doing string comparisons
-									// on classnames.
-	
 	int			movetype;
 	int			flags;
 
@@ -1802,6 +1838,7 @@ struct edict_s
 	char		*move_to;
 
 	// newtargetname used ONLY by target_change and target_bmodel_spawner.
+	//CW ...and trigger_relay, trigger_multiple, func_button and func_door toggles
 	char		*newtargetname;
 
 	// source of target_clone's model
@@ -1875,10 +1912,6 @@ struct edict_s
 //ROGUE
 //=========
 
-#ifdef WESQ2
-	int			my_spawn;
-#endif
-
 };
 
 #define	LOOKAT_NOBRUSHMODELS  1
@@ -1896,36 +1929,3 @@ struct edict_s
 #define FLASHLIGHT_DRAIN     60
 #define FLASHLIGHT_ITEM      "Cells"
 
-#ifdef WESQ2
-// tunnel code stuff
-#define MAX_SPAWNED_ITEMS 100
-extern int NumSpawnedItems;
-typedef struct {
-	char	classname[64];
-	vec3_t	origin;
-	vec_t	angle;
-} SPAWNED_ITEM;
-extern SPAWNED_ITEM SpawnedItem[MAX_SPAWNED_ITEMS];
-
-typedef struct {
-	vec3_t	loc;
-	float	pressure;
-	float	temperature;
-} PRESSURE_TEMP;
-
-typedef struct {
-	vec3_t	loc;
-	float	weight;
-	float	delay;
-} EXPLOSIVE;
-
-extern int gNumTargets;
-extern int gNumCharges;
-extern float gTargetSpacing;
-extern PRESSURE_TEMP *PT;
-extern EXPLOSIVE     *TNT;
-extern vec3_t	gWorld;
-
-#define DAMAGE_PER_POUND 5
-
-#endif

@@ -508,7 +508,6 @@ void SP_func_pendulum (edict_t *ent)
 {
 	float	max_speed;
 
-	ent->class_id = ENTITY_FUNC_PENDULUM;
 	ent->solid = SOLID_BSP;
 	ent->movetype = MOVETYPE_PENDULUM;
 	if(!st.distance)

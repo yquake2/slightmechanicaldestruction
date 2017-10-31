@@ -153,7 +153,8 @@ void berserk_run (edict_t *self)
 void berserk_attack_spike (edict_t *self)
 {
 	static	vec3_t	aim = {MELEE_DISTANCE, 0, -24};
-	fire_hit (self, aim, (15 + (rand() % 6)), 400);		//	Faster attack -- upwards and backwards
+	fire_hit (self, aim, (20 + (rand() % 6)), 400);		//Faster attack (upwards and backwards)
+														//CW: increased damage from 10
 }
 
 
@@ -164,8 +165,8 @@ void berserk_swing (edict_t *self)
 
 mframe_t berserk_frames_attack_spike [] =
 {
-		ai_charge, 0, NULL,
-		ai_charge, 0, NULL,
+//		ai_charge, 0, NULL,		//CW: don't pause before attacking
+//		ai_charge, 0, NULL,		//CW
 		ai_charge, 0, berserk_swing,
 		ai_charge, 0, berserk_attack_spike,
 		ai_charge, 0, NULL,
@@ -173,7 +174,7 @@ mframe_t berserk_frames_attack_spike [] =
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL
 };
-mmove_t berserk_move_attack_spike = {FRAME_att_c1, FRAME_att_c8, berserk_frames_attack_spike, berserk_run};
+mmove_t berserk_move_attack_spike = {FRAME_att_c3, FRAME_att_c8, berserk_frames_attack_spike, berserk_run};	//CW: initial frame was att_c1
 
 
 void berserk_attack_club (edict_t *self)
@@ -181,15 +182,15 @@ void berserk_attack_club (edict_t *self)
 	vec3_t	aim;
 
 	VectorSet (aim, MELEE_DISTANCE, self->mins[0], -4);
-	fire_hit (self, aim, (5 + (rand() % 6)), 400);		// Slower attack
+	fire_hit (self, aim, (10 + (rand() % 6)), 400);		//CW: increased damage from 5
 }
 
 mframe_t berserk_frames_attack_club [] =
 {	
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
+//	ai_charge, 0, NULL,		//CW: don't pause before attacking
+//	ai_charge, 0, NULL,		//CW
+//	ai_charge, 0, NULL,		//CW
+//	ai_charge, 0, NULL,		//CW
 	ai_charge, 0, berserk_swing,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
@@ -199,7 +200,7 @@ mframe_t berserk_frames_attack_club [] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-mmove_t berserk_move_attack_club = {FRAME_att_c9, FRAME_att_c20, berserk_frames_attack_club, berserk_run};
+mmove_t berserk_move_attack_club = {FRAME_att_c13, FRAME_att_c20, berserk_frames_attack_club, berserk_run};	//CW: initial frame was att_c9
 
 
 void berserk_strike (edict_t *self)
@@ -229,7 +230,7 @@ mframe_t berserk_frames_attack_strike [] =
 mmove_t berserk_move_attack_strike = {FRAME_att_c21, FRAME_att_c34, berserk_frames_attack_strike, berserk_run};
 
 
-void berserk_melee (edict_t *self)
+void berserk_melee (edict_t *self)		//CW: wot no _attack_strike ??
 {
 	if ((rand() % 2) == 0)
 		self->monsterinfo.currentmove = &berserk_move_attack_spike;
@@ -306,8 +307,11 @@ void berserk_pain (edict_t *self, edict_t *other, float kick, int damage)
 	self->pain_debounce_time = level.time + 3;
 	gi.sound (self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 10)	//CW: shrug off low damage
+		return;
 
 	if ((damage < 20) || (random() < 0.5))
 		self->monsterinfo.currentmove = &berserk_move_pain1;
@@ -428,8 +432,6 @@ void SP_monster_berserk (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_MONSTER_BERSERK;
-	self->spawnflags |= SF_MONSTER_KNOWS_MIRRORS;
 	// pre-caches
 	sound_pain  = gi.soundindex ("berserk/berpain2.wav");
 	sound_die   = gi.soundindex ("berserk/berdeth2.wav");
@@ -455,7 +457,7 @@ void SP_monster_berserk (edict_t *self)
 	if(!self->health)
 		self->health = 240;
 	if(!self->gib_health)
-		self->gib_health = -60;
+		self->gib_health = -150;  //CW: was -60
 	if(!self->mass)
 		self->mass = 250;
 
@@ -473,8 +475,8 @@ void SP_monster_berserk (edict_t *self)
 	if(monsterjump->value) 
 	{
 		self->monsterinfo.jump = berserk_jump;
-		self->monsterinfo.jumpup = 48;
-		self->monsterinfo.jumpdn = 160;
+		self->monsterinfo.jumpup = 72;		//CW: was 48
+		self->monsterinfo.jumpdn = 250;		//CW: was 160
 	}
 
 	self->monsterinfo.currentmove = &berserk_move_stand;
@@ -487,16 +489,26 @@ void SP_monster_berserk (edict_t *self)
 	}
 	self->monsterinfo.scale = MODEL_SCALE;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++	Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.20;
+//DWH---
+
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.10;	//CW: was 0.20
+
 	self->common_name = "Berserker";
 
 	gi.linkentity (self);
-
 	walkmonster_start (self);
 }

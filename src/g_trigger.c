@@ -6,16 +6,21 @@
 #define TRIGGER_NEED_USE     8
 #define TRIGGER_CAMOWNER    16
 #define TRIGGER_LOOKTARGET	32
-#define TRIGGER_TARGET_OFF  64
 
-void InitTrigger (edict_t *self)
+//CW+++ For trigger toggles.
+#define	TOGGLE_DELAY		16
+#define TOGGLE_MESSAGE		32
+#define TOGGLE_TARGET		64
+//CW---
+
+void InitTrigger(edict_t *self)
 {
-	if (!VectorCompare (self->s.angles, vec3_origin))
-		G_SetMovedir (self->s.angles, self->movedir);
+	if (!VectorCompare(self->s.angles, vec3_origin))
+		G_SetMovedir(self->s.angles, self->movedir);
 
 	self->solid = SOLID_TRIGGER;
 	self->movetype = MOVETYPE_NONE;
-	gi.setmodel (self, self->model);
+	gi.setmodel(self, self->model);
 	self->svflags = SVF_NOCLIENT;
 }
 
@@ -32,10 +37,36 @@ void multi_wait (edict_t *ent)
 // so wait for the delay time before firing
 void multi_trigger (edict_t *ent)
 {
+	float	fTemp;		//CW
+	char	*sTemp;		//CW
+
 	if (ent->nextthink)
 		return;		// already been triggered
 
 	G_UseTargets (ent, ent->activator);
+
+//CW+++ Toggle between two delay/message/target values.
+	if (ent->spawnflags & TOGGLE_DELAY)
+	{
+		fTemp = ent->delay;
+		ent->delay = ent->roll;
+		ent->roll = fTemp;
+	}
+
+	if (ent->spawnflags & TOGGLE_MESSAGE)
+	{
+		sTemp = ent->message;
+		ent->message = ent->viewmessage;
+		ent->viewmessage = sTemp;
+	}
+
+	if (ent->spawnflags & TOGGLE_TARGET)
+	{
+		sTemp = ent->newtargetname;
+		ent->target = ent->newtargetname;
+		ent->newtargetname = sTemp;
+	}
+//CW---
 
 	if (ent->wait > 0)	
 	{
@@ -90,13 +121,27 @@ void Touch_Multi (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 
 /*QUAKED trigger_multiple (.5 .5 .5) ? MONSTER NOT_PLAYER TRIGGERED
 Variable sized repeatable trigger.  Must be targeted at one or more entities.
+
 If "delay" is set, the trigger waits some time after activating before firing.
-"wait" : Seconds between triggerings. (.2 default)
-sounds
+"wait" : seconds between triggerings. (.2 default)
+
+//CW+++
+It can be set to toggle between two different values for the following spawnflags:
+16 = message (with viewmessage)
+32 = delay   (with roll)
+64 = target  (with newtargetname)
+
+"noise : play a user-defined WAV file (NB: overrides the 'sounds' setting)
+"sounds" :
+0)  beep beep
 1)	secret
-2)	beep beep
+2)	F1 talk
 3)	large switch
-4)
+4)  key try
+5)  key use
+6)  silent
+//CW---
+
 set "message" to text string
 */
 void trigger_enable (edict_t *self, edict_t *other, edict_t *activator)
@@ -108,15 +153,25 @@ void trigger_enable (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_multiple (edict_t *ent)
 {
-	ent->class_id = ENTITY_TRIGGER_MULTIPLE;
-	if (ent->sounds == 1)
-		ent->noise_index = gi.soundindex ("misc/secret.wav");
-	else if (ent->sounds == 2)
-		ent->noise_index = gi.soundindex ("misc/talk.wav");
-	else if (ent->sounds == 3)
-// DWH - should be silent
-//		ent->noise_index = gi.soundindex ("misc/trigger1.wav");
-		ent->noise_index = -1;
+//CW+++ Extended preset sound list; allow user to specify their own sounds if desired.
+	if (st.noise)
+		ent->noise_index = gi.soundindex(st.noise);
+	else
+	{
+		if (ent->sounds == 1)
+			ent->noise_index = gi.soundindex ("misc/secret.wav");
+		else if (ent->sounds == 2)
+			ent->noise_index = gi.soundindex ("misc/talk.wav");
+		else if (ent->sounds == 3)
+			ent->noise_index = gi.soundindex ("switches/butn2.wav");
+		else if (ent->sounds == 4)
+			ent->noise_index = gi.soundindex ("misc/keytry.wav");
+		else if (ent->sounds == 5)
+			ent->noise_index = gi.soundindex ("misc/keyuse.wav");
+		else if (ent->sounds == 6)
+			ent->noise_index = -1;
+	}
+//CW---
 	
 	if (!ent->wait)
 		ent->wait = 0.2;
@@ -149,18 +204,17 @@ void SP_trigger_multiple (edict_t *ent)
 /*QUAKED trigger_once (.5 .5 .5) ? x x TRIGGERED
 Triggers once, then removes itself.
 You must set the key "target" to the name of another object in the level that has a matching "targetname".
-
 If TRIGGERED, this trigger must be triggered before it is live.
-
-sounds
- 1)	secret
- 2)	beep beep
- 3)	large switch
- 4)
-
+"sounds" :
+0)  beep beep
+1)	secret
+2)	F1 talk
+3)	large switch
+4)  key try
+5)  key use
+6)  silent
 "message"	string to be displayed when triggered
 */
-
 void SP_trigger_once(edict_t *ent)
 {
 	// make old maps work because I messed up on flag assignments here
@@ -177,39 +231,97 @@ void SP_trigger_once(edict_t *ent)
 
 	ent->wait = -1;
 	SP_trigger_multiple (ent);
-	ent->class_id = ENTITY_TRIGGER_ONCE;
 }
 
 /*QUAKED trigger_relay (.5 .5 .5) (-8 -8 -8) (8 8 8)
 This fixed size trigger cannot be touched, it can only be fired by other events.
+
+//CW+++
+It can be set to toggle between two different values for the following spawnflags:
+16 = message (with viewmessage)
+32 = delay   (with roll)
+64 = target  (with newtargetname)
+
+"noise : play a user-defined WAV file (NB: overrides the 'sounds' setting)
+"sounds" :
+0)  beep beep
+1)	secret
+2)	F1 talk
+3)	large switch
+4)  key try
+5)  key use
+6)  silent
+//CW---
 */
 void trigger_relay_use (edict_t *self, edict_t *other, edict_t *activator)
 {
+	float	fTemp;		//CW
+	char	*sTemp;		//CW
+
 	self->count--;
-	if(!self->count) {
+	if (!self->count)
+	{
 		self->think = G_FreeEdict;
 		self->nextthink = level.time + FRAMETIME;
 	}
-	G_UseTargets (self, activator);
+	G_UseTargets(self, activator);
+
+//CW+++ Toggle between two delay/message/target values.
+	if (self->spawnflags & TOGGLE_DELAY)
+	{
+		fTemp = self->delay;
+		self->delay = self->roll;
+		self->roll = fTemp;
+	}
+
+	if (self->spawnflags & TOGGLE_MESSAGE)
+	{
+		sTemp = self->message;
+		self->message = self->viewmessage;
+		self->viewmessage = sTemp;
+	}
+
+	if (self->spawnflags & TOGGLE_TARGET)
+	{
+		sTemp = self->newtargetname;
+		self->target = self->newtargetname;
+		self->newtargetname = sTemp;
+	}
+//CW---
 }
 
 void SP_trigger_relay (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_RELAY;
 // DWH - gives trigger_relay same message-displaying, sound-playing capabilities
 //       as trigger_multiple and trigger_once
-	if (self->sounds == 1)
-		self->noise_index = gi.soundindex ("misc/secret.wav");
-	else if (self->sounds == 2)
-		self->noise_index = gi.soundindex ("misc/talk.wav");
-	else if (self->sounds == 3)
-		self->noise_index = -1;
-	if(!self->count) self->count=-1;
+
+//CW+++ Extended preset sound list; allow user to specify their own sounds if desired.
+	if (st.noise)
+		self->noise_index = gi.soundindex(st.noise);
+	else
+	{
+		if (self->sounds < 1)
+			self->noise_index = 0;
+		else if (self->sounds == 1)
+			self->noise_index = gi.soundindex ("misc/secret.wav");
+		else if (self->sounds == 2)
+			self->noise_index = gi.soundindex ("misc/talk.wav");
+		else if (self->sounds == 3)
+			self->noise_index = gi.soundindex ("switches/butn2.wav");
+		else if (self->sounds == 4)
+			self->noise_index = gi.soundindex ("misc/keytry.wav");
+		else if (self->sounds == 5)
+			self->noise_index = gi.soundindex ("misc/keyuse.wav");
+		else if (self->sounds == 6)
+			self->noise_index = -1;
+	}
+//CW---
+	
+	if(!self->count) self->count = -1;
 // end DWH
 
 	self->use = trigger_relay_use;
 }
-
 
 /*
 ==============================================================================
@@ -251,7 +363,10 @@ void trigger_key_use (edict_t *self, edict_t *other, edict_t *activator)
 		self->touch_debounce_time = level.time + 5.0;
 		if(!(self->spawnflags & 4))
 		{
-			gi.centerprintf (activator, "You need the %s", self->item->pickup_name);
+			if (self->key_message)
+				gi.centerprintf (activator, self->key_message);		//CW: display customised key_message if set
+			else
+				gi.centerprintf (activator, "You need the %s", self->item->pickup_name);
 			gi.sound (activator, CHAN_AUTO, gi.soundindex ("misc/keytry.wav"), 1, ATTN_NORM, 0);
 		}
 		return;
@@ -322,7 +437,6 @@ void trigger_key_use (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_key (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_KEY;
 	if (!st.item)
 	{
 		gi.dprintf("no key item for trigger_key at %s\n", vtos(self->s.origin));
@@ -400,7 +514,6 @@ void trigger_counter_use(edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_counter (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_COUNTER;
 	self->wait = -1;
 	if (!self->count)
 		self->count = 2;
@@ -422,7 +535,6 @@ This trigger will always fire.  It is activated by the world.
 */
 void SP_trigger_always (edict_t *ent)
 {
-	ent->class_id = ENTITY_TRIGGER_ALWAYS;
 	// we must have some delay to make sure our use targets are present
 	if (ent->delay < 0.2)
 		ent->delay = 0.2;
@@ -444,7 +556,7 @@ static int windsound;
 
 void trigger_push_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	if (other->class_id == ENTITY_GRENADE)
+	if (strcmp(other->classname, "grenade") == 0)
 	{
 		VectorScale (self->movedir, self->speed * 10, other->velocity);
 	}
@@ -484,7 +596,6 @@ Pushes the player
 */
 void SP_trigger_push (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_PUSH;
 	InitTrigger (self);
 	// DWH: Custom (or no) sound
 	if(self->spawnflags & 2) {
@@ -502,6 +613,137 @@ void SP_trigger_push (edict_t *self)
 	gi.linkentity (self);
 }
 
+//CW+++
+/*
+==============================================================================
+
+trigger_medibot
+
+==============================================================================
+*/
+
+/*QUAKED trigger_medibot (.5 .5 .5) ? START_OFF TOGGLE SILENT SLOW
+Any entity that touches this will be healed, until the charge runs out.
+
+It does 'health' points of healing each server frame
+"health"	default 1 (whole numbers only)
+"count"		charge
+*/
+
+#define SF_MEDI_START_OFF		1
+#define SF_MEDI_TOGGLE          2	// can be toggled on/off
+#define SF_MEDI_SILENT			4	// supresses playing the sound
+#define SF_MEDI_SLOW			8	// changes the healing rate to once per second
+#define SF_MEDI_SUPERHEAL		16	// heals beyond the player's max_health
+
+void medibot_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
+
+void medibot_use(edict_t *self, edict_t *other, edict_t *activator)
+{
+	if (self->solid == SOLID_NOT) self->solid = SOLID_TRIGGER;
+	else self->solid = SOLID_NOT;
+
+	gi.linkentity (self);
+	if (!(self->spawnflags & SF_MEDI_TOGGLE)) self->use = NULL;
+}
+
+void medibot_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (self->message)
+	{
+		gi.centerprintf (other, "%s", self->message);
+		gi.sound (other, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
+		self->message = NULL;
+	}
+	
+	if (self->target)
+	{
+		G_UseTargets(self, other);
+		self->target = NULL;
+		if (self->killtarget) self->killtarget = NULL;
+		gi.linkentity(self);
+	}
+
+	if (self->timestamp > level.time) return;
+
+	if (self->count <= 0) return;
+
+	if (self->spawnflags & SF_MEDI_SLOW) self->timestamp = level.time + 1;
+	else self->timestamp = level.time + FRAMETIME;
+
+	if ((other->health >= other->max_health) && !(self->spawnflags & SF_MEDI_SUPERHEAL)) return;
+
+	other->health += self->health;
+	if ((other->health > other->max_health) && !(self->spawnflags & SF_MEDI_SUPERHEAL))
+		other->health = other->max_health;
+
+	if (!(self->spawnflags & SF_MEDI_SILENT))
+	{
+		if (((level.framenum % 10) == 0 ) || (self->spawnflags & SF_MEDI_SLOW))
+			gi.sound(other, CHAN_AUTO, self->noise_index, 1, ATTN_NORM, 0);
+	}
+
+	if (--self->count == 0)
+	{
+		self->activator = other;
+		if (self->deathtarget) self->target = self->deathtarget;
+		multi_trigger(self);
+	}
+}
+
+void SP_trigger_medibot(edict_t *self)
+{
+	InitTrigger(self);
+	self->touch = medibot_touch;
+	self->noise_index = gi.soundindex("items/s_health.wav");
+	if (!self->health) self->health = 1;
+	
+	if (!self->count) self->count = 50;
+
+	if (self->spawnflags & SF_MEDI_START_OFF)
+	{
+		if (self->targetname == NULL) 
+		{
+			gi.dprintf("trigger_medibot at %s flagged to start off but has no targetname (will start on)\n", vtos(self->s.origin));
+			self->solid = SOLID_TRIGGER;
+		}
+		else self->solid = SOLID_NOT;
+	}
+	else self->solid = SOLID_TRIGGER;
+
+	if (self->spawnflags & SF_MEDI_TOGGLE)
+	{
+		if (self->targetname == NULL) gi.dprintf("switchable trigger_medibot at %s has no targetname\n", vtos(self->s.origin));
+		self->use = medibot_use;
+	}
+	gi.linkentity(self);
+}
+
+
+/*
+==============================================================================
+trigger_command
+==============================================================================
+*/
+void trigger_cmd_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (self->touch_debounce_time > level.time)
+		return;
+
+	stuffcmd(other, self->viewmessage);
+	self->touch_debounce_time = level.time + self->wait;
+}
+
+void SP_trigger_command(edict_t *self)
+{
+	InitTrigger(self);
+	self->touch = trigger_cmd_touch;
+	if (self->wait < FRAMETIME)
+		self->wait = FRAMETIME;
+
+	gi.linkentity(self);
+}
+//CW---
 
 /*
 ==============================================================================
@@ -617,7 +859,6 @@ void hurt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *sur
 
 void SP_trigger_hurt (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_HURT;
 	InitTrigger (self);
 
 	self->touch = hurt_touch;
@@ -671,7 +912,6 @@ void SP_trigger_gravity (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_TRIGGER_GRAVITY;
 	InitTrigger (self);
 	self->gravity = atoi(st.gravity);
 	self->touch = trigger_gravity_touch;
@@ -714,7 +954,6 @@ void trigger_monsterjump_touch (edict_t *self, edict_t *other, cplane_t *plane, 
 
 void SP_trigger_monsterjump (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_MONSTERJUMP;
 	if (!self->speed)
 		self->speed = 200;
 	if (!st.height)
@@ -769,7 +1008,6 @@ void tremor_trigger_enable (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_tremor_trigger_multiple (edict_t *ent)
 {
-	ent->class_id = ENTITY_TREMOR_TRIGGER_MULTIPLE;
 	if (ent->sounds == 1)
 		ent->noise_index = gi.soundindex ("misc/secret.wav");
 	else if (ent->sounds == 2)
@@ -819,7 +1057,6 @@ void trigger_mass_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 
 void SP_trigger_mass (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_MASS;
 	// Fires its target if touched by an entity weighing at least
 	// self->mass
 	if (self->sounds == 1)
@@ -891,7 +1128,6 @@ void SP_trigger_inside (edict_t *self)
 {
 	vec3_t v;
 
-	self->class_id = ENTITY_TRIGGER_INSIDE;
 	VectorMA (self->mins, 0.5, self->size, v);
 	if(!self->target)
 	{
@@ -985,7 +1221,6 @@ void SP_trigger_scales (edict_t *self)
 {
 	vec3_t v;
 
-	self->class_id = ENTITY_TRIGGER_SCALES;
 	VectorMA (self->mins, 0.5, self->size, v);
 	if(!self->team)
 	{
@@ -1100,7 +1335,6 @@ void trigger_bbox_use (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_bbox (edict_t *ent)
 {
-	ent->class_id = ENTITY_TRIGGER_BBOX;
 	if (ent->sounds == 1)
 		ent->noise_index = gi.soundindex ("misc/secret.wav");
 	else if (ent->sounds == 2)
@@ -1123,7 +1357,7 @@ void SP_trigger_bbox (edict_t *ent)
 	VectorCopy(ent->tright,ent->maxs);
 
 	ent->max_health = ent->health;
-	if(ent->health > 0)
+	if (ent->health > 0)
 	{
 		ent->svflags   |= SVF_DEADMONSTER;
 		ent->die        = trigger_bbox_die;
@@ -1136,7 +1370,7 @@ void SP_trigger_bbox (edict_t *ent)
 		ent->solid = SOLID_NOT;
 	else
 	{
-		if(ent->health)
+		if (ent->health)
 		{
 			ent->solid = SOLID_BBOX;
 			ent->touch = NULL;
@@ -1288,7 +1522,6 @@ void trigger_look_enable (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_look (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_LOOK;
 	if (self->sounds == 1)
 		self->noise_index = gi.soundindex ("misc/secret.wav");
 	else if (self->sounds == 2)
@@ -1366,7 +1599,6 @@ void SP_trigger_speaker (edict_t *self)
 {
 	char	buffer[MAX_QPATH];
 
-	self->class_id = ENTITY_TRIGGER_SPEAKER;
 	if(!st.noise)
 	{
 		gi.dprintf("trigger_speaker with no noise set at %s\n", vtos(self->s.origin));
@@ -1434,11 +1666,11 @@ void WriteTransitionEdict (FILE *f, edict_t *changelevel, edict_t *ent)
 	void		*p;
 
 	memcpy(&e,ent,sizeof(edict_t));
-	if ( (e.class_id == ENTITY_TARGET_LASER) ||
-		 (e.class_id == ENTITY_TARGET_BLASTER)   )
+	if (!Q_stricmp(e.classname,"target_laser") ||
+		!Q_stricmp(e.classname,"target_blaster")  )
 		vectoangles(e.movedir,e.s.angles);
 
-	if (e.class_id == ENTITY_TARGET_SPEAKER)
+	if (!Q_stricmp(e.classname,"target_speaker"))
 		e.spawnflags |= 8;  // indicates that "message" contains noise
 
 	if(changelevel->s.angles[YAW])
@@ -1507,10 +1739,7 @@ void WriteTransitionEdict (FILE *f, edict_t *changelevel, edict_t *ent)
 	if(e.classname &&
 	   ( !Q_stricmp(e.classname,"misc_actor") || strstr(e.classname,"monster_") ) &&
 	   (e.health <= e.gib_health) )
-	{
 		e.classname = "gibhead";
-		e.class_id  = ENTITY_GIBHEAD;
-	}
 	WriteEdict(f,&e);
 }
 
@@ -1555,6 +1784,12 @@ entlist_t DoNotMove[] = {
 	{"trigger_key"},
 	{"trigger_relay"},
 	{"turret_driver"},
+//CW++
+	{"target_speaker"},
+	{"target_effect"},
+	{"trigger_medibot"},
+	{"target_bmodel_spawner"},
+//CW--
 	{NULL}};
 
 void trans_ent_filename (char *filename)
@@ -1592,7 +1827,7 @@ int trigger_transition_ents (edict_t *changelevel, edict_t *self)
 		if(ent->s.origin[0] < self->mins[0]) continue;
 		if(ent->s.origin[1] < self->mins[1]) continue;
 		if(ent->s.origin[2] < self->mins[2]) continue;
-		if( (ent->class_id == ENTITY_FUNC_TRACKTRAIN) && !(ent->spawnflags & 8) && ent->targetname)
+		if(!Q_stricmp(ent->classname,"func_tracktrain") && !(ent->spawnflags & 8) && ent->targetname)
 		{
 			edict_t	*e;
 
@@ -1661,6 +1896,7 @@ int trigger_transition_ents (edict_t *changelevel, edict_t *self)
 			ent->owner_id = -(ent->owner - g_edicts);
 		else
 			ent->owner_id = 0;
+
 		WriteTransitionEdict(f,changelevel,ent);
 		gi.unlinkentity(ent);
 		ent->inuse = false;
@@ -1696,6 +1932,7 @@ int trigger_transition_ents (edict_t *changelevel, edict_t *self)
 		if(!ent->owner_id) continue;
 		total++;
 		ent->id = total;
+
 		WriteTransitionEdict(f,changelevel,ent);
 		gi.unlinkentity(ent);
 		ent->inuse = false;
@@ -1713,7 +1950,6 @@ void SP_trigger_transition (edict_t *self)
 		gi.dprintf("trigger_transition w/o a targetname\n");
 		G_FreeEdict(self);
 	}
-	self->class_id = ENTITY_TRIGGER_TRANSITION;
 	self->solid = SOLID_NOT;
 	self->movetype = MOVETYPE_NONE;
 	gi.setmodel (self, self->model);
@@ -1762,7 +1998,6 @@ void trigger_disguise_use (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_trigger_disguise (edict_t *self)
 {
-	self->class_id = ENTITY_TRIGGER_DISGUISE;
 	if(self->spawnflags & 2)
 		self->solid = SOLID_TRIGGER;
 	else
@@ -1776,291 +2011,6 @@ void SP_trigger_disguise (edict_t *self)
 	gi.setmodel (self, self->model);
 	gi.linkentity(self);
 
-}
-
-/* ============================================================================
-  TRIGGER_SWITCH
-
-  Identical to trigger_multiple in just about every way, except that
-  it only turns entities ON if they're currently OFF (default operation) or
-  OFF if they're currently ON and TRIGGER_TARGET_OFF spawnflag is set.
-
-==============================================================================*/
-
-void trigger_switch_usetargets (edict_t *ent, edict_t *activator);
-void trigger_switch_delay (edict_t *ent)
-{
-	trigger_switch_usetargets (ent, ent->activator);
-	G_FreeEdict (ent);
-}
-
-void trigger_switch_usetargets (edict_t *ent, edict_t *activator)
-{
-	edict_t		*t;
-
-//
-// check for a delay
-//
-	if (ent->delay)
-	{
-	// create a temp object to fire at a later time
-		t = G_Spawn();
-		t->classname = "DelayedUse";
-		t->nextthink = level.time + ent->delay;
-		t->think = trigger_switch_delay;
-		t->activator = activator;
-		if (!activator)
-			gi.dprintf ("Delay with no activator\n");
-		t->message = ent->message;
-		t->target = ent->target;
-		t->killtarget = ent->killtarget;
-		t->noise_index = ent->noise_index;
-		return;
-	}
-	
-	
-//
-// print the message
-//
-	if ((ent->message) && !(activator->svflags & SVF_MONSTER))
-	{
-//		Lazarus - change so that noise_index < 0 means no sound
-		gi.centerprintf (activator, "%s", ent->message);
-		if (ent->noise_index > 0)
-			gi.sound (activator, CHAN_AUTO, ent->noise_index, 1, ATTN_NORM, 0);
-		else if (ent->noise_index == 0)
-			gi.sound (activator, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
-	}
-
-//
-// kill killtargets
-//
-	if (ent->killtarget)
-	{
-		t = NULL;
-		while ((t = G_Find (t, FOFS(targetname), ent->killtarget)))
-		{
-			// Lazarus: remove LIVE killtargeted monsters from total_monsters
-			if((t->svflags & SVF_MONSTER) && (t->deadflag == DEAD_NO))
-			{
-				if(!t->dmgteam || strcmp(t->dmgteam,"player"))
-					if(!(t->monsterinfo.aiflags & AI_GOOD_GUY))
-						level.total_monsters--;
-			}
-			// and decrement secret count if target_secret is removed
-			else if(t->class_id == ENTITY_TARGET_SECRET)
-				level.total_secrets--;
-			// same deal with target_goal, but also turn off CD music if applicable
-			else if(t->class_id == ENTITY_TARGET_GOAL)
-			{
-				level.total_goals--;
-				if (level.found_goals >= level.total_goals)
-				gi.configstring (CS_CDTRACK, "0");
-			}
-			G_FreeEdict (t);
-			if (!ent->inuse)
-			{
-				gi.dprintf("entity was removed while using killtargets\n");
-				return;
-			}
-		}
-	}
-
-//
-// fire targets
-//
-	if (ent->target)
-	{
-		int	on;
-
-		t = NULL;
-		while ((t = G_Find (t, FOFS(targetname), ent->target)))
-		{
-			if (t == ent)
-			{
-				gi.dprintf ("WARNING: Entity used itself.\n");
-			}
-			else if(t->use)
-			{
-				on = 0;
-				switch(t->class_id)
-				{
-				case ENTITY_FUNC_CONVEYOR:
-				case ENTITY_FUNC_FORCE_WALL:
-				case ENTITY_FUNC_WALL:
-					if(t->solid == SOLID_BSP)
-						on=1;
-					break;
-				case ENTITY_FUNC_PENDULUM:
-				case ENTITY_FUNC_TRAIN:
-				case ENTITY_MISC_STROGG_SHIP:
-				case ENTITY_MISC_VIPER:
-				case ENTITY_MODEL_TRAIN:
-				case ENTITY_TARGET_ATTRACTOR:
-				case ENTITY_TARGET_FOG:
-				case ENTITY_TARGET_FOUNTAIN:
-				case ENTITY_TARGET_LASER:
-				case ENTITY_TARGET_PRECIPITATION:
-					if(t->spawnflags & 1)
-						on=1;
-					break;
-				case ENTITY_FUNC_REFLECT:
-					if(!(t->spawnflags & 1))
-						on=1;
-					break;
-				case ENTITY_FUNC_ROTATING:
-					on = VectorCompare (t->avelocity, vec3_origin);
-					break;
-				case ENTITY_FUNC_TIMER:
-					if(t->nextthink)
-						on=1;
-					break;
-				case ENTITY_FUNC_TRACKTRAIN:
-					if(!(t->spawnflags & 128))
-						on=1;
-					break;
-				case ENTITY_MODEL_TURRET:
-				case ENTITY_TURRET_BREACH:
-					if(t->spawnflags & 16)
-						on=1;
-					break;
-				case ENTITY_TARGET_EFFECT:
-					if(t->spawnflags & 3)
-					{
-						if(t->spawnflags & 1)
-							on=1;
-					}
-					else
-						on = -1;
-					break;
-				case ENTITY_TARGET_SPEAKER:
-					if(t->spawnflags & 3)
-					{
-						if(t->s.sound)
-							on=1;
-					}
-					else
-						on=-1;
-					break;
-				default:
-					on=-1;
-				}
-
-
-				if(ent->spawnflags & TRIGGER_TARGET_OFF)
-				{
-					// Only use target if it is currently ON
-					if(on==1)
-						t->use (t, ent, activator);
-				}
-				else if(on==0)
-				{
-					// Only use target if it is currently OFF
-					t->use (t, ent, activator);
-				}
-			}
-			if (!ent->inuse)
-			{
-				gi.dprintf("entity was removed while using targets\n");
-				return;
-			}
-		}
-	}
-}
-
-void trigger_switch (edict_t *ent)
-{
-	if (ent->nextthink)
-		return;		// already been triggered
-
-	trigger_switch_usetargets (ent, ent->activator);
-
-	if (ent->wait > 0)	
-	{
-		ent->think = multi_wait;
-		ent->nextthink = level.time + ent->wait;
-	}
-	else
-	{	// we can't just remove (self) here, because this is a touch function
-		// called while looping through area links...
-		ent->touch = NULL;
-		ent->nextthink = level.time + FRAMETIME;
-		ent->think = G_FreeEdict;
-	}
-}
-
-void touch_trigger_switch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
-{
-	if(other->client || (other->flags & FL_ROBOT))
-	{
-		if (self->spawnflags & TRIGGER_NOT_PLAYER)
-			return;
-	}
-	else if (other->svflags & SVF_MONSTER)
-	{
-		if (!(self->spawnflags & TRIGGER_MONSTER))
-			return;
-	}
-	else
-		return;
-
-	if( (self->spawnflags & TRIGGER_CAMOWNER) && (!other->client || !other->client->spycam))
-		return;
-
-	if (!VectorCompare(self->movedir, vec3_origin))
-	{
-		vec3_t	forward;
-
-		AngleVectors(other->s.angles, forward, NULL, NULL);
-		if (_DotProduct(forward, self->movedir) < 0)
-			return;
-	}
-
-	self->activator = other;
-	trigger_switch (self);
-}
-
-void use_trigger_switch (edict_t *ent, edict_t *other, edict_t *activator)
-{
-	ent->activator = activator;
-	trigger_switch (ent);
-}
-
-void SP_trigger_switch (edict_t *ent)
-{
-	ent->class_id = ENTITY_TRIGGER_SWITCH;
-	if (ent->sounds == 1)
-		ent->noise_index = gi.soundindex ("misc/secret.wav");
-	else if (ent->sounds == 2)
-		ent->noise_index = gi.soundindex ("misc/talk.wav");
-	else if (ent->sounds == 3)
-		ent->noise_index = -1;
-	
-	if (!ent->wait)
-		ent->wait = 0.2;
-	ent->touch = touch_trigger_switch;
-	ent->movetype = MOVETYPE_NONE;
-	ent->svflags |= SVF_NOCLIENT;
-
-	if (ent->spawnflags & TRIGGER_CAMOWNER)
-		ent->svflags |= SVF_TRIGGER_CAMOWNER;
-
-	if (ent->spawnflags & TRIGGER_START_OFF)
-	{
-		ent->solid = SOLID_NOT;
-		ent->use = trigger_enable;
-	}
-	else
-	{
-		ent->solid = SOLID_TRIGGER;
-		ent->use = use_trigger_switch;
-	}
-
-	if (!VectorCompare(ent->s.angles, vec3_origin))
-		G_SetMovedir (ent->s.angles, ent->movedir);
-
-	gi.setmodel (ent, ent->model);
-	gi.linkentity (ent);
 }
 
 // end DWH

@@ -50,7 +50,7 @@ qboolean CanDamage (edict_t *targ, edict_t *inflictor)
 	//          from inflictor to targ is blocked by a func_tracktrain, AND the targ is riding/driving
 	//          the tracktrain, go ahead and hurt him.
 
-	if(trace.ent && (trace.ent->flags & FL_TRACKTRAIN) && ((trace.ent->owner == targ) || (targ->groundentity == trace.ent)) )
+	if (trace.ent && (trace.ent->flags & FL_TRACKTRAIN) && ((trace.ent->owner == targ) || (targ->groundentity == trace.ent)) )
 		return true;
 
 	VectorCopy (targ->s.origin, dest);
@@ -121,7 +121,7 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 			if (coop->value && attacker->client)
 				attacker->client->resp.score++;
 			// medics won't heal monsters that they kill themselves
-			if (attacker->class_id == ENTITY_MONSTER_MEDIC)
+			if (strcmp(attacker->classname, "monster_medic") == 0)
 				targ->owner = attacker;
 		}
 	}
@@ -141,7 +141,7 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 	if (inflictor->movetype == MOVETYPE_PUSH)
 	{
 		// Lazarus - Die function won't gib NO_GIB monsters... blow 'em up
-		if((targ->die != misc_deadsoldier_die) && (targ->spawnflags & SF_MONSTER_NOGIB))
+		if ((targ->die != misc_deadsoldier_die) && (targ->spawnflags & SF_MONSTER_NOGIB))
 		{
 			BecomeExplosion1(targ);
 			return;
@@ -172,19 +172,20 @@ void SpawnDamage (int type, vec3_t origin, vec3_t normal)
 	gi.WriteDir (normal);
 	gi.multicast (origin, MULTICAST_PVS);
 
-	if(level.num_reflectors)
+	if (level.num_reflectors)
 		ReflectSparks(type,origin,normal);
 }
 
 int	BloodType (int index)
 {
-	switch (index) {
-	case 1:
-		return TE_GREENBLOOD;
-	case 2:
-		return TE_SPARKS;
-	default:
-		return TE_BLOOD;
+	switch (index)
+	{
+		case 1:
+			return TE_GREENBLOOD;
+		case 2:
+			return TE_SPARKS;
+		default:
+			return TE_BLOOD;
 	}
 }
 
@@ -350,32 +351,32 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 {
 	edict_t	*teammate;
 
-	if(!targ || !attacker)
+	if (!targ || !attacker)
 		return;
 
 	// Lazarus dmgteam stuff
-	if( (attacker->client && !(attacker->flags & FL_NOTARGET)) || (attacker->svflags & SVF_MONSTER))
+	if ( (attacker->client && !(attacker->flags & FL_NOTARGET)) || (attacker->svflags & SVF_MONSTER))
 	{	// the attacker is a player or a monster
-		if( (targ->svflags & SVF_MONSTER) && (targ->dmgteam) && (targ->health > 0) )
+		if ( (targ->svflags & SVF_MONSTER) && (targ->dmgteam) && (targ->health > 0) )
 		{	// the target is a live monster on a dmgteam
-			if( !attacker->dmgteam || strcmp(targ->dmgteam,attacker->dmgteam) )
+			if ( !attacker->dmgteam || strcmp(targ->dmgteam,attacker->dmgteam) )
 			{	// attacker is not on same dmgteam as target
-				if( !Q_stricmp(targ->dmgteam,"player") && attacker->client )
+				if ( !Q_stricmp(targ->dmgteam,"player") && attacker->client )
 				{	// Target is a GOOD_GUY, attacked by the player. Allow self-defense,
 					// but don't get other dmgteam teammates involved.
 					// Special case for misc_actors - if ACTOR_BAD_GUY isn't set,
 					// actor stays on the same team and only taunts player
-					if(!(targ->monsterinfo.aiflags & AI_ACTOR) || (targ->spawnflags & SF_ACTOR_BAD_GUY))
+					if (!(targ->monsterinfo.aiflags & AI_ACTOR) || (targ->spawnflags & SF_ACTOR_BAD_GUY))
 					{
 						targ->enemy = targ->movetarget = targ->goalentity = attacker;
 						targ->monsterinfo.aiflags &= ~AI_FOLLOW_LEADER;
-						if(visible(targ,targ->enemy))
+						if (visible(targ,targ->enemy))
 							FoundTarget(targ);
 						else
 							HuntTarget(targ);
 					}
 				}
-				else if( !(targ->svflags & SVF_MONSTER) || !(attacker->svflags & SVF_MONSTER) ||
+				else if ( !(targ->svflags & SVF_MONSTER) || !(attacker->svflags & SVF_MONSTER) ||
 					(targ->monsterinfo.aiflags & AI_FREEFORALL) ||
 					((targ->monsterinfo.aiflags & AI_GOOD_GUY) != (attacker->monsterinfo.aiflags & AI_GOOD_GUY)) )
 				{
@@ -385,13 +386,13 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 					teammate = G_Find(NULL,FOFS(dmgteam),targ->dmgteam);
 					while(teammate)
 					{
-						if(teammate != targ)
+						if (teammate != targ)
 						{
-							if(teammate->svflags & SVF_MONSTER)
+							if (teammate->svflags & SVF_MONSTER)
 							{
-								if(teammate->health > 0 && (teammate->enemy != attacker) && !(teammate->monsterinfo.aiflags & AI_CHASE_THING))
+								if (teammate->health > 0 && (teammate->enemy != attacker) && !(teammate->monsterinfo.aiflags & AI_CHASE_THING))
 								{
-									if(!teammate->enemy || !teammate->enemy->dmgteam || !attacker->dmgteam )
+									if (!teammate->enemy || !teammate->enemy->dmgteam || !attacker->dmgteam )
 									{
 										// If either 1) this teammate doesn't currently have an enemy,
 										//        or 2) the teammate's enemy is not a member of a dmgteam
@@ -399,7 +400,7 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 										// then set the attacker as the enemy of this teammate
 										DefendMyFriend(teammate,attacker);
 									}
-									else if(strcmp(teammate->enemy->dmgteam,attacker->dmgteam))
+									else if (strcmp(teammate->enemy->dmgteam,attacker->dmgteam))
 									{
 										// attacker is a member of a team different than the
 										// current enemy
@@ -407,7 +408,7 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 									}
 								}
 							}
-							else if(!(teammate->svflags & SVF_DEADMONSTER))
+							else if (!(teammate->svflags & SVF_DEADMONSTER))
 								G_UseTargets(teammate,attacker);
 						}
 						teammate = G_Find(teammate,FOFS(dmgteam),targ->dmgteam);
@@ -416,7 +417,7 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 			}
 		}
 	}
-	if( targ->client && (attacker->svflags & SVF_MONSTER) )
+	if ( targ->client && (attacker->svflags & SVF_MONSTER) )
 	{
 		// target is player; attacker is monster... alert "good guys", if any
 //		trace_t	tr;
@@ -424,16 +425,16 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 		teammate = G_Find(NULL,FOFS(dmgteam),"player");
 		while(teammate)
 		{
-			if((teammate->health > 0) && !(teammate->monsterinfo.aiflags & AI_CHASE_THING) && (teammate != attacker))
+			if ((teammate->health > 0) && !(teammate->monsterinfo.aiflags & AI_CHASE_THING) && (teammate != attacker))
 			{
 				// Can teammate see player?
 //				tr = gi.trace(teammate->s.origin,vec3_origin,vec3_origin,targ->s.origin,teammate,MASK_OPAQUE);
-//				if(tr.fraction == 1.0)
-				if(gi.inPVS(teammate->s.origin,targ->s.origin))
+//				if (tr.fraction == 1.0)
+				if (gi.inPVS(teammate->s.origin,targ->s.origin))
 				{
 					teammate->enemy = attacker;
 					FoundTarget(teammate);
-					if(teammate->monsterinfo.aiflags & AI_ACTOR)
+					if (teammate->monsterinfo.aiflags & AI_ACTOR)
 					{
 						teammate->monsterinfo.aiflags |= AI_FOLLOW_LEADER;
 						teammate->monsterinfo.old_leader = NULL;
@@ -447,17 +448,17 @@ void CallMyFriends (edict_t *targ, edict_t *attacker)
 	// If player attacks a GOODGUY, turn GOODGUY stuff off
 	if (attacker->client && (targ->svflags & SVF_MONSTER) && (targ->spawnflags & SF_MONSTER_GOODGUY))
 	{
-		if(!(targ->monsterinfo.aiflags & AI_ACTOR) || (targ->spawnflags & SF_ACTOR_BAD_GUY))
+		if (!(targ->monsterinfo.aiflags & AI_ACTOR) || (targ->spawnflags & SF_ACTOR_BAD_GUY))
 		{
 			targ->spawnflags &= ~SF_MONSTER_GOODGUY;
 			targ->monsterinfo.aiflags &= ~(AI_GOOD_GUY + AI_FOLLOW_LEADER);
-			if(targ->dmgteam && !Q_stricmp(targ->dmgteam,"player"))
+			if (targ->dmgteam && !Q_stricmp(targ->dmgteam,"player"))
 				targ->dmgteam = NULL;
 		}
 	}
 	// 1.6.1.3 change - one chance and one chance only to call friends
-/*	if(targ->dmgteam)
-		if(Q_stricmp(targ->dmgteam,"player"))
+/*	if (targ->dmgteam)
+		if (Q_stricmp(targ->dmgteam,"player"))
 			targ->dmgteam = NULL; */
 }
 
@@ -465,7 +466,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 {
 	qboolean is_turret;
 
-	if( targ->health <= 0 )
+	if ( targ->health <= 0 )
 		return;
 
 	// If targ is currently chasing a "thing" or we're running a hint_path test, he 
@@ -477,7 +478,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 	if (targ->flags & FL_ROBOT)
 		return;
 
-	is_turret = (attacker->class_id == ENTITY_TURRET_BREACH);
+	is_turret = (attacker->classname && !Q_stricmp(attacker->classname,"turret_breach"));
 
 	targ->spawnflags &= ~(SF_MONSTER_AMBUSH | SF_MONSTER_SIGHT);	// 1.6.1.3
 
@@ -486,7 +487,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 	if (!(attacker->client) && !(attacker->svflags & SVF_MONSTER) && !is_turret &&
 		!(targ->monsterinfo.aiflags & AI_DUCKED) )
 	{
-		if(!targ->movetarget || (targ->movetarget->class_id != ENTITY_THING) )
+		if (!targ->movetarget || Q_stricmp(targ->movetarget->classname,"thing") )
 		{
 			int		i;
 			edict_t	*thing;
@@ -498,12 +499,12 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 
 			VectorCopy(targ->mins,mins);
 			mins[2] += 16; // max step height? not sure about this
-			if(mins[2] > 0) mins[2] = 0;
+			if (mins[2] > 0) mins[2] = 0;
 			VectorCopy(targ->maxs,maxs);
-			if( (attacker==world) ||
-				(attacker->class_id == ENTITY_FUNC_DOOR) ||
-				(attacker->class_id == ENTITY_FUNC_WATER) ||
-				(attacker->class_id == ENTITY_FUNC_PUSHABLE)   )
+			if ( (attacker==world) ||
+				(!Q_stricmp(attacker->classname,"func_door") )   ||
+				(!Q_stricmp(attacker->classname,"func_water"))   ||
+				(!Q_stricmp(attacker->classname,"func_pushable"))  )
 			{
 				// Just send the monster straight ahead and hope for the best.
 				thing = SpawnThing();
@@ -515,18 +516,18 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 					VectorMA(targ->s.origin,8192,dir,end);
 					trace1 = gi.trace(targ->s.origin,mins,maxs,end,targ,MASK_MONSTERSOLID);
 					dist = trace1.fraction * 8192;
-					if(dist > best_dist) {
+					if (dist > best_dist) {
 						best_dist = dist;
 						VectorCopy(dir,best_dir);
 					}
 				}
 			}
-			else if(attacker->class_id == ENTITY_TARGET_LASER)
+			else if (!Q_stricmp(attacker->classname,"target_laser")) 
 			{
 				// Send the monster in a direction perpendicular to laser
 				// path, whichever direction is closest to current angles
 				thing = SpawnThing();
-				if(attacker->movedir[2] > 0.7)
+				if (attacker->movedir[2] > 0.7)
 				{
 					// Just move straight ahead and hope for the best
 					AngleVectors(targ->s.angles,best_dir,NULL,NULL);
@@ -539,7 +540,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 					best_dir[1] =  best_dir[2];
 					best_dir[2] =  0;
 					AngleVectors(targ->s.angles,dir,NULL,NULL);
-					if(DotProduct(best_dir,dir) < 0)
+					if (DotProduct(best_dir,dir) < 0)
 						VectorNegate(best_dir,best_dir);
 				}
 			}
@@ -548,7 +549,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 				// Attacked by a point entity or moving brush model
 				// not covered above. Find a vector that will hide the
 				// monster from the attacker.
-				if(!VectorLength(attacker->size)) {
+				if (!VectorLength(attacker->size)) {
 					// point entity
 					VectorCopy(attacker->s.origin,atk);
 				} else {
@@ -559,7 +560,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 				AngleVectors(targ->s.angles,forward,NULL,NULL);
 				for(i=0; i<32 && best_dist == 0; i++) {
 					// Weight escape route tests in favor of forward-facing direction
-					if(random() > 0.5) {
+					if (random() > 0.5) {
 						dir[0] = forward[0] + 0.5*crandom();
 						dir[1] = forward[1] + 0.5*crandom();
 						dir[2] = forward[2];
@@ -572,20 +573,20 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 					VectorMA(targ->s.origin,8192,dir,end);
 					trace1 = gi.trace(targ->s.origin,mins,maxs,end,targ,MASK_MONSTERSOLID);
 					trace2 = gi.trace(trace1.endpos,NULL,NULL,atk,targ,MASK_SOLID);
-					if(trace2.fraction == 1.0) continue;
+					if (trace2.fraction == 1.0) continue;
 					dist = trace1.fraction * 8192;
-					if(dist > best_dist) {
+					if (dist > best_dist) {
 						best_dist = dist;
 						VectorCopy(dir,best_dir);
 					}
 				}
-				if(best_dist == 0.)
+				if (best_dist == 0.)
 					return;
 				thing = SpawnThing();
 				vectoangles(best_dir,thing->s.angles);
 			}
-			if( (attacker->class_id == ENTITY_FUNC_DOOR) ||
-				(attacker->class_id == ENTITY_FUNC_PUSHABLE)  )
+			if ( (!Q_stricmp(attacker->classname,"func_door"))    ||
+				(!Q_stricmp(attacker->classname,"func_pushable"))   )
 				run = 256;
 			else
 				run = 8192;
@@ -594,7 +595,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 			dist = trace1.fraction * run;
 			VectorMA(targ->s.origin, dist, best_dir, thing->s.origin);
 			// If monster already has an enemy, use a short lifespan for thing
-			if(targ->enemy)
+			if (targ->enemy)
 				thing->touch_debounce_time = level.time + 2.0;
 			else
 				thing->touch_debounce_time = level.time + max(5.0,dist/50.);
@@ -617,7 +618,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 			{
 				if (attacker->health > targ->health)
 				{
-					if(ai_chicken(targ,attacker))
+					if (ai_chicken(targ,attacker))
 						return;
 				}
 			}
@@ -643,10 +644,10 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 		float	percentHealth;
 
 		// make sure whatever we were pissed at is still around.
-		if(targ->enemy->inuse)
+		if (targ->enemy->inuse)
 		{
 			percentHealth = (float)(targ->health) / (float)(targ->max_health);
-			if( targ->enemy->inuse && (percentHealth > 0.33))
+			if ( targ->enemy->inuse && (percentHealth > 0.33))
 				return;
 		}
 
@@ -663,7 +664,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 
 		percentHealth = (float)(targ->health) / (float)(targ->max_health);
 		// ignore it some of the time
-		if( targ->enemy->inuse && percentHealth > 0.25)
+		if ( targ->enemy->inuse && percentHealth > 0.25)
 			return;
 
 		// remove the medic flag
@@ -691,7 +692,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 			targ->oldenemy = targ->enemy;
 		}
 		targ->enemy = attacker;
-		if(visible(targ,targ->enemy))
+		if (visible(targ,targ->enemy))
 			FoundTarget (targ); 
 		else
 			HuntTarget (targ);
@@ -702,21 +703,21 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 	// (they spray too much), get mad at them
 	if (((targ->flags & (FL_FLY|FL_SWIM)) == (attacker->flags & (FL_FLY|FL_SWIM))) &&
 		 (strcmp (targ->classname, attacker->classname) != 0) &&
-		 (attacker->class_id != ENTITY_MONSTER_TANK) &&
-		 (attacker->class_id != ENTITY_MONSTER_SUPERTANK) &&
-		 (attacker->class_id != ENTITY_MONSTER_MAKRON) &&
-		 (attacker->class_id != ENTITY_MONSTER_JORG) )
+		 (strcmp(attacker->classname, "monster_tank") != 0) &&
+		 (strcmp(attacker->classname, "monster_supertank") != 0) &&
+		 (strcmp(attacker->classname, "monster_makron") != 0) &&
+		 (strcmp(attacker->classname, "monster_jorg") != 0) )
 	{
 		// Lazarus: Check IGNORE_SHOTS spawnflag for attacker. If set AND 
 		//          targ and attacker have same GOODGUY setting, don't respond
 		//          to attacks.
-		if( ( (targ->spawnflags & SF_MONSTER_GOODGUY) != (attacker->spawnflags & SF_MONSTER_GOODGUY) ) ||
+		if ( ( (targ->spawnflags & SF_MONSTER_GOODGUY) != (attacker->spawnflags & SF_MONSTER_GOODGUY) ) ||
 			!(attacker->spawnflags & SF_MONSTER_IGNORESHOTS) )
 		{
 			if (targ->enemy && targ->enemy->client)
 				targ->oldenemy = targ->enemy;
 			targ->enemy = attacker;
-			if(visible(targ,targ->enemy))
+			if (visible(targ,targ->enemy))
 				FoundTarget (targ); 
 			else
 				HuntTarget (targ);
@@ -729,7 +730,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 		if (targ->enemy && targ->enemy->client)
 			targ->oldenemy = targ->enemy;
 		targ->enemy = attacker;
-		if(visible(targ,targ->enemy))
+		if (visible(targ,targ->enemy))
 			FoundTarget (targ); 
 		else
 			HuntTarget (targ);
@@ -741,7 +742,7 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 		if (targ->enemy && targ->enemy->client)
 			targ->oldenemy = targ->enemy;
 		targ->enemy = attacker->enemy;
-		if(visible(targ,targ->enemy))
+		if (visible(targ,targ->enemy))
 			FoundTarget (targ); 
 		else
 			HuntTarget (targ);
@@ -778,7 +779,7 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 	// Lazarus: If monster/actor is currently being forced to use
 	// specific animations due to target_animation, release that
 	// control over it.
-	if((targ->think == target_animate) && (targ->svflags & SVF_MONSTER))
+	if ((targ->think == target_animate) && (targ->svflags & SVF_MONSTER))
 	{
 		targ->think = monster_think;
 		targ->nextthink = level.time + FRAMETIME;
@@ -792,10 +793,10 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 
 	// If targ is a fake player for the real player viewing camera, get that player
 	// out of the camera and do the damage to him
-	if (targ->class_id == ENTITY_CAMPLAYER) {
-		if(targ->target_ent && targ->target_ent->client && targ->target_ent->client->spycam)
+	if (!Q_stricmp(targ->classname,"camplayer")) {
+		if (targ->target_ent && targ->target_ent->client && targ->target_ent->client->spycam)
 		{
-			if(attacker->enemy == targ)
+			if (attacker->enemy == targ)
 			{
 				attacker->enemy = targ->target_ent;
 				attacker->goalentity = NULL;
@@ -803,23 +804,23 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 			}
 			targ = targ->target_ent;
 			camera_off(targ);
-			if(attacker->svflags & SVF_MONSTER)
+			if (attacker->svflags & SVF_MONSTER)
 			{
-				if(attacker->spawnflags & SF_MONSTER_GOODGUY)
+				if (attacker->spawnflags & SF_MONSTER_GOODGUY)
 				{
-					if(attacker->enemy == targ)
+					if (attacker->enemy == targ)
 					{
 						attacker->enemy = NULL;
 						attacker->monsterinfo.aiflags &= ~AI_FOLLOW_LEADER;
 						attacker->monsterinfo.attack_finished = 0;
 						attacker->monsterinfo.pausetime = level.time + 100000000;
-						if(attacker->monsterinfo.stand)
+						if (attacker->monsterinfo.stand)
 							attacker->monsterinfo.stand(attacker);
 					}
 				}
 				else
 				{
-					if(attacker->enemy == targ)
+					if (attacker->enemy == targ)
 						FoundTarget(attacker);
 				}
 			}
@@ -829,13 +830,13 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 	}
 	// If targ is a remote turret_driver and attacker is a player, replace turret_driver
 	// with normal infantry dude and turn TRACK off on corresponding turret_breach
-	if ( targ->classname && (targ->class_id == ENTITY_TURRET_DRIVER) && 
+	if ( targ->classname && !Q_stricmp(targ->classname,"turret_driver") && 
 		(targ->spawnflags & 1) && (attacker->client) ) {
 		edict_t	*monster;
 		monster = targ->child;
-		if(monster) {
+		if (monster) {
 			monster->health = targ->health;
-			if(targ->target_ent) {
+			if (targ->target_ent) {
 				targ->target_ent->spawnflags &= ~4;
 				targ->target_ent->move_angles[0] = 0;
 				targ->target_ent->owner = NULL;
@@ -893,7 +894,7 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 
 // Lazarus: If monster is currently chasing a "thing" and mod is a laser,
 //          ignore knockback to give poor guy a chance to vamoose.
-	if (targ->movetarget && (targ->movetarget->class_id == ENTITY_THING) && (mod == MOD_TARGET_LASER))
+	if (targ->movetarget && !Q_stricmp(targ->movetarget->classname,"thing") && (mod == MOD_TARGET_LASER))
 		knockback = 0;
 
 // figure momentum add
@@ -972,9 +973,9 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 		}
 
 
-		if(targ->client)
+		if (targ->client)
 		{
-			if(in_targ != targ)
+			if (in_targ != targ)
 			{
 				// Then player has taken the place of whatever was originally
 				// damaged, as in switching from func_monitor usage. Limit
@@ -984,34 +985,34 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 				targ->client->invincible_framenum = level.framenum+2;
 				targ->pain_debounce_time = max(targ->pain_debounce_time,level.time+0.3);
 			}
-			else if(level.framenum - targ->client->startframe > 30)
+			else if (level.framenum - targ->client->startframe > 30)
 				targ->health = targ->health - take;
-			else if(targ->health > 10)
+			else if (targ->health > 10)
 				targ->health = max(10,targ->health - take);
 		}
 		else
 		{
 			// Lazarus: For func_explosive target, check spawnflags and, if needed,
 			//          damage type
-			if(targ->class_id == ENTITY_FUNC_EXPLOSIVE)
+			if (targ->classname && !Q_stricmp(targ->classname,"func_explosive"))
 			{
 				qboolean good_damage = true;
 
-				if(targ->spawnflags & 8)  // explosion only
+				if (targ->spawnflags & 8)  // explosion only
 				{
 					good_damage = false;
-					if(mod == MOD_GRENADE)     good_damage = true;
-					if(mod == MOD_G_SPLASH)    good_damage = true;
-					if(mod == MOD_ROCKET)      good_damage = true;
-					if(mod == MOD_R_SPLASH)    good_damage = true;
-					if(mod == MOD_BFG_BLAST)   good_damage = true;
-					if(mod == MOD_HANDGRENADE) good_damage = true;
-					if(mod == MOD_HG_SPLASH)   good_damage = true;
-					if(mod == MOD_EXPLOSIVE)   good_damage = true;
-					if(mod == MOD_BARREL)      good_damage = true;
-					if(mod == MOD_BOMB)        good_damage = true;
+					if (mod == MOD_GRENADE)     good_damage = true;
+					if (mod == MOD_G_SPLASH)    good_damage = true;
+					if (mod == MOD_ROCKET)      good_damage = true;
+					if (mod == MOD_R_SPLASH)    good_damage = true;
+					if (mod == MOD_BFG_BLAST)   good_damage = true;
+					if (mod == MOD_HANDGRENADE) good_damage = true;
+					if (mod == MOD_HG_SPLASH)   good_damage = true;
+					if (mod == MOD_EXPLOSIVE)   good_damage = true;
+					if (mod == MOD_BARREL)      good_damage = true;
+					if (mod == MOD_BOMB)        good_damage = true;
 				}
-				if(!good_damage) return;
+				if (!good_damage) return;
 			}
 
 			targ->health = targ->health - take;
@@ -1028,10 +1029,21 @@ void T_Damage (edict_t *in_targ, edict_t *inflictor, edict_t *in_attacker, vec3_
 
 	if (targ->svflags & SVF_MONSTER)
 	{
-		M_ReactToDamage (targ, attacker);
+
+//CW+++ Added for Brains - don't want them to prematurely abort tentacle attacks.
+		if (targ->busy)
+			return;
+
+//		Learn the futility of ducking the hard way.
+
+		if (targ->monsterinfo.aiflags & AI_DUCKED)
+			targ->count++;
+//CW---
+
+		M_ReactToDamage(targ, attacker);
 		if (!(targ->monsterinfo.aiflags & AI_DUCKED) && (take))
 		{
-			targ->pain (targ, attacker, knockback, take);
+			targ->pain(targ, attacker, knockback, take);
 			// nightmare mode monsters don't go into pain frames often
 			if (skill->value == 3)
 				targ->pain_debounce_time = level.time + 5;

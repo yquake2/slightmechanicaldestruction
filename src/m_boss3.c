@@ -38,7 +38,6 @@ void SP_monster_boss3_stand (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_BOSS3_STAND;
 
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;

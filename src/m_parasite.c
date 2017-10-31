@@ -50,12 +50,14 @@ void parasite_sight (edict_t *self, edict_t *other)
 
 void parasite_tap (edict_t *self)
 {
-	gi.sound (self, CHAN_WEAPON, sound_tap, 1, ATTN_IDLE, 0);
+	if(!(self->spawnflags & SF_MONSTER_AMBUSH))		//CW: ambush => should be silent
+		gi.sound (self, CHAN_WEAPON, sound_tap, 1, ATTN_IDLE, 0);
 }
 
 void parasite_scratch (edict_t *self)
 {
-	gi.sound (self, CHAN_WEAPON, sound_scratch, 1, ATTN_IDLE, 0);
+	if(!(self->spawnflags & SF_MONSTER_AMBUSH))		//CW: ambush => should be silent
+		gi.sound (self, CHAN_WEAPON, sound_scratch, 1, ATTN_IDLE, 0);
 }
 
 void parasite_search (edict_t *self)
@@ -263,8 +265,11 @@ void parasite_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 10)	//CW: shrug off low damage
+		return;
 
 	if (random() < 0.5)
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
@@ -301,6 +306,11 @@ void parasite_drain_attack (edict_t *self)
 	trace_t	tr;
 	int damage;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	AngleVectors (self->s.angles, f, r, NULL);
 	VectorSet (offset, 24, 0, 6);
 	G_ProjectSource (self->s.origin, offset, f, r, start);
@@ -318,15 +328,7 @@ void parasite_drain_attack (edict_t *self)
 	}
 	VectorCopy (self->enemy->s.origin, end);
 
-	// Lazarus: Original code can foul up if parasite is near and facing a solid.
-	// "start" may be embedded in the solid, since it is outside the parasite's
-	// bbox. In this case cable will appear to go through a solid.
-//	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
-	VectorCopy (self->s.origin,offset);
-	offset[2] += 6;
-	tr = gi.trace (offset, NULL, NULL, end, self, MASK_SHOT);
-	// end Lazarus fix
-
+	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
 	if (tr.ent != self->enemy)
 		return;
 
@@ -526,7 +528,6 @@ void SP_monster_parasite (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_PARASITE;
 
 	sound_pain1 = gi.soundindex ("parasite/parpain1.wav");	
 	sound_pain2 = gi.soundindex ("parasite/parpain2.wav");	
@@ -557,7 +558,7 @@ void SP_monster_parasite (edict_t *self)
 	if(!self->health)
 		self->health = 175;
 	if(!self->gib_health)
-		self->gib_health = -50;
+		self->gib_health = -80;		//CW: was -50
 	if(!self->mass)
 		self->mass = 250;
 
@@ -571,17 +572,28 @@ void SP_monster_parasite (edict_t *self)
 	self->monsterinfo.sight = parasite_sight;
 	self->monsterinfo.idle = parasite_idle;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.35;
-	if(monsterjump->value)
+//DWH---
+
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.20;	//CW: was 0.35
+
+	if (monsterjump->value)
 	{
 		self->monsterinfo.jump = parasite_jump;
-		self->monsterinfo.jumpup = 32;
+		self->monsterinfo.jumpup = 48;	//CW: was 32
 		self->monsterinfo.jumpdn = 160;
 	}
 

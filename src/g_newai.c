@@ -48,7 +48,7 @@ qboolean blocked_checkshot (edict_t *self, float shotChance)
 		return false;
 
 	// PMM - special handling for the parasite
-	if (self->class_id == ENTITY_MONSTER_PARASITE)
+	if (!strcmp(self->classname, "monster_parasite"))
 	{
 		vec3_t	f, r, offset, start, end;
 		trace_t	tr;
@@ -485,17 +485,22 @@ qboolean monsterlost_checkhint (edict_t *self)
 	qboolean	hint_path_represented[MAX_HINT_CHAINS];
 
 	// if there are no hint paths on this map, exit immediately.
-	if(!hint_paths_present)
+	if (!hint_paths_present)
 		return false;
 
-	if(!self->enemy)
+//CW+++ Don't look for hintpaths if Mr. Mapping Dude doesn't want me to.
+	if (self->spawnflags & SF_MONSTER_NOHINT)
+		return false;
+//CW---
+
+	if (!self->enemy)
 		return false;
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		return false;
 	
-//	if (!strcmp(self->classname, "monster_turret"))
-//		return false;
+	if (!strcmp(self->classname, "monster_turret"))
+		return false;
 
 	monster_pathchain = NULL;
 
@@ -819,7 +824,7 @@ void hint_path_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 		return;
 	}
 
-	// make sure we're the target of it's obsession
+	// make sure we're the target of its obsession
 	if(other->movetarget == self)
 	{
 		goal = other->monsterinfo.goal_hint;
@@ -895,7 +900,6 @@ void SP_hint_path (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_HINT_PATH;
 	// Lazarus: Corrections for mappers that can't follow instructions :-)
 	if (!self->targetname)
 		self->spawnflags |= HINT_ENDPOINT;

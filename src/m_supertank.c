@@ -17,6 +17,7 @@ static int	sound_pain3;
 static int	sound_death;
 static int	sound_search1;
 static int	sound_search2;
+static int	sound_gun;			//CW
 
 static	int	tread_sound;
 
@@ -421,8 +422,16 @@ mmove_t supertank_move_end_attack1 = {FRAME_attak1_7, FRAME_attak1_20, supertank
 
 void supertank_reattack1(edict_t *self)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+	{
+		self->monsterinfo.currentmove = &supertank_move_end_attack1;
+		return;
+	}
+//CW--
+
 	if (visible(self, self->enemy))
-		if (random() < 0.9)
+		if (random() <= (0.7 + 0.1*skill->value))	//CW: was < 0.9
 			self->monsterinfo.currentmove = &supertank_move_attack1;
 		else
 			self->monsterinfo.currentmove = &supertank_move_end_attack1;	
@@ -432,17 +441,19 @@ void supertank_reattack1(edict_t *self)
 
 void supertank_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
-
 	if (self->health < (self->max_health / 2))
 			self->s.skinnum |= 1;
 
+	if (damage <= 30)	//CW: shrug off low damage
+		return;
+
 	if (level.time < self->pain_debounce_time)
-			return;
+		return;
 
 	// Lessen the chance of him going into his pain frames
-	if (damage <=25)
-		if (random()<0.2)
-			return;
+	//if (damage <=25)
+	//	if (random()<0.2)
+	//		return;			//CW: shrug off low damage
 
 	// Don't go into pain if he's firing his rockets
 	if (skill->value >= 2)
@@ -451,15 +462,15 @@ void supertank_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
 
-	if (damage <= 10)
+	if (damage <= 40)
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM,0);
 		self->monsterinfo.currentmove = &supertank_move_pain1;
 	}
-	else if (damage <= 25)
+	else if (damage <= 60)
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM,0);
 		self->monsterinfo.currentmove = &supertank_move_pain2;
@@ -481,7 +492,12 @@ void supertankRocket (edict_t *self)
 	int		flash_number;
 	int		rocketSpeed;
 
-	if((self->spawnflags & SF_MONSTER_SPECIAL))
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
+	if ((self->spawnflags & SF_MONSTER_SPECIAL))
 		rocketSpeed = 400; // DWH: Homing rockets are tougher if slow
 	else
 		rocketSpeed = 500 + (100 * skill->value);	// PGM rock & roll.... :)
@@ -500,7 +516,7 @@ void supertankRocket (edict_t *self)
 	vec[2] += self->enemy->viewheight;
 
 	// Lazarus fog reduction of accuracy
-	if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
 		vec[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		vec[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -509,47 +525,84 @@ void supertankRocket (edict_t *self)
 	
 	VectorSubtract (vec, start, dir);
 	VectorNormalize (dir);
-	monster_fire_rocket (self, start, dir, 50, rocketSpeed, flash_number,
-		(self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL) );
+	monster_fire_rocket (self, start, dir, 50, rocketSpeed, flash_number, (self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL) );
 }	
 
 void supertankMachineGun (edict_t *self)
 {
-	vec3_t	dir;
-	vec3_t	vec;
 	vec3_t	start;
-	vec3_t	forward, right;
-	int		flash_number;
+	vec3_t	forward, right, up;		//CW
+	vec3_t	target;					//CW
+	vec3_t	aim;
+	vec3_t	dir;					//CW++
+	vec3_t	offset;					//CW++
+	float	r, u;					//CW++
+	//int		flash_number;
 
-	flash_number = MZ2_SUPERTANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak1_1);
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
 
-	//FIXME!!!
-	dir[0] = 0;
-	dir[1] = self->s.angles[1];
-	dir[2] = 0;
+	//flash_number = MZ2_SUPERTANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak1_1);
 
-	AngleVectors (dir, forward, right, NULL);
-	G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+	//CW --- removed old dir code here ---
 
-	if (self->enemy)
+	AngleVectors (self->s.angles, forward, right, NULL);
+	//G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+
+//CW++
+	VectorSet(offset, 25.0, 40.0, 86.0);
+	G_ProjectSource (self->s.origin, offset, forward, right, start);
+//CW--
+
+	VectorCopy (self->enemy->s.origin, target);
+	VectorMA (target, -0.05*(3-skill->value), self->enemy->velocity, target);	//CW vary projection scale factor based on skill
+	target[2] += self->enemy->viewheight;
+
+	//CW --- removed (if (self->enemy) check ---
+
+	// Lazarus fog reduction of accuracy
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
-		VectorCopy (self->enemy->s.origin, vec);
-		VectorMA (vec, 0, self->enemy->velocity, vec);
-		vec[2] += self->enemy->viewheight;
+		target[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
+		target[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
+		target[2] += crandom() * 320 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
+	}
+	
+	VectorSubtract (target, start, aim);	//CW 'aim' was 'forward'
 
-		// Lazarus fog reduction of accuracy
-		if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
-		{
-			vec[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
-			vec[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
-			vec[2] += crandom() * 320 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
-		}
-		
-		VectorSubtract (vec, start, forward);
-		VectorNormalize (forward);
-  }
+//CW++
+//	Degrade aiming based on skill.
+	
+	if (skill->value < 3)
+	{
+		vectoangles (aim, dir);
+		AngleVectors (dir, forward, right, up);
 
-	monster_fire_bullet (self, start, forward, 6, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
+		r = crandom()*(1000 - 290*skill->value);
+		u = crandom()*(500 - 140*skill->value);
+		VectorMA (start, 8192, forward, target);
+		VectorMA (target, r, right, target);
+		VectorMA (target, u, up, target);
+
+		VectorSubtract (target, start, aim);
+	}
+//CW--
+	VectorNormalize (aim);	//CW 'aim' was 'forward'
+
+	//monster_fire_bullet(self, start, aim, 6, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);	//CW 'aim' was 'forward'
+
+//CW++	Replace monster_fire_bullet due to incorrect muzzle flash
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_GUNSHOT);
+	gi.WritePosition(start);
+	gi.WriteDir(aim);
+	gi.multicast(start, MULTICAST_PVS);
+
+	gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
+	fire_bullet(self, start, aim, 6, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_UNKNOWN);
+//CW--
 }	
 
 
@@ -557,23 +610,20 @@ void supertank_attack(edict_t *self)
 {
 	vec3_t	vec;
 	float	range;
-	//float	r;
+
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
 
 	VectorSubtract (self->enemy->s.origin, self->s.origin, vec);
 	range = VectorLength (vec);
 
-	//r = random();
-
-	// Attack 1 == Chaingun
-	// Attack 2 == Rocket Launcher
-
 	if (range <= 160)
-	{
 		self->monsterinfo.currentmove = &supertank_move_attack1;
-	}
 	else
-	{	// fire rockets more often at distance
-		if (random() < 0.3)
+	{	// fire rockets more often at distance	//CW: and even more likely if using homing rockets
+		if (random() < ((self->spawnflags & SF_MONSTER_SPECIAL)? 0.15 : 0.3))	//CW: was just < 0.3
 			self->monsterinfo.currentmove = &supertank_move_attack1;
 		else
 			self->monsterinfo.currentmove = &supertank_move_attack2;
@@ -685,7 +735,6 @@ void SP_monster_supertank (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_SUPERTANK;
 
 	// Lazarus: special purpose skins
 	if ( (self->spawnflags & SF_MONSTER_SPECIAL) && self->style )
@@ -700,6 +749,7 @@ void SP_monster_supertank (edict_t *self)
 	sound_death = gi.soundindex ("bosstank/btkdeth1.wav");
 	sound_search1 = gi.soundindex ("bosstank/btkunqv1.wav");
 	sound_search2 = gi.soundindex ("bosstank/btkunqv2.wav");
+	sound_gun = gi.soundindex ("infantry/infatck1.wav");			//CW++
 
 //	self->s.sound = gi.soundindex ("bosstank/btkengn1.wav");
 	tread_sound = gi.soundindex ("bosstank/btkengn1.wav");
@@ -719,11 +769,11 @@ void SP_monster_supertank (edict_t *self)
 	VectorSet (self->maxs, 64, 64, 112);
 
 	// Lazarus: mapper-configurable health
-	if(!self->health)
+	if (!self->health)
 		self->health = 1500;
-	if(!self->gib_health)
+	if (!self->gib_health)
 		self->gib_health = -500;
-	if(!self->mass)
+	if (!self->mass)
 		self->mass = 800;
 
 	self->pain = supertank_pain;
@@ -737,15 +787,24 @@ void SP_monster_supertank (edict_t *self)
 	self->monsterinfo.melee = NULL;
 	self->monsterinfo.sight = NULL;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
 
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &supertank_move_stand;
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&supertank_move_death,
 								 NULL};

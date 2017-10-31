@@ -24,7 +24,7 @@ static int	sound_sight;
 
 void gladiator_idle (edict_t *self)
 {
-	if(!(self->spawnflags & SF_MONSTER_AMBUSH))
+	if (!(self->spawnflags & SF_MONSTER_AMBUSH))
 		gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
 
@@ -147,7 +147,7 @@ void gladiator_melee(edict_t *self)
 }
 
 
-void GladiatorGun (edict_t *self)
+void GladiatorGun(edict_t *self)
 {
 	vec3_t	start;
 	vec3_t	dir;
@@ -159,7 +159,7 @@ void GladiatorGun (edict_t *self)
 	// calc direction to where we targeted
 
 	// Lazarus fog reduction of accuracy
-	if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
 		self->pos1[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		self->pos1[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -172,12 +172,38 @@ void GladiatorGun (edict_t *self)
 	monster_fire_railgun (self, start, dir, 50, 100, MZ2_GLADIATOR_RAILGUN_1);
 }
 
+//CW++
+void GladiatorGun_0(edict_t *self)
+{
+	if (skill->value == 0)
+		GladiatorGun(self);
+}
+
+void GladiatorGun_1(edict_t *self)
+{
+	if (skill->value == 1)
+		GladiatorGun(self);
+}
+
+void GladiatorGun_2(edict_t *self)
+{
+	if (skill->value == 2)
+		GladiatorGun(self);
+}
+
+void GladiatorGun_3(edict_t *self)
+{
+	if (skill->value == 3)
+		GladiatorGun(self);
+}
+//CW--
+
 mframe_t gladiator_frames_attack_gun [] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, GladiatorGun,
+	ai_charge, 0, GladiatorGun_3,		//CW: Fire sooner at higher skill levels...
+	ai_charge, 0, GladiatorGun_2,
+	ai_charge, 0, GladiatorGun_1,
+	ai_charge, 0, GladiatorGun_0,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
@@ -188,7 +214,8 @@ mmove_t gladiator_move_attack_gun = {FRAME_attack1, FRAME_attack9, gladiator_fra
 
 void gladiator_attack(edict_t *self)
 {
-/* Lazarus: What the hell is this? Why give the play a safe zone at all???
+/* Lazarus: What the hell is this? Why give the player a safe zone at all???
+// CW: Yeah, the frickin' PUSSY!
 
 	float	range;
 	vec3_t	v;
@@ -199,9 +226,12 @@ void gladiator_attack(edict_t *self)
 	if (range <= (MELEE_DISTANCE + 32))
 		return;
 */
+	if (!self->enemy || !self->enemy->inuse)	//CW: paranoia check
+		return;
+
 	// charge up the railgun
 	gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
-	VectorCopy (self->enemy->s.origin, self->pos1);	//save for aiming the shot
+	VectorCopy (self->enemy->s.origin, self->pos1);		//save for aiming the shot
 	self->pos1[2] += self->enemy->viewheight;
 	self->monsterinfo.currentmove = &gladiator_move_attack_gun;
 }
@@ -245,13 +275,14 @@ void gladiator_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 
+	if (skill->value > 1) return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 15) return;			//CW: shrug off low damage
+
 	if (random() < 0.5)
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
 	else
 		gi.sound (self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
-
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
 
 	if (self->velocity[2] > 100)
 		self->monsterinfo.currentmove = &gladiator_move_pain_air;
@@ -272,7 +303,7 @@ void gladiator_dead (edict_t *self)
 	M_FlyCheck (self);
 
 	// Lazarus monster fade
-	if(world->effects & FX_WORLDSPAWN_CORPSEFADE)
+	if (world->effects & FX_WORLDSPAWN_CORPSEFADE)
 	{
 		self->think=FadeDieSink;
 		self->nextthink=level.time+corpse_fadetime->value;
@@ -339,10 +370,10 @@ void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 //PGM
 qboolean gladiator_blocked (edict_t *self, float dist)
 {
-	if(blocked_checkshot (self, 0.25 + (0.05 * skill->value) ))
+	if (blocked_checkshot (self, 0.25 + (0.05 * skill->value) ))
 		return true;
 
-	if(blocked_checkplat (self, dist))
+	if (blocked_checkplat (self, dist))
 		return true;
 
 	return false;
@@ -359,7 +390,6 @@ void SP_monster_gladiator (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_GLADIATOR;
 
 	sound_pain1 = gi.soundindex ("gladiator/pain.wav");	
 	sound_pain2 = gi.soundindex ("gladiator/gldpain2.wav");	
@@ -389,11 +419,11 @@ void SP_monster_gladiator (edict_t *self)
 	VectorSet (self->maxs, 32, 32, 48);
 
 	// Lazarus: mapper-configurable health
-	if(!self->health)
+	if (!self->health)
 		self->health = 400;
-	if(!self->gib_health)
-		self->gib_health = -175;
-	if(!self->mass)
+	if (!self->gib_health)
+		self->gib_health = -200;	//CW: was -175
+	if (!self->mass)
 		self->mass = 400;
 
 	self->pain = gladiator_pain;
@@ -410,17 +440,27 @@ void SP_monster_gladiator (edict_t *self)
 	self->monsterinfo.search = gladiator_search;
 	self->monsterinfo.blocked = gladiator_blocked;		// PGM
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.05;
+//DWH---
+
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.01;	//CW: was 0.05
 
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &gladiator_move_stand;
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&gladiator_move_death,
 								 NULL};

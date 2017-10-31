@@ -91,7 +91,6 @@ The normal starting point for a level.
 */
 void SP_info_player_start(edict_t *self)
 {
-	self->class_id = ENTITY_INFO_PLAYER_START;
 	if (!coop->value)
 		return;
 	if(Q_stricmp(level.mapname, "security") == 0)
@@ -113,7 +112,6 @@ void SP_info_player_deathmatch(edict_t *self)
 		return;
 	}
 	SP_misc_teleporter_dest (self);
-	self->class_id = ENTITY_INFO_PLAYER_DEATHMATCH;
 }
 
 /*QUAKED info_player_coop (1 0 1) (-16 -16 -24) (16 16 32)
@@ -127,7 +125,7 @@ void SP_info_player_coop(edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_INFO_PLAYER_COOP;
+
 	if((Q_stricmp(level.mapname, "jail2") == 0)   ||
 	   (Q_stricmp(level.mapname, "jail4") == 0)   ||
 	   (Q_stricmp(level.mapname, "mine1") == 0)   ||
@@ -154,9 +152,8 @@ void SP_info_player_coop(edict_t *self)
 The deathmatch intermission point will be at one of these
 Use 'angles' instead of 'angle', so you can set pitch or roll as well as yaw.  'pitch yaw roll'
 */
-void SP_info_player_intermission(edict_t *self)
+void SP_info_player_intermission(void)
 {
-	self->class_id = ENTITY_INFO_PLAYER_INTERMISSION;
 }
 
 
@@ -378,6 +375,10 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 			case MOD_KICK:
 				message = "was booted by";
 				message2 = "'s foot";
+				break;
+			case MOD_PLASMA:	//CW: plasma weaponry
+				message = "was melted by";
+				message2 = "'s plasma stream";
 				break;
 			}
 			if (message)
@@ -1444,12 +1445,12 @@ void PutClientInServer (edict_t *ent)
 
 	// clear entity state values
 	ent->s.effects = 0;
-	ent->s.modelindex = MAX_MODELS-1;		// will use the skin specified model
+	ent->s.modelindex = 255;		// will use the skin specified model
 
 	if(ITEM_INDEX(client->pers.weapon) == noweapon_index)
 		ent->s.modelindex2 = 0;
 	else
-		ent->s.modelindex2 = MAX_MODELS-1;		// custom gun model
+		ent->s.modelindex2 = 255;		// custom gun model
 
 	// sknum is player num and weapon number
 	// weapon number will be added in changeweapon
@@ -2069,7 +2070,7 @@ void ClientSpycam(edict_t *ent)
 			}
 			if(dist > 8)
 			{
-				if(!thing || !thing->inuse || (thing->class_id != ENTITY_THING))
+				if(!thing || !thing->inuse || Q_stricmp(thing->classname,"thing"))
 					thing = camera->vehicle = SpawnThing();
 				thing->touch_debounce_time = level.time + 5.0;
 				thing->target_ent = camera;
@@ -2230,7 +2231,8 @@ void ClientSpycam(edict_t *ent)
 		if ( client->ucmd.buttons & BUTTON_ATTACK && camera->sounds >= 0 ) {
 			if (level.time >= camera->monsterinfo.attack_finished) {
 				client->latched_buttons &= ~BUTTON_ATTACK;
-				if(camera->class_id == ENTITY_TURRET_BREACH)
+				if (!Q_stricmp(camera->classname,"turret_breach")
+				    || !Q_stricmp(camera->classname,"model_turret"))	//CW: added to allow model_turrets to be remotely fired
 				{
 					if(camera->sounds==5 || camera->sounds==6)
 						camera->monsterinfo.attack_finished = level.time;
@@ -2415,13 +2417,13 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			viewing = LookingAt(ent,0,intersect,&range);
 			if(viewing && viewing->classname)
 			{
-				if(viewing->class_id == ENTITY_CRANE_CONTROL)
+				if(!stricmp(viewing->classname,"crane_control"))
 					crane_control_action(viewing,ent,intersect);
-				if(viewing->class_id == ENTITY_TARGET_LOCK_DIGIT)
+				if(!stricmp(viewing->classname,"target_lock_digit"))
 					lock_digit_increment(viewing,ent);
-				if((viewing->class_id == ENTITY_FUNC_TRAINBUTTON) && (viewing->spawnflags & 1))
+				if(!stricmp(viewing->classname,"func_trainbutton") && (viewing->spawnflags & 1))
 					trainbutton_use(viewing,ent,ent);
-				if((viewing->class_id == ENTITY_FUNC_MONITOR) && (range <= 100)) {
+				if(!stricmp(viewing->classname,"func_monitor") && range <= 100) {
 					use_camera(viewing,ent,ent);
 					if(client->spycam && client->spycam->viewer == ent) {
 						client->old_owner_angles[0] = ucmd->angles[0];
@@ -2506,7 +2508,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		return;
 	}
 
-	if (ent->target_ent && (ent->target_ent->class_id == ENTITY_TARGET_MONITOR))
+	if (ent->target_ent && !Q_stricmp(ent->target_ent->classname,"target_monitor"))
 	{
 		edict_t	*monitor = ent->target_ent;
 		if(monitor->target_ent && monitor->target_ent->inuse)
@@ -2608,7 +2610,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		if (ent->movetype == MOVETYPE_NOCLIP)
 			client->ps.pmove.pm_type = PM_SPECTATOR;
-		else if (ent->s.modelindex != MAX_MODELS-1)
+		else if (ent->s.modelindex != 255)
 			client->ps.pmove.pm_type = PM_GIB;
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
@@ -3030,8 +3032,8 @@ void ClientBeginServerFrame (edict_t *ent)
 	}
 
 	// add player trail so monsters can follow
-	// Lazarus: Don't add player trail for players in camera or notarget players
-	if (!deathmatch->value && !client->spycam && !(ent->flags & FL_NOTARGET))
+	// DWH: Don't add player trail for players in camera
+	if (!deathmatch->value && !client->spycam)
 		if (!visible (ent, PlayerTrail_LastSpot() ) )
 			PlayerTrail_Add (ent->s.old_origin);
 

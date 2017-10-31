@@ -62,12 +62,17 @@ void item_die(edict_t *self,edict_t *inflictor, edict_t *attacker, int damage, v
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 
 	if (level.num_reflectors)
-		ReflectExplosion (TE_EXPLOSION1, self->s.origin);
+		ReflectExplosion(TE_EXPLOSION1, self->s.origin);
+
+//CW+++ Fire killtarget, if set.
+	if (self->killtarget)
+		G_UseTargets(self, attacker);
+//CW---
 
 	if (!(self->spawnflags & DROPPED_ITEM) && (deathmatch->value))
-		SetRespawn (self, 30);
+		SetRespawn(self, 30);
 	else
-		G_FreeEdict (self);
+		G_FreeEdict(self);
 }
 
 /*
@@ -95,11 +100,20 @@ gitem_t	*FindItemByClassname (char *classname)
 	int		i;
 	gitem_t	*it;
 
+//CW++
+	if (NULL == classname)
+	{
+		gi.dprintf("NULL pointer passed to FindItemByClassname()\n");
+		return NULL;
+	}
+//CW--
+
 	it = itemlist;
 	for (i=0 ; i<game.num_items ; i++, it++)
 	{
 		if (!it->classname)
 			continue;
+
 		if (!Q_stricmp(it->classname, classname))
 			return it;
 	}
@@ -899,14 +913,14 @@ void Touch_Item (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf
 		}
 	}
 
+	if (!taken)		//CW: this check was originally after the if-statement below; moved it here so that
+		return;		//    target only fires if the item is actually picked up (not just touched).
+
 	if (!(ent->spawnflags & ITEM_TARGETS_USED))
 	{
 		G_UseTargets (ent, other);
 		ent->spawnflags |= ITEM_TARGETS_USED;
 	}
-
-	if (!taken)
-		return;
 
 	DeleteReflection(ent,-1);
 
@@ -939,23 +953,53 @@ static void drop_make_touchable (edict_t *ent)
 	}
 }
 
-edict_t *Drop_Item (edict_t *ent, gitem_t *item)
+edict_t *Drop_Item(edict_t *ent, gitem_t *item)
 {
 	edict_t	*dropped;
 	vec3_t	forward, right;
 	vec3_t	offset;
 
 	dropped = G_Spawn();
-
+	
 	dropped->classname = item->classname;
+	dropped->clipmask |= CONTENTS_SOLID | CONTENTS_GRILL;	//CW: so that item doesn't fall through grills
 	dropped->item = item;
 	dropped->spawnflags = DROPPED_ITEM;
 	dropped->s.effects = item->world_model_flags;
 	dropped->s.renderfx = RF_GLOW;
-//	VectorSet (dropped->mins, -15, -15, -15);
-//	VectorSet (dropped->maxs, 15, 15, 15);
 	VectorSet (dropped->mins, -16, -16, -16);
 	VectorSet (dropped->maxs, 16, 16, 16);
+
+//CW+++ Don't floaty-spin certain items when they're dropped...lay them gently, statically on the ground.
+	if (!Q_stricmp(dropped->classname, "key_commander_head") || !Q_stricmp(dropped->classname, "key_captain_head"))
+	{
+		dropped->s.angles[1] = 150;
+		dropped->s.effects &= ~EF_ROTATE;
+		VectorSet(dropped->mins, -16, -16, -16);
+		VectorSet(dropped->maxs, 16, 16, 16);
+	}
+	else if (!Q_stricmp(dropped->classname, "weapon_railgun"))
+	{
+		dropped->s.effects &= ~EF_ROTATE;
+		VectorSet(dropped->mins, -16, -16, 8);
+		VectorSet(dropped->maxs, 16, 16, 40);
+	}
+	else if (!Q_stricmp(dropped->classname, "weapon_rocketlauncher"))
+	{
+		dropped->s.effects &= ~EF_ROTATE;
+		VectorSet(dropped->mins, -16, -16, 8);
+		VectorSet(dropped->maxs, 16, 16, 40);
+	}
+	else if (dropped->item->pickup == Pickup_Armor)
+	{
+		dropped->s.angles[0] = -90;
+		dropped->s.effects &= ~EF_ROTATE;
+		VectorSet(dropped->mins, -16, -16, -8);
+		VectorSet(dropped->maxs, 16, 16, 24);
+	}
+
+//CW---
+	
 	gi.setmodel (dropped, dropped->item->world_model);
 	dropped->solid = SOLID_TRIGGER;
 	dropped->movetype = MOVETYPE_TOSS;  
@@ -969,7 +1013,8 @@ edict_t *Drop_Item (edict_t *ent, gitem_t *item)
 		if(item->quantity == 2)
 			dropped->style |= HEALTH_IGNORE_MAX;
 		if(item->quantity == 100)
-			dropped->style |= HEALTH_IGNORE_MAX | HEALTH_TIMED;
+//			dropped->style |= HEALTH_IGNORE_MAX | HEALTH_TIMED;		//CW: commented out so that...
+			dropped->style |= HEALTH_IGNORE_MAX;					//CW: ...MH doesn't count down
 	}
 
 	if (ent->client)
@@ -979,8 +1024,7 @@ edict_t *Drop_Item (edict_t *ent, gitem_t *item)
 		AngleVectors (ent->client->v_angle, forward, right, NULL);
 		VectorSet(offset, 24, 0, -16);
 		G_ProjectSource (ent->s.origin, offset, forward, right, dropped->s.origin);
-		trace = gi.trace (ent->s.origin, dropped->mins, dropped->maxs,
-			dropped->s.origin, ent, CONTENTS_SOLID);
+		trace = gi.trace (ent->s.origin, dropped->mins, dropped->maxs, dropped->s.origin, ent, CONTENTS_SOLID | CONTENTS_GRILL);	//CW: so that item doesn't fall through grills
 		VectorCopy (trace.endpos, dropped->s.origin);
 	}
 	else
@@ -991,9 +1035,18 @@ edict_t *Drop_Item (edict_t *ent, gitem_t *item)
 		AngleVectors (ent->s.angles, forward, right, NULL);
 //		VectorCopy (ent->s.origin, dropped->s.origin);
 		VectorSet(offset, 24, 0, -16);
+
+//CW++
+		if (!Q_stricmp(dropped->classname, "key_commander_head") || !Q_stricmp(dropped->classname, "key_captain_head"))
+		{
+			VectorNegate(forward, forward);
+			VectorNegate(right, right);
+			VectorSet(offset, 16, 0, 16);
+		}
+//CW--
+
 		G_ProjectSource (ent->s.origin, offset, forward, right, dropped->s.origin);
-		trace = gi.trace (ent->s.origin, dropped->mins, dropped->maxs,
-			dropped->s.origin, ent, CONTENTS_SOLID);
+		trace = gi.trace (ent->s.origin, dropped->mins, dropped->maxs, dropped->s.origin, ent, CONTENTS_SOLID | CONTENTS_GRILL);	//CW: so that item doesn't fall through grills
 		VectorCopy (trace.endpos, dropped->s.origin);
 	}
 
@@ -1064,15 +1117,21 @@ void droptofloor (edict_t *ent)
 	// Fortunately we KNOW what the "offset" is - nada.
 	VectorClear(ent->origin_offset);
 
-	if(ent->spawnflags & SHOOTABLE) {
+	if (ent->spawnflags & SHOOTABLE)
+	{
 		ent->solid = SOLID_BBOX;
 		ent->clipmask |= MASK_MONSTERSOLID;
+		ent->clipmask |= CONTENTS_SOLID | CONTENTS_GRILL;	//CW: so that item doesn't fall through grills
 		if(!ent->health)
 			ent->health = 20;
 		ent->takedamage = DAMAGE_YES;
 		ent->die = item_die;
-	} else
+	}
+	else
+	{
 		ent->solid = SOLID_TRIGGER;
+		ent->clipmask |= CONTENTS_SOLID | CONTENTS_GRILL;	//CW: so that item doesn't fall through grills
+	}
 
 	// Lazarus:
 	if(ent->movewith)
@@ -1088,7 +1147,7 @@ void droptofloor (edict_t *ent)
 		v = tv(0,0,-128);
 		VectorAdd (ent->s.origin, v, dest);
 
-		tr = gi.trace (ent->s.origin, ent->mins, ent->maxs, dest, ent, MASK_SOLID);
+		tr = gi.trace (ent->s.origin, ent->mins, ent->maxs, dest, ent, MASK_SOLID | CONTENTS_GRILL);	//CW: so that item doesn't fall through grills
 		if (tr.startsolid)
 		{
 			gi.dprintf ("droptofloor: %s startsolid at %s\n", ent->classname, vtos(ent->s.origin));
@@ -1291,14 +1350,15 @@ void SpawnItem (edict_t *ent, gitem_t *item)
 	ent->s.renderfx = RF_GLOW;
 
 	// Lazarus:
-	if(item->pickup == Pickup_Health)
+	if (item->pickup == Pickup_Health)
 	{
 		ent->count = item->quantity;
 		ent->style = item->tag;
 	}
-	if(ent->spawnflags & NO_STUPID_SPINNING) {
+	if (ent->spawnflags & NO_STUPID_SPINNING)
+	{
 		ent->s.effects &= ~EF_ROTATE;
-		ent->s.renderfx &= ~RF_GLOW;
+		//ent->s.renderfx &= ~RF_GLOW;		//CW want glowing
 	}
 
 	if (ent->model)
@@ -2281,6 +2341,32 @@ warehouse circuits
 /* precache */ ""
 	},
 
+//CW+++
+/*QUAKED key_hipower_cube (0 .5 .8) (-16 -16 -16) (16 16 16) TRIGGER_SPAWN NO_TOUCH
+Over-charged power cube - handle with extreme care!
+*/
+	{
+		"key_hipower_cube",
+		Pickup_Key,
+		NULL,
+		Drop_General,
+		NULL,
+		"items/pkup.wav",
+		"models/items/keys/power/tris.md2", EF_ROTATE,
+		NULL,
+		"k_powercube",
+		"Hi-Power Cube",
+		2,
+		0,
+		NULL,
+		IT_STAY_COOP|IT_KEY,
+		0,
+		NULL,
+		0,
+/* precache */ ""
+	},
+//CW---
+
 /*QUAKED key_pyramid (0 .5 .8) (-16 -16 -16) (16 16 16)
 key for the entrance of jail3
 */
@@ -2353,6 +2439,32 @@ security pass for the security level
 /* precache */ ""
 	},
 
+//CW+++
+/*QUAKED key_hackedpass (0 .5 .8) (-16 -16 -16) (16 16 16)
+hacked security pass 
+*/
+	{
+		"key_hackedpass",
+		Pickup_Key,
+		NULL,
+		Drop_General,
+		NULL,
+		"items/pkup.wav",
+		"models/items/keys/pass/tris.md2", EF_ROTATE,
+		NULL,
+		"k_security",
+		"Security Pass L2",
+		2,
+		0,
+		NULL,
+		IT_STAY_COOP|IT_KEY,
+		0,
+		NULL,
+		0,
+/* precache */ ""
+	},
+//CW---
+
 /*QUAKED key_blue_key (0 .5 .8) (-16 -16 -16) (16 16 16)
 normal door key - blue
 */
@@ -2418,12 +2530,38 @@ tank commander's head
 /* width */		2,
 		0,
 		NULL,
-		IT_STAY_COOP|IT_KEY,
+		IT_STAY_COOP|IT_KEY|IT_INDESTRUCTABLE,			//CW
 		0,
 		NULL,
 		0,
 /* precache */ ""
 	},
+
+//CW++
+/*QUAKED key_captain_head (0 .5 .8) (-16 -16 -16) (16 16 16)
+tank commander's head
+*/
+	{
+		"key_captain_head",
+		Pickup_Key,
+		NULL,
+		Drop_General,
+		NULL,
+		"items/pkup.wav",
+		"models/monsters/commandr/head/tris.md2", EF_GIB,
+		NULL,
+/* icon */		"k_comhead",
+/* pickup */	"Captain's Head",
+/* width */		2,
+		0,
+		NULL,
+		IT_STAY_COOP|IT_KEY|IT_INDESTRUCTABLE,
+		0,
+		NULL,
+		0,
+/* precache */ ""
+	},
+//CW--
 
 /*QUAKED key_airstrike_target (0 .5 .8) (-16 -16 -16) (16 16 16)
 tank commander's head
@@ -2553,7 +2691,8 @@ tank commander's head
 		0,
 		0,
 		NULL,
-		HEALTH_IGNORE_MAX | HEALTH_TIMED,
+		//HEALTH_IGNORE_MAX | HEALTH_TIMED,		//CW: commented out so that...
+		HEALTH_IGNORE_MAX,						//CW: ...MH doesn't count down
 		"items/m_health.wav"
 	},
 
@@ -2572,7 +2711,6 @@ void SP_item_health (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_ITEM_HEALTH;
 	self->model = "models/items/healing/medium/tris.md2";
 	self->count = 10;
 //	SpawnItem (self, FindItem ("Health"));
@@ -2590,7 +2728,8 @@ void SP_item_health_small (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_ITEM_HEALTH_SMALL;
+	gi.dprintf("HEY - SP_item_health_small\n");
+
 	self->model = "models/items/healing/stimpack/tris.md2";
 	self->count = 2;
 //	SpawnItem (self, FindItem ("Health"));
@@ -2609,7 +2748,6 @@ void SP_item_health_large (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_ITEM_HEALTH_LARGE;
 	self->model = "models/items/healing/large/tris.md2";
 	self->count = 25;
 //	SpawnItem (self, FindItem ("Health"));
@@ -2627,13 +2765,14 @@ void SP_item_health_mega (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_ITEM_HEALTH_MEGA;
 	self->model = "models/items/mega_h/tris.md2";
 	self->count = 100;
 //	SpawnItem (self, FindItem ("Health"));
 	SpawnItem (self, FindItemByClassname ("item_health_mega"));
 	gi.soundindex ("items/m_health.wav");
-	self->style = HEALTH_IGNORE_MAX|HEALTH_TIMED;
+
+//	self->style = HEALTH_IGNORE_MAX|HEALTH_TIMED;	//CW: commented out so that...
+	self->style = HEALTH_IGNORE_MAX;				//CW: ...MH doesn't count down
 }
 
 
@@ -2716,8 +2855,7 @@ void Use_Jet ( edict_t *ent, gitem_t *item )
 		// Force frame. While using the jetpack ClientThink forces the frame to
 		// stand20 when it really SHOULD be jump2. This is fine, but if we leave
 		// it at that then the player cycles through the wrong frames to complete
-		// his "jump" when the jetpack is turned off. The same thing is done in 
-		// ClientThink when jetpack timer expires.
+		// his "jump" when the jetpack is turned off. The same thing is done in 		// ClientThink when jetpack timer expires.
 		ent->s.frame = 67;
 		gi.sound(ent,CHAN_GIZMO,gi.soundindex("jetpack/shutdown.wav"), 1, ATTN_NORM, 0);
 	}

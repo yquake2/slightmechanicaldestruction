@@ -9,6 +9,13 @@ flyer
 #include "g_local.h"
 #include "m_flyer.h"
 
+//CW+++
+#define BOLT_BASESPEED		750
+#define BOLT_SKILLSPEED		100
+#define AIM_R_BASE			1500
+#define AIM_R_SKILL			250
+//CW---
+
 qboolean visible (edict_t *self, edict_t *other);
 
 static int	nextmove;			// Used for start/stop frames
@@ -348,16 +355,30 @@ mmove_t flyer_move_bankleft = {FRAME_bankl01, FRAME_bankl07, flyer_frames_bankle
 
 void flyer_fire (edict_t *self, int flash_number)
 {
+//CW+++
+	vec3_t	forward;
+	vec3_t	right;
+	vec3_t	up;
 	vec3_t	start;
-	vec3_t	forward, right;
 	vec3_t	end;
 	vec3_t	dir;
+	vec3_t	aim;
+	float	time;
+	float	r;
+	float	xy_velsq;
+	int		bolt_speed;
+//CW---
 	int		effect;
+	int		damage;
+
+	if (!self->enemy || !self->enemy->inuse)	//CW
+		return;
 
 	if ((self->s.frame == FRAME_attak204) || (self->s.frame == FRAME_attak207) || (self->s.frame == FRAME_attak210))
 		effect = EF_HYPERBLASTER;
 	else
 		effect = 0;
+
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
 	VectorCopy (self->enemy->s.origin, end);
@@ -370,9 +391,38 @@ void flyer_fire (edict_t *self, int flash_number)
 		end[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		end[2] += crandom() * 320 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 	}
+	VectorSubtract (end, start, aim);
 
-	VectorSubtract (end, start, dir);
-	monster_fire_blaster (self, start, dir, 1, 1000, flash_number, effect);
+//CW+++ 
+//	Lead the target...
+
+	bolt_speed = BOLT_BASESPEED + (BOLT_SKILLSPEED * skill->value);
+	time = VectorLength(aim) / bolt_speed;
+	VectorMA(end, time, self->enemy->velocity, end);
+	VectorSubtract(end, start, aim);
+
+//	...and degrade accuracy based on skill level and target velocity.
+
+	vectoangles(aim, dir);
+	AngleVectors(dir, forward, right, up);
+	xy_velsq = (self->enemy->velocity[0]*self->enemy->velocity[0]) + (self->enemy->velocity[1]*self->enemy->velocity[1]);
+	r = crandom() * (AIM_R_BASE - (AIM_R_SKILL * skill->value)) * (xy_velsq / 90000);
+	VectorMA(start, 8192, forward, end);
+	VectorMA(end, r, right, end);
+	VectorSubtract(end, start, aim);
+	VectorNormalize(aim);
+
+//	Beefier blaster bolts if monster is flagged as special.
+
+	if (self->spawnflags & SF_MONSTER_SPECIAL)
+	{
+		effect |= EF_PENT;
+		damage = 4;
+	}
+	else
+		damage = 2;
+//CW---
+	monster_fire_blaster (self, start, aim, damage, bolt_speed, flash_number, effect);	//CW: dmg was 1, speed was 1000
 }
 
 void flyer_fireleft (edict_t *self)
@@ -449,7 +499,7 @@ mmove_t flyer_move_end_melee = {FRAME_attak119, FRAME_attak121, flyer_frames_end
 
 mframe_t flyer_frames_loop_melee [] =
 {
-		ai_charge, 0, NULL,		// Loop Start
+		ai_charge, 0, NULL,					// Loop Start
 		ai_charge, 0, NULL,
 		ai_charge, 0, flyer_slash_left,		// Left Wing Strike
 		ai_charge, 0, NULL,
@@ -460,7 +510,7 @@ mframe_t flyer_frames_loop_melee [] =
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL,
-		ai_charge, 0, NULL		// Loop Ends
+		ai_charge, 0, NULL					// Loop Ends
 		
 };
 mmove_t flyer_move_loop_melee = {FRAME_attak107, FRAME_attak118, flyer_frames_loop_melee, flyer_check_melee};
@@ -508,6 +558,11 @@ void flyer_melee (edict_t *self)
 
 void flyer_check_melee(edict_t *self)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (range (self, self->enemy) == RANGE_MELEE)
 		if (random() <= 0.8)
 			self->monsterinfo.currentmove = &flyer_move_loop_melee;
@@ -526,10 +581,14 @@ void flyer_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	if (level.time < self->pain_debounce_time)
 		return;
+	
+	self->pain_debounce_time = level.time + 3;	//CW: this line was missing
 
-	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if ((damage <= 8) && (skill->value >= 2))			//CW: tougher on hard & nightmare
+		return;
 
 	n = rand() % 3;
 	if (n == 0)
@@ -566,7 +625,6 @@ void SP_monster_flyer (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_FLYER;
 
 	// fix a map bug in jail5.bsp
 	if (!Q_stricmp(level.mapname, "jail5") && (self->s.origin[2] == -104))
@@ -617,11 +675,21 @@ void SP_monster_flyer (edict_t *self)
 	self->monsterinfo.sight = flyer_sight;
 	self->monsterinfo.idle = flyer_idle;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
+
 	self->common_name = "Flyer";
 
 	gi.linkentity (self);

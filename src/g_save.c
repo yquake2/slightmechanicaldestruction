@@ -77,7 +77,7 @@ field_t fields[] = {
 
 	{"endfunc", FOFS(moveinfo.endfunc), F_FUNCTION, FFL_NOSPAWN},
 
-	// temp spawn vars -- only valid when the spawn function is called
+// temp spawn vars -- only valid when the spawn function is called
 	{"lip", STOFS(lip), F_INT, FFL_SPAWNTEMP},
 	{"distance", STOFS(distance), F_INT, FFL_SPAWNTEMP},
 	{"height", STOFS(height), F_INT, FFL_SPAWNTEMP},
@@ -112,7 +112,6 @@ field_t fields[] = {
 	{"bobframe", FOFS(bobframe), F_INT},
 	{"busy", FOFS(busy), F_INT},
 	{"child", FOFS(child), F_EDICT},
-	{"class_id", FOFS(class_id), F_INT},
 	{"color", FOFS(color), F_VECTOR},
 	{"crane_beam", FOFS(crane_beam), F_EDICT, FFL_NOSPAWN},
 	{"crane_bonk", FOFS(crane_bonk), F_VECTOR},
@@ -260,8 +259,13 @@ is loaded.
 void ReadTextureSurfaceAssignments();
 void InitGame (void)
 {
-	gi.dprintf ("==== InitGame (Lazarus) ====\n");
-	gi.dprintf("by Mr. Hyde & Mad Dog\ne-mail: rascal@vicksburg.com\n\n");
+	gi.dprintf("==== InitGame ====\n");
+
+//CW++
+	gi.dprintf("Slight Mechanical Destruction\n");
+	gi.dprintf("by Musashi\n");
+	gi.dprintf("E-mail: musashi.planetquake@gmail.com\n\n");
+//CW--
 
 	gun_x = gi.cvar ("gun_x", "0", 0);
 	gun_y = gi.cvar ("gun_y", "0", 0);
@@ -338,7 +342,6 @@ void InitGame (void)
 	m_yaw = gi.cvar("m_yaw", "0.022", 0);
 	monsterjump = gi.cvar("monsterjump", "1", CVAR_SERVERINFO|CVAR_LATCH);
 	packet_fmod_playback = gi.cvar("packet_fmod_playback", "0", CVAR_SERVERINFO);
-	player_vampire = gi.cvar("player_vampire", "0", CVAR_SERVERINFO|CVAR_LATCH);
 	rocket_strafe = gi.cvar("rocket_strafe", "0", 0);
 	s_primary = gi.cvar("s_primary", "0", 0);
 	sv_maxgibs = gi.cvar("sv_maxgibs", "20", CVAR_SERVERINFO);
@@ -422,6 +425,11 @@ void InitGame (void)
 
 	if(footstep_sounds->value)
 		ReadTextureSurfaceAssignments();
+
+//CW++
+	game.clock_count = 0;
+	game.clock_ticking = 0;
+//CW--
 }
 
 //=========================================================
@@ -869,7 +877,7 @@ void WriteLevel (char *filename)
 		ent = &g_edicts[i];
 		if (!ent->inuse)
 			continue;
-		if (ent->class_id == ENTITY_TARGET_PLAYBACK)
+		if (!Q_stricmp(ent->classname,"target_playback"))
 		{
 			edict_t	e;
 			memcpy(&e,ent,sizeof(edict_t));
@@ -1013,8 +1021,11 @@ void ReadLevel (char *filename)
 			continue;
 
 		// fire any cross-level triggers
-		if (ent->class_id == ENTITY_TARGET_CROSSLEVEL_TARGET)
-			ent->nextthink = level.time + ent->delay;
+		if (ent->classname)
+		{
+			if (strcmp(ent->classname, "target_crosslevel_target") == 0)
+				ent->nextthink = level.time + ent->delay;
+		}
 	}
 
 	// DWH: Load transition entities

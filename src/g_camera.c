@@ -101,7 +101,6 @@ void camera_on (edict_t *ent)
 	faker->viewheight   = ent->viewheight;
 	faker->inuse        = true;
 	faker->classname    = "camplayer";
-	faker->class_id     = ENTITY_CAMPLAYER;
 	faker->mass         = ent->mass;
 	faker->solid        = SOLID_BBOX;
 	faker->deadflag     = DEAD_NO;
@@ -187,7 +186,7 @@ edict_t *G_FindNextCamera (edict_t *camera, edict_t *monitor)
 			if (!next->targetname)
 				continue;
 			// don't select "inactive" cameras
-			if ((next->class_id == ENTITY_TURRET_BREACH) && (next->spawnflags & 16))
+			if (!Q_stricmp (next->classname,"turret_breach") && (next->spawnflags & 16))
 				continue;
 			if (!Q_stricmp (next->targetname, monitor->target))
 				goto found_one;
@@ -205,7 +204,7 @@ edict_t *G_FindNextCamera (edict_t *camera, edict_t *monitor)
 			if (!next->targetname)
 				continue;
 			// don't select "inactive" cameras
-			if ((next->class_id == ENTITY_TURRET_BREACH) && (next->spawnflags & 16))
+			if (!Q_stricmp (next->classname,"turret_breach") && (next->spawnflags & 16))
 				continue;
 			if (!Q_stricmp (next->targetname, monitor->target))
 				goto found_one;
@@ -226,7 +225,7 @@ edict_t *G_FindNextCamera (edict_t *camera, edict_t *monitor)
 				if(!Q_stricmp(next->targetname,monitor->target)) {
 					if(next->count == which) {
 						if(!next->inuse || (next->deadflag == DEAD_DEAD) ||
-							((next->class_id == ENTITY_TURRET_BREACH) && (next->spawnflags & 16)) )
+							(!Q_stricmp (next->classname,"turret_breach") && (next->spawnflags & 16)) )
 						{
 							next = g_edicts;
 							which++;
@@ -290,7 +289,7 @@ edict_t *G_FindPrevCamera (edict_t *camera, edict_t *monitor)
 			if (!prev->targetname)
 				continue;
 			// don't select "inactive" cameras
-			if ((prev->class_id == ENTITY_TURRET_BREACH) && (prev->spawnflags & 16))
+			if (!Q_stricmp (prev->classname,"turret_breach") && (prev->spawnflags & 16))
 				continue;
 			if (!Q_stricmp (prev->targetname, monitor->target))
 				newcamera = prev;
@@ -314,7 +313,7 @@ edict_t *G_FindPrevCamera (edict_t *camera, edict_t *monitor)
 				if(!Q_stricmp(prev->targetname,monitor->target)) {
 					if(prev->count == which) {
 						if(!prev->inuse || (prev->deadflag == DEAD_DEAD) ||
-							((prev->class_id == ENTITY_TURRET_BREACH) && (prev->spawnflags & 16)))
+							(!Q_stricmp (prev->classname,"turret_breach") && (prev->spawnflags & 16)))
 						{
 							prev = g_edicts;
 							which--;
@@ -384,7 +383,6 @@ void SP_func_monitor (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_FUNC_MONITOR;
 	if (self->spawnflags & 8)
 		self->s.effects |= EF_ANIM_ALL;
 	if (self->spawnflags & 16)

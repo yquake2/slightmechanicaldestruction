@@ -543,13 +543,15 @@ void makron_pain (edict_t *self, edict_t *other, float kick, int damage)
 			return;
 
 	// Lessen the chance of him going into his pain frames
+	if (damage <= 10) return;	//CW: shrug off low damage
+
 	if (damage <=25)
 		if (random()<0.2)
 			return;
 
 	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value >= 2)
+		return;		// no pain anims in nightmare (CW: or hard)
 
 
 	if (damage <= 40)
@@ -849,7 +851,6 @@ void SP_monster_makron (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_MAKRON;
 
 	MakronPrecache ();
 
@@ -881,11 +882,20 @@ void SP_monster_makron (edict_t *self)
 	self->monsterinfo.sight = makron_sight;
 	self->monsterinfo.checkattack = Makron_CheckAttack;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
 
 	gi.linkentity (self);
 	

@@ -62,7 +62,7 @@ vec3_t monster_flash_offset [] =
 	8.3, 17.8, 49.5,
 
 // MZ2_INFANTRY_MACHINEGUN_1		26
-	26.6, 7.1, 13.1,
+	26.6, 7.1, 15.1,
 // MZ2_INFANTRY_MACHINEGUN_2		27
 	18.2, 7.5, 15.4,
 // MZ2_INFANTRY_MACHINEGUN_3		28
@@ -142,7 +142,7 @@ vec3_t monster_flash_offset [] =
 	30.0, 18.0, 28.0,
 
 // MZ2_HOVER_BLASTER_1				62
-	32.5, -0.8, 10.0,
+	32.5, -6.0, 10.0,			//CW: was -0.8 (central-ish); now alternate between shoulder launchers
 
 // MZ2_ACTOR_MACHINEGUN_1			63
 	18.4, 7.4, 9.6,
@@ -296,15 +296,15 @@ vec3_t monster_flash_offset [] =
 // MZ2_JORG_BFG_1					132
 	6.3,	-9,		111.2,
 
-// MZ2_BOSS2_MACHINEGUN_R1			73
+// MZ2_BOSS2_MACHINEGUN_R1			133 / 73
 	32,	40,	70,
-// MZ2_BOSS2_MACHINEGUN_R2			74
+// MZ2_BOSS2_MACHINEGUN_R2			134 / 74
 	32,	40,	70,
-// MZ2_BOSS2_MACHINEGUN_R3			75
+// MZ2_BOSS2_MACHINEGUN_R3			135 / 75
 	32,	40,	70,
-// MZ2_BOSS2_MACHINEGUN_R4			76
+// MZ2_BOSS2_MACHINEGUN_R4			136 / 76
 	32,	40,	70,
-// MZ2_BOSS2_MACHINEGUN_R5			77
+// MZ2_BOSS2_MACHINEGUN_R5			137 / 77
 	32,	40,	70,
 
 // --- End Xian Shit ---
@@ -463,6 +463,53 @@ vec3_t monster_flash_offset [] =
 	62.77, 18.91, 91.65,
 // MZ2_WIDOW2_BEAM_SWEEP_11			210
 	58.29, 27.11, 92.00,
+
+//CW+++ Certain monsters have new special attacks.
+// MZ2_INFANTRY_BLASTER_1			211
+	26.6, 7.1, 15.1,
+// MZ2_INFANTRY_BLASTER_2			212
+	18.2, 7.5, 15.4,
+// MZ2_INFANTRY_BLASTER_3			213
+	17.2, 10.3, 17.9,
+// MZ2_INFANTRY_BLASTER_4			214
+	17.0, 12.8, 20.1,
+// MZ2_INFANTRY_BLASTER_5			215
+	15.1, 14.1, 21.8,
+// MZ2_INFANTRY_BLASTER_6			216
+	11.8, 17.2, 23.1,
+// MZ2_INFANTRY_BLASTER_7			217
+	11.4, 20.2, 21.0,
+// MZ2_INFANTRY_BLASTER_8			218
+	9.0, 23.0, 18.9,
+// MZ2_INFANTRY_BLASTER_9			219
+	13.9, 18.6, 17.7,
+// MZ2_INFANTRY_BLASTER_10			220
+	15.4, 15.6, 15.8,
+// MZ2_INFANTRY_BLASTER_11			221
+	10.2, 15.2, 25.1,
+// MZ2_INFANTRY_BLASTER_12			222
+	-1.9, 15.1, 28.2,
+// MZ2_INFANTRY_BLASTER_13			223
+	-12.4, 13.0, 20.2,
+
+// MZ2_HOVER_BLASTER_2				224		//apparently forgotten (there are two shoulder mounts)
+	32.5, 5.0, 10.0,
+
+// MZ2_HOVER_ROCKET_1				225
+	32.5, -6.0, 10.0,
+// MZ2_HOVER_ROCKET_2				226
+	32.5, 5.0, 10.0,
+
+// MZ2_BRAIN_PLASMA_1				227
+	30.0, -8.0, 27.0,
+// MZ2_BRAIN_PLASMA_2				228
+	30.0, -4.0, 27.0,
+
+// MZ2_SENTRYBOT_GUN_1				229
+	9.0, 16.0, 9.0,
+// MZ2_SENTRYBOT_GUN_2				230
+	9.0, -11.0, 9.0,
+//CW---
 
 // end of table
 	0.0, 0.0, 0.0

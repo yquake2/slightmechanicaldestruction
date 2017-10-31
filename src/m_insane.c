@@ -616,7 +616,6 @@ void SP_misc_insane (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MISC_INSANE;
 
 	sound_fist = gi.soundindex ("insane/insane11.wav");
 	sound_shake = gi.soundindex ("insane/insane5.wav");

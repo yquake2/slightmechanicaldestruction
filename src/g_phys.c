@@ -36,8 +36,7 @@ void other_FallingDamage (edict_t *ent)
 	int		damage;
 	vec3_t	dir;
 
-	if (ent->movetype == MOVETYPE_NOCLIP)
-		return;
+	if (ent->movetype == MOVETYPE_NOCLIP) return;
 
 	if ((ent->oldvelocity[2] < 0) && (ent->velocity[2] > ent->oldvelocity[2]) && (!ent->groundentity))
 	{
@@ -45,8 +44,7 @@ void other_FallingDamage (edict_t *ent)
 	}
 	else
 	{
-		if (!ent->groundentity)
-			return;
+		if (!ent->groundentity)	return;
 		delta = ent->velocity[2] - ent->oldvelocity[2];
 	}
 	delta = delta*delta * 0.0001;
@@ -68,16 +66,17 @@ void other_FallingDamage (edict_t *ent)
 		return;
 	}
 
-	fall_value = delta*0.5;
+	fall_value = delta * 0.5;
 	if (fall_value > 40) fall_value = 40;
+
 	fall_time = level.time + FALL_TIME;
 
-	if (delta > 30)
+	if (delta > MAX_SAFE_FALLDIST)	//CW: reduced safe falling distance, and replaced hardcoded value
 	{
 		ent->pain_debounce_time = level.time;	// no normal pain sound
-		damage = (delta-30)/2;
-		if (damage < 1)
-			damage = 1;
+		damage = (delta - MAX_SAFE_FALLDIST) * FALLDAMAGE_FACTOR;	//CW: increased falling damage, and replaced hardcoded values
+		if (damage < 1)	damage = 1;
+
 		VectorSet (dir, 0, 0, 1);
 
 		if (!deathmatch->value || !((int)dmflags->value & DF_NO_FALLING) )
@@ -157,6 +156,7 @@ void SV_CheckVelocity (edict_t *ent)
 		else if (ent->velocity[i] < -sv_maxvelocity->value)
 			ent->velocity[i] = -sv_maxvelocity->value;
 	} */
+
 	if (VectorLength(ent->velocity) > sv_maxvelocity->value)
 	{
 		VectorNormalize(ent->velocity);
@@ -178,7 +178,7 @@ qboolean SV_RunThink (edict_t *ent)
 	thinktime = ent->nextthink;
 	if (thinktime <= 0)
 		return true;
-	if (thinktime > level.time+0.001)
+	if (thinktime > level.time + 0.001)
 		return true;
 	
 	ent->nextthink = 0;
@@ -1507,7 +1507,7 @@ void SV_Physics_Toss (edict_t *ent)
 			ent->waterlevel = 0;
 
 		// tpp... don't do sounds for the camera
-		if(ent->class_id != ENTITY_CHASECAM)
+		if(Q_stricmp(ent->classname,"chasecam"))
 		{
 		if (!wasinwater && isinwater)
 			gi.positioned_sound (old_origin, g_edicts, CHAN_AUTO, gi.soundindex("misc/h2ohit1.wav"), 1, 1, 0);
@@ -1956,7 +1956,7 @@ void SV_Physics_Step (edict_t *ent)
 
 
 	// Lazarus: Add falling damage for entities that can be damaged
-	if( ent->takedamage ) {
+	if( ent->takedamage == DAMAGE_YES ) {
 		other_FallingDamage(ent);
 		VectorCopy(ent->velocity,ent->oldvelocity);
 	}
@@ -2537,7 +2537,7 @@ G_RunEntity
 */
 void G_RunEntity (edict_t *ent)
 {
-	if(level.freeze && (ent->class_id != ENTITY_CHASECAM))
+	if (level.freeze && Q_stricmp(ent->classname,"chasecam"))
 		return;
 
 	if (ent->prethink)

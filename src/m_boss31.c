@@ -408,7 +408,7 @@ void jorg_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	// Lessen the chance of him going into his pain frames if he takes little damage
 	if (damage <= 40)
-		if (random()<=0.6)
+		if (random() <= 0.6)
 			return;
 
 	/* 
@@ -431,8 +431,8 @@ void jorg_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 
 	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)
+		return;		// no pain anims in nightmare (CW: or hard)
 
 	if (damage <= 50)
 	{
@@ -708,7 +708,6 @@ void SP_monster_jorg (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_JORG;
 
 	sound_pain1 = gi.soundindex ("boss3/bs3pain1.wav");
 	sound_pain2 = gi.soundindex ("boss3/bs3pain2.wav");
@@ -764,11 +763,21 @@ void SP_monster_jorg (edict_t *self)
 	}
 	self->monsterinfo.scale = MODEL_SCALE;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
+
 	self->common_name = "Jorg";
 
 	walkmonster_start(self);

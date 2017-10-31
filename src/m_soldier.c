@@ -420,8 +420,11 @@ void soldier_pain (edict_t *self, edict_t *other, float kick, int damage)
 		return;
 	}
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 8)	//CW: shrug off low damage
+		return;
 
 	r = random();
 
@@ -451,6 +454,7 @@ void soldier_fire (edict_t *self, int flash_number)
 	vec3_t	end;
 	float	r, u;
 	int		flash_index;
+	int		effect, damage;	//CW
 
 	if (self->s.skinnum < 2)
 		flash_index = blaster_flash[flash_number];
@@ -468,6 +472,10 @@ void soldier_fire (edict_t *self, int flash_number)
 	}
 	else
 	{
+//CW++	Fix potential crashes
+		if (!self->enemy)
+			return;
+//CW--
 		VectorCopy (self->enemy->s.origin, end);
 		end[2] += self->enemy->viewheight;
 
@@ -481,13 +489,13 @@ void soldier_fire (edict_t *self, int flash_number)
 		
 		VectorSubtract (end, start, aim);
 		// Lazarus: Accuracy is skill level dependent
-		if(skill->value < 3)
+		if (skill->value < 3)
 		{
 			vectoangles (aim, dir);
 			AngleVectors (dir, forward, right, up);
 
-			r = crandom()*(1000 - 333*skill->value);
-			u = crandom()*(500 - 167*skill->value);
+			r = crandom()*(1000 - 300*skill->value);		//CW was 333
+			u = crandom()*(500 - 150*skill->value);			//CW was 167
 			VectorMA (start, 8192, forward, end);
 			VectorMA (end, r, right, end);
 			VectorMA (end, u, up, end);
@@ -499,8 +507,18 @@ void soldier_fire (edict_t *self, int flash_number)
 
 	if (self->s.skinnum <= 1)
 	{
-		// Lazarus: make bolt speed skill level dependent
-		monster_fire_blaster (self, start, aim, 5, 600 + 100*skill->value, flash_index, EF_BLASTER);
+
+//CW+++ Beefier blaster bolts if monster is flagged as special.
+		effect = EF_BLASTER;
+		if (self->spawnflags & SF_MONSTER_SPECIAL)
+		{
+			effect |= EF_PENT;
+			damage = 10;
+		}
+		else damage = 5;
+//CW---
+
+		monster_fire_blaster (self, start, aim, damage, 600 + 100*skill->value, flash_index, effect);
 	}
 	else if (self->s.skinnum <= 3)
 	{
@@ -532,10 +550,15 @@ void soldier_attack1_refire1 (edict_t *self)
 	if (self->s.skinnum > 1)
 		return;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
-	if ( ((skill->value == 3) && (random() < 0.5)) || (range(self, self->enemy) == RANGE_MELEE) )
+	if ((random() <= (0.2*skill->value)) || (range(self, self->enemy) == RANGE_MELEE)) //CW: was < 0.5 (for skill 3 only)
 		self->monsterinfo.nextframe = FRAME_attak102;
 	else
 		self->monsterinfo.nextframe = FRAME_attak110;
@@ -546,10 +569,15 @@ void soldier_attack1_refire2 (edict_t *self)
 	if (self->s.skinnum < 2)
 		return;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
-	if ( ((skill->value == 3) && (random() < 0.5)) || (range(self, self->enemy) == RANGE_MELEE) )
+	if ((random() <= (0.2*skill->value)) || (range(self, self->enemy) == RANGE_MELEE)) //CW: was < 0.5 (for skill 3 only)
 		self->monsterinfo.nextframe = FRAME_attak102;
 }
 
@@ -582,10 +610,15 @@ void soldier_attack2_refire1 (edict_t *self)
 	if (self->s.skinnum > 1)
 		return;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
-	if ( ((skill->value == 3) && (random() < 0.5)) || (range(self, self->enemy) == RANGE_MELEE) )
+	if ((random() <= (0.2*skill->value)) || (range(self, self->enemy) == RANGE_MELEE)) //CW: was < 0.5 (for skill 3 only)
 		self->monsterinfo.nextframe = FRAME_attak204;
 	else
 		self->monsterinfo.nextframe = FRAME_attak216;
@@ -596,10 +629,15 @@ void soldier_attack2_refire2 (edict_t *self)
 	if (self->s.skinnum < 2)
 		return;
 
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
-	if ( ((skill->value == 3) && (random() < 0.5)) || (range(self, self->enemy) == RANGE_MELEE) )
+	if ((random() <= (0.2*skill->value)) || (range(self, self->enemy) == RANGE_MELEE)) //CW: was < 0.5 (for skill 3 only)
 		self->monsterinfo.nextframe = FRAME_attak204;
 }
 
@@ -632,6 +670,7 @@ void soldier_duck_down (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_DUCKED)
 		return;
+
 	self->monsterinfo.aiflags |= AI_DUCKED;
 	self->maxs[2] -= 32;
 	self->takedamage = DAMAGE_YES;
@@ -707,6 +746,11 @@ void soldier_fire5 (edict_t *self)
 
 void soldier_attack5_refire (edict_t *self)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
@@ -737,13 +781,18 @@ void soldier_fire8 (edict_t *self)
 
 void soldier_attack6_refire (edict_t *self)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health <= 0)
 		return;
 
 	if (range(self, self->enemy) < RANGE_MID)
 		return;
 
-	if (skill->value == 3)
+	if (random() <= (0.33*skill->value)) //CW: originally just for skill 3
 		self->monsterinfo.nextframe = FRAME_runs03;
 }
 
@@ -788,6 +837,11 @@ void soldier_attack(edict_t *self)
 
 void soldier_sight(edict_t *self, edict_t *other)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (random() < 0.5)
 		gi.sound (self, CHAN_VOICE, sound_sight1, 1, ATTN_NORM, 0);
 	else
@@ -826,8 +880,7 @@ void soldier_dodge (edict_t *self, edict_t *attacker, float eta)
 {
 	float	r;
 
-	r = random();
-	if (r > 0.25)
+	if (random() > 0.25)
 		return;
 
 	if (!self->enemy)
@@ -841,7 +894,6 @@ void soldier_dodge (edict_t *self, edict_t *attacker, float eta)
 
 	self->monsterinfo.pausetime = level.time + eta + 0.3;
 	r = random();
-
 	if (skill->value == 1)
 	{
 		if (r > 0.33)
@@ -1252,26 +1304,35 @@ void SP_monster_soldier_x (edict_t *self)
 	self->monsterinfo.attack = soldier_attack;
 	self->monsterinfo.melee = NULL;
 	self->monsterinfo.sight = soldier_sight;
-	if(monsterjump->value)
+	if (monsterjump->value)
 	{
 		self->monsterinfo.jump = soldier_jump;
 		self->monsterinfo.jumpup = 48;
 		self->monsterinfo.jumpdn = 160;
 	}
 
-	// DWH
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	// end DWH
+//DWH---
 
 	gi.linkentity (self);
 
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.40;
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.20;	//CW: was 0.40
 
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&soldier_move_death1,
 			                     &soldier_move_death2,
@@ -1295,7 +1356,6 @@ void SP_monster_soldier_light (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_SOLDIER_LIGHT;
 
 	sound_pain_light = gi.soundindex ("soldier/solpain2.wav");
 	sound_death_light =	gi.soundindex ("soldier/soldeth2.wav");
@@ -1308,7 +1368,7 @@ void SP_monster_soldier_light (edict_t *self)
 	if(!self->health)
 		self->health = 20;
 	if(!self->gib_health)
-		self->gib_health = -30;
+		self->gib_health = -70;		//CW: was -30
 
 	// Lazarus: custom skins
 	self->s.skinnum = 0 + 6*self->style;
@@ -1325,7 +1385,6 @@ void SP_monster_soldier (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_SOLDIER;
 
 	sound_pain = gi.soundindex ("soldier/solpain1.wav");
 	sound_death = gi.soundindex ("soldier/soldeth1.wav");
@@ -1336,7 +1395,7 @@ void SP_monster_soldier (edict_t *self)
 	if(!self->health)
 		self->health = 30;
 	if(!self->gib_health)
-		self->gib_health = -30;
+		self->gib_health = -70;	//CW: was -30
 
 	// Lazarus: custom skins
 	self->s.skinnum = 2 + 6*self->style;
@@ -1353,7 +1412,6 @@ void SP_monster_soldier_ss (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_SOLDIER_SS;
 
 	sound_pain_ss = gi.soundindex ("soldier/solpain3.wav");
 	sound_death_ss = gi.soundindex ("soldier/soldeth3.wav");
@@ -1364,7 +1422,7 @@ void SP_monster_soldier_ss (edict_t *self)
 	if(!self->health)
 		self->health = 40;
 	if(!self->gib_health)
-		self->gib_health = -30;
+		self->gib_health = -70;		//CW: was -30
 
 	// Lazarus: custom skins
 	self->s.skinnum = 4 + 6*self->style;

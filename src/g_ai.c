@@ -12,61 +12,6 @@ qboolean	enemy_vis;
 qboolean	enemy_infront;
 int			enemy_range;
 float		enemy_yaw;
-
-// SeekEnemy is used to help a monster/actor navigate to its enemy. It's
-// not by any means a complete solution - zigzag routes aren't handled at
-// all. But in many situations this is a big improvement over standard AI
-
-qboolean SeekEnemy(edict_t *self)
-{
-	float		angle, yaw, yaw_0;
-	int			i;
-	trace_t		tr1, tr2;
-	vec3_t		target, vec;
-
-	VectorSubtract(self->enemy->s.origin,self->s.origin,vec);
-	yaw_0 = vectoyaw(vec);
-	yaw_0 = anglemod( (int)(yaw_0/45)*45 );
-	target[2] = self->enemy->s.origin[2];
-	for(i=0; i<8; i++)
-	{
-		if(i % 2)
-			yaw = yaw_0 - (i+1)*22.5;
-		else
-			yaw = yaw_0 + i*22.5;
-		angle = yaw * (M_PI*2 / 360);
-		vec[0] = cos(angle);
-		vec[1] = sin(angle);
-		vec[2] = 0;
-		VectorMA(self->s.origin,256.,vec,target);
-		tr1 = gi.trace(self->s.origin,NULL,NULL,target,self,MASK_OPAQUE);
-		tr2 = gi.trace(self->enemy->s.origin,NULL,NULL,tr1.endpos,self->enemy,MASK_OPAQUE);
-		if(tr2.fraction == 1.0)
-		{
-			edict_t	*thing;
-			
-			thing = SpawnThing();
-			VectorCopy(tr1.endpos,thing->s.origin);
-			thing->touch_debounce_time = level.time + 5.0;
-			thing->target_ent = self;
-			ED_CallSpawn(thing);
-			// make it think a bit faster than normal 2 sec. so if monster 
-			// sees enemy enroute he'll face enemy
-			thing->nextthink = level.time + 1.0;
-			self->movetarget = self->goalentity = thing;
-			self->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
-			self->monsterinfo.aiflags |= (AI_CHASE_THING | AI_SEEK_ENEMY);
-			VectorSubtract(thing->s.origin,self->s.origin,vec);
-			self->ideal_yaw = vectoyaw(vec);
-			// wait a while before first attack
-			if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
-				AttackFinished (self, 1);
-			return true;
-		}
-	}
-	return false;
-}
-
 /*
 =================
 AI_SetSightClient
@@ -101,12 +46,10 @@ void AI_SetSightClient (void)
 			&& ent->health > 0
 			&& !(ent->flags & (FL_NOTARGET|FL_DISGUISED) ) )
 		{
-			// If player is using func_monitor, make
-			// the sight_client = the fake player at the
-			// monitor currently taking the player's place.
-			// Do NOT do this for players using a
-			// target_monitor, though... in this case
-			// both player and fake player are ignored.
+			// If player is using func_monitor, make the sight_client = the fake player at the
+			// monitor currently taking the player's place. Do NOT do this for players using a
+			// target_monitor, though... in this case both player and fake player are ignored.
+
 			if(ent->client && ent->client->camplayer)
 			{
 				if(ent->client->spycam)
@@ -139,11 +82,36 @@ Move the specified distance at current facing.
 This replaces the QC functions: ai_forward, ai_back, ai_pain, and ai_painforward
 ==============
 */
-void ai_move (edict_t *self, float dist)
+void ai_move(edict_t *self, float dist)
 {
 	M_walkmove (self, self->s.angles[YAW], dist);
 }
 
+//CW+++
+/*
+=============
+ai_strafe
+
+Move sideways the specified distance.
+==============
+*/
+void ai_strafe(edict_t *self, float dist)
+{
+	float sideang;
+
+	if (self->moreflags == -1)		//set for roll dodging to the right
+		sideang = self->s.angles[YAW] - 90.0;
+	else
+		sideang = self->s.angles[YAW] + 90.0;
+
+	if (sideang >= 180.0)
+		sideang -= 360.0;
+	if (sideang <= 180.0)
+		sideang += 360.0;
+
+	M_walkmove(self, sideang, dist);
+}
+//CW---
 
 /*
 =============
@@ -319,7 +287,7 @@ void ai_walk (edict_t *self, float dist)
 ai_charge
 
 Turns towards target and advances
-Use this call with a distnace of 0 to replace ai_face
+Use this call with a distance of 0 to replace ai_face
 ==============
 */
 void ai_charge (edict_t *self, float dist)
@@ -330,7 +298,7 @@ void ai_charge (edict_t *self, float dist)
 	// This is normally not necessary, but target_anger making 
 	// monster mad at a static object (a pickup, for example)
 	// previously resulted in weirdness here
-	if(!self->enemy || !self->enemy->inuse)
+	if (!self->enemy || !self->enemy->inuse)
 		return;
 
 	VectorSubtract (self->enemy->s.origin, self->s.origin, v);
@@ -428,6 +396,20 @@ qboolean visible (edict_t *self, edict_t *other)
 	vec3_t	spot2;
 	trace_t	trace;
 
+//CW++
+	if (!self)
+	{
+		gi.dprintf("**ERROR: Invalid [self] pointer passed to visible()\n");
+		return false;
+	}
+
+	if (!other)
+	{
+		gi.dprintf("**ERROR: Invalid [other] pointer passed to visible()\n");
+		return false;
+	}
+//CW--
+
 	VectorCopy (self->s.origin, spot1);
 	spot1[2] += self->viewheight;
 	VectorCopy (other->s.origin, spot2);
@@ -501,7 +483,7 @@ qboolean infront (edict_t *self, edict_t *other)
 	VectorSubtract (other->s.origin, self->s.origin, vec);
 	VectorNormalize (vec);
 	dot = DotProduct (vec, forward);
-
+	
 	if (dot > 0.3)
 		return true;
 	return false;
@@ -546,13 +528,6 @@ void HuntTarget (edict_t *self)
 		self->monsterinfo.stand (self);
 	else
 		self->monsterinfo.run (self);
-
-	// Lazarus - help dummies find their enemy, maybe.
-	if (!visible(self,self->enemy) && !(self->monsterinfo.aiflags & AI_SEEK_ENEMY))
-	{
-		if(SeekEnemy(self))
-			return;
-	}
 	VectorSubtract (self->enemy->s.origin, self->s.origin, vec);
 	self->ideal_yaw = vectoyaw(vec);
 	// wait a while before first attack
@@ -573,9 +548,8 @@ void FoundTarget (edict_t *self)
 	if (self->monsterinfo.aiflags & AI_CHICKEN)
 		return;
 
-	// let other monsters see this monster for a while, but not if 
-	// it's simply a reflection
-	if (self->enemy->client && !(self->enemy->flags & FL_REFLECT))
+	// let other monsters see this monster for a while
+	if (self->enemy->client)
 	{
 		self->enemy->flags &= ~FL_DISGUISED;
 
@@ -665,8 +639,6 @@ qboolean FindTarget (edict_t *self)
 {
 	edict_t		*client=NULL;
 	qboolean	heardit;
-	edict_t		*reflection;
-	edict_t		*self_reflection;
 	int			r;
 
 	if(self->monsterinfo.aiflags & (AI_CHASE_THING | AI_HINT_TEST))
@@ -676,7 +648,7 @@ qboolean FindTarget (edict_t *self)
 	{
 		if (self->goalentity && self->goalentity->inuse && self->goalentity->classname)
 		{
-			if (self->goalentity->class_id == ENTITY_TARGET_ACTOR)
+			if (strcmp(self->goalentity->classname, "target_actor") == 0)
 				return false;
 		}
 
@@ -793,7 +765,7 @@ qboolean FindTarget (edict_t *self)
 		return true;	// JDC false;
 
 	// Lazarus: Force idle medics to look for dead monsters
-	if (!self->enemy && (self->class_id == ENTITY_MONSTER_MEDIC))
+	if (!self->enemy && !Q_stricmp(self->classname,"monster_medic"))
 	{
 		if(medic_FindDeadMonster(self))
 			return true;
@@ -824,24 +796,6 @@ qboolean FindTarget (edict_t *self)
 	else
 		return false;
 
-	reflection = NULL;
-	self_reflection = NULL;
-	if (level.num_reflectors)
-	{
-		int		i;
-		edict_t *ref;
-
-		for(i=0; i<6 && !reflection; i++)
-		{
-			ref = client->reflection[i];
-			if(ref && visible(self,ref) && infront(self,ref))
-			{
-				reflection = ref;
-				self_reflection = self->reflection[i];
-			}
-		}
-	}
-
 	if (!heardit)
 	{
 		r = range (self, client);
@@ -851,93 +805,27 @@ qboolean FindTarget (edict_t *self)
 
 // this is where we would check invisibility
 
-		// is client in a spot too dark to be seen?
+		// is client in an spot too dark to be seen?
 		if (client->light_level <= 5) 
 			return false;
 
 		if (!visible (self, client))
-		{
-			vec3_t	temp;
-
-			if (!reflection)
-				return false;
-
-			self->goalentity = self->movetarget = reflection;
-			VectorSubtract(reflection->s.origin,self->s.origin,temp);
-			self->ideal_yaw = vectoyaw(temp);
-			M_ChangeYaw (self);
-			// If MORON (=4) is set, then the reflection becomes the
-			// enemy. Otherwise if DUMMY (=8) is set, reflection
-			// becomes the enemy ONLY if the monster cannot see his
-			// own reflection in the same mirror. And if neither situation
-			// applies, then reflection is treated identically 
-			// to a player noise.
-			// Don't do the MORON/DUMMY bit if SF_MONSTER_KNOWS_MIRRORS
-			// is set (set automatically for melee-only monsters, and
-			// turned on once other monsters have figured out the truth)
-			if(!(self->spawnflags & SF_MONSTER_KNOWS_MIRRORS))
-			{
-				if(reflection->activator->spawnflags & 4)
-				{
-					self->monsterinfo.attack_state = 0;
-					self->enemy = reflection;
-					goto got_one;
-				}
-				if(reflection->activator->spawnflags & 8)
-				{
-					if(!self_reflection || !visible(self,self_reflection))
-					{
-						self->monsterinfo.attack_state = 0;
-						self->enemy = reflection;
-						goto got_one;
-					}
-				}
-			}
-			self->monsterinfo.pausetime = 0;
-			self->monsterinfo.aiflags &= ~AI_STAND_GROUND;
-			self->monsterinfo.run(self);
 			return false;
-		}
 
-		if (reflection && !(self->spawnflags & SF_MONSTER_KNOWS_MIRRORS) &&
-			!infront(self,client))
+		if (r == RANGE_NEAR)
 		{
-			// Client is visible but behind monster.
-			// If MORON or DUMMY for the parent func_reflect is set,
-			// attack the reflection (in the case of DUMMY, only
-			// if monster doesn't see himself in the same mirror)
-			if( (reflection->activator->spawnflags & 4) ||
-				( (reflection->activator->spawnflags & 8) &&
-				(!self_reflection || !visible(self,self_reflection)) ) )
-			{
-				vec3_t	temp;
-				
-				self->goalentity = self->movetarget = reflection;
-				VectorSubtract(reflection->s.origin,self->s.origin,temp);
-				self->ideal_yaw = vectoyaw(temp);
-				M_ChangeYaw (self);
-				self->enemy = reflection;
-				goto got_one;
-			}
+			if (client->show_hostile < level.time && !infront (self, client))
+				return false;
 		}
-
-		if (!reflection)
+		else if (r == RANGE_MID)
 		{
-			if (r == RANGE_NEAR)
-			{
-				if (client->show_hostile < level.time && !infront (self, client))
-					return false;
-			}
-			else if (r == RANGE_MID)
-			{
-				if (!infront (self, client))
-					return false;
-			}
+			if (!infront (self, client))
+				return false;
 		}
 
 		self->enemy = client;
 
-		if (self->enemy->class_id != ENTITY_PLAYER_NOISE)
+		if (strcmp(self->enemy->classname, "player_noise") != 0)
 		{
 			self->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
 
@@ -961,7 +849,7 @@ qboolean FindTarget (edict_t *self)
 			if (!visible (self, client))
 				return false;
 		}
-		else if(!(client->flags & FL_REFLECT))
+		else
 		{
 			if (!gi.inPHS(self->s.origin, client->s.origin))
 				return false;
@@ -975,12 +863,9 @@ qboolean FindTarget (edict_t *self)
 		}
 
 		// check area portals - if they are different and not connected then we can't hear it
-		if (!(client->flags & FL_REFLECT))
-		{
-			if (client->areanum != self->areanum)
-				if (!gi.AreasConnected(self->areanum, client->areanum))
-					return false;
-		}
+		if (client->areanum != self->areanum)
+			if (!gi.AreasConnected(self->areanum, client->areanum))
+				return false;
 
 		self->ideal_yaw = vectoyaw(temp);
 		M_ChangeYaw (self);
@@ -989,8 +874,6 @@ qboolean FindTarget (edict_t *self)
 		self->monsterinfo.aiflags |= AI_SOUND_TARGET;
 		self->enemy = client;
 	}
-
-got_one:
 
 //
 // got one
@@ -1060,12 +943,7 @@ qboolean M_CheckAttack (edict_t *self)
 
 		// do we have a clear shot?
 		if (tr.ent != self->enemy)
-		{
-			if (!(self->enemy->flags & FL_REFLECT))
-				return false;
-			if (tr.ent != world)
-				return false;
-		}
+			return false;
 	}
 	
 	// melee attack
@@ -1091,12 +969,7 @@ qboolean M_CheckAttack (edict_t *self)
 	if (enemy_range == RANGE_FAR)
 		return false;
 
-	if (self->enemy->flags == FL_REFLECT)
-	{
-		// no waiting for reflections - shoot 'em NOW
-		chance = 2.0;
-	}
-	else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
 		chance = 0.4;
 	}
@@ -1261,10 +1134,6 @@ qboolean ai_checkattack (edict_t *self, float dist)
 			hesDeadJim = true;
 			self->monsterinfo.aiflags &= ~AI_MEDIC;
 		}
-	}
-	else if (self->enemy->flags & FL_REFLECT)
-	{
-		hesDeadJim = false;
 	}
 	else
 	{
@@ -1442,36 +1311,6 @@ void ai_run (edict_t *self, float dist)
 		}
 	}
 
-	// If currently mad at a reflection, AND we've already shot at it once, set
-	// flag indicating that this monster got suddenly smarter about mirrors, and
-	// turn him on the real enemy
-	if (self->enemy && (self->enemy->flags & FL_REFLECT))
-	{
-		if( (self->enemy->last_attacked_framenum > 0) &&
-			(self->enemy->last_attacked_framenum < level.framenum-5) )
-		{
-			self->enemy->last_attacked_framenum = 0;
-			self->spawnflags |= SF_MONSTER_KNOWS_MIRRORS;
-			self->enemy = self->enemy->owner;
-			self->movetarget = self->goalentity = self->enemy;
-			VectorSubtract(self->enemy->s.origin,self->s.origin,v);
-			self->ideal_yaw = vectoyaw(v);
-			if(!alreadyMoved)
-				M_MoveToGoal(self,dist);
-			return;
-		}
-	}
-
-	// Lazarus: If running at a reflection, go ahead, until source of reflection
-	// is visible
-	if (!self->enemy && self->movetarget && (self->movetarget->flags & FL_REFLECT))
-	{
-		if( !visible(self,self->movetarget->owner))
-		{
-			M_MoveToGoal(self,dist);
-			return;
-		}
-	}
 
 	// Lazarus: If we're following the leader and have no enemy, go ahead
 	if ((!self->enemy) && (self->monsterinfo.aiflags & AI_FOLLOW_LEADER))
@@ -1510,7 +1349,7 @@ void ai_run (edict_t *self, float dist)
 		{
 			if (self->enemy->inuse)
 			{
-				if (self->enemy->class_id != ENTITY_PLAYER_NOISE)
+				if (strcmp(self->enemy->classname, "player_noise") != 0)
 					realEnemy = self->enemy;
 				else if (self->enemy->owner)
 					realEnemy = self->enemy->owner;
@@ -1559,8 +1398,11 @@ void ai_run (edict_t *self, float dist)
 				}
 			}
 
-			if(self->enemy && visible(self, realEnemy))
+			if (self->enemy && visible(self, realEnemy))
+			{
+				//CWFIXME: switch to hintpath searching if efforts to reach a visible player have been fruitless for a few seconds
 				gotcha = true;
+			}
 		}
 		
 		// if we see the player, stop following hintpaths.
@@ -1586,16 +1428,6 @@ void ai_run (edict_t *self, float dist)
 			return;
 		}
 
-		if (!(self->monsterinfo.aiflags & AI_SEEK_ENEMY))
-		{
-			if(SeekEnemy(self))
-			{
-				if(!alreadyMoved)
-					M_MoveToGoal(self,dist);
-				return;
-			}
-		}
-
 		M_MoveToGoal (self, dist);
 		// PMM - prevent double moves for sound_targets
 		alreadyMoved = true;
@@ -1607,7 +1439,7 @@ void ai_run (edict_t *self, float dist)
 			return;
 	}
 
-	if(ai_checkattack (self, dist))
+	if (ai_checkattack (self, dist))
 		return;
 
 	if (self->monsterinfo.attack_state == AS_SLIDING)
@@ -1616,19 +1448,6 @@ void ai_run (edict_t *self, float dist)
 		return;
 	}
 
-	// Lazarus: If enemy is currently unseen, try our random vector
-	//          business.
-	if (self->enemy && self->enemy->inuse && !enemy_vis &&
-		!(self->monsterinfo.aiflags & (AI_SOUND_TARGET | AI_SEEK_ENEMY)) )
-	{
-		if(SeekEnemy(self))
-		{
-			if(!alreadyMoved)
-				M_MoveToGoal(self,dist);
-			return;
-		}
-	}
-			
 	if ((self->enemy) && (self->enemy->inuse) && (enemy_vis))
 	{
 //		if (self.aiflags & AI_LOST_SIGHT)
@@ -1671,7 +1490,7 @@ void ai_run (edict_t *self, float dist)
 	//          search time and let him go idle so he'll start tracking hint_paths
 	if (self->monsterinfo.search_time)
 	{
-		if ((self->class_id == ENTITY_MONSTER_MEDIC) && hint_paths_present)
+		if (!Q_stricmp(self->classname,"monster_medic") && hint_paths_present)
 		{
 			if(developer->value)
 				gi.dprintf("medic search_time=%g\n",level.time - self->monsterinfo.search_time);
@@ -1855,7 +1674,7 @@ qboolean ai_chicken (edict_t *self, edict_t *badguy)
 	// If we've already been here, quit
 	if(self->monsterinfo.aiflags & AI_CHICKEN)
 	{
-		if(self->movetarget && (self->movetarget->class_id == ENTITY_THING))
+		if(self->movetarget && !Q_stricmp(self->movetarget->classname,"thing"))
 			return true;
 	}
 

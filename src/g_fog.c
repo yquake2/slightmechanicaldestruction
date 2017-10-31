@@ -815,7 +815,6 @@ void SP_target_fog (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_TARGET_FOG;
 
 	if(!level.fogs) level.fogs = 1;   // 1st fog reserved for console commands
 
@@ -899,7 +898,6 @@ void SP_trigger_fog (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_TRIGGER_FOG;
 	if(!level.fogs) level.fogs = 1;   // 1st fog reserved for console commands
 
 	if(level.fogs >= MAX_FOGS)

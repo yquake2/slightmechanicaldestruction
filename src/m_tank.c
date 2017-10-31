@@ -50,7 +50,7 @@ void tank_windup (edict_t *self)
 
 void tank_idle (edict_t *self)
 {
-	if(!(self->spawnflags & SF_MONSTER_AMBUSH))
+	if (!(self->spawnflags & SF_MONSTER_AMBUSH))
 		gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
 
@@ -269,10 +269,10 @@ mmove_t	tank_move_pain3 = {FRAME_pain301, FRAME_pain316, tank_frames_pain3, tank
 
 void tank_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
-	if (self->health < (self->max_health / 2))
+	if (self->health < (0.5 * self->max_health))
 			self->s.skinnum |= 1;
 
-	if (damage <= 10)
+	if (damage <= 20)		//CW: shrug off low damage
 		return;
 
 	if (level.time < self->pain_debounce_time)
@@ -294,8 +294,8 @@ void tank_pain (edict_t *self, edict_t *other, float kick, int damage)
 	self->pain_debounce_time = level.time + 3;
 	gi.sound (self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
 
 	if (damage <= 30)
 		self->monsterinfo.currentmove = &tank_move_pain1;
@@ -318,7 +318,7 @@ void TankBlaster (edict_t *self)
 	vec3_t	dir;
 	int		flash_number;
 
-	if(!self->enemy || !self->enemy->inuse)
+	if (!self->enemy || !self->enemy->inuse)
 		return;
 
 	if (self->s.frame == FRAME_attak110)
@@ -334,7 +334,7 @@ void TankBlaster (edict_t *self)
 	end[2] += self->enemy->viewheight;
 
 	// Lazarus fog reduction of accuracy
-	if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
 		end[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		end[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -361,8 +361,8 @@ void TankRocket (edict_t *self)
 	// Lazarus: Added Rogue's skill level-dependent rocket speed
 	int		rocketSpeed;
 
-	if(!self->enemy || !self->enemy->inuse)		//PGM
-		return;									//PGM
+	if (!self->enemy || !self->enemy->inuse)		//PGM
+		return;										//PGM
 
 	if (self->s.frame == FRAME_attak324)
 		flash_number = MZ2_TANK_ROCKET_1;
@@ -374,7 +374,7 @@ void TankRocket (edict_t *self)
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
 
-	if((self->spawnflags & SF_MONSTER_SPECIAL))
+	if (self->spawnflags & SF_MONSTER_SPECIAL)
 		rocketSpeed = 400; // Lazarus: Homing rockets are tougher if slow
 	else
 		rocketSpeed = 500 + (100 * skill->value);	// PGM rock & roll.... :)
@@ -385,7 +385,7 @@ void TankRocket (edict_t *self)
 	VectorNormalize (dir); */
 	// Lazarus: Added Rogue stuff and homers
 	VectorCopy (self->enemy->s.origin, vec);
-	if(random() < 0.66 || (start[2] < self->enemy->absmin[2]))
+	if (random() < 0.66 || (start[2] < self->enemy->absmin[2]))
 	{
 //		gi.dprintf("normal shot\n");
 		vec[2] += self->enemy->viewheight;
@@ -397,7 +397,7 @@ void TankRocket (edict_t *self)
 	}
 
 	// Lazarus fog reduction of accuracy
-	if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+	if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 	{
 		vec[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 		vec[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -409,7 +409,7 @@ void TankRocket (edict_t *self)
 	// 20, 35, 50, 65 chance of leading
 	// Lazarus: Switched this around from Rogue code... it led target more often
 	//          for Easy, which seemed backwards
-	if( (random() < (0.2 + skill->value * 0.15) ) && !(self->spawnflags & SF_MONSTER_SPECIAL))
+	if ( (random() < (0.2 + skill->value * 0.15) ) && !(self->spawnflags & SF_MONSTER_SPECIAL))
 	{
 		float	dist;
 		float	time;
@@ -423,9 +423,9 @@ void TankRocket (edict_t *self)
 	VectorNormalize(dir);
 	// paranoia, make sure we're not shooting a target right next to us
 	trace = gi.trace(start, vec3_origin, vec3_origin, vec, self, MASK_SHOT);
-	if(trace.ent == self->enemy || trace.ent == world)
+	if (trace.ent == self->enemy || trace.ent == world)
 	{
-		if(trace.fraction > 0.5 || (trace.ent && trace.ent->client))
+		if (trace.fraction > 0.5 || (trace.ent && trace.ent->client))
 			monster_fire_rocket (self, start, dir, 50, rocketSpeed, flash_number,
 				(self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL) );
 	}
@@ -439,8 +439,8 @@ void TankMachineGun (edict_t *self)
 	vec3_t	forward, right;
 	int		flash_number;
 
-	if(!self->enemy || !self->enemy->inuse)		//PGM
-		return;									//PGM
+	if (!self->enemy || !self->enemy->inuse)		//PGM
+		return;										//PGM
 
 	flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
 
@@ -453,7 +453,7 @@ void TankMachineGun (edict_t *self)
 		vec[2] += self->enemy->viewheight;
 
 		// Lazarus fog reduction of accuracy
-		if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+		if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 		{
 			vec[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 			vec[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -525,14 +525,22 @@ mmove_t tank_move_attack_post_blast = {FRAME_attak117, FRAME_attak122, tank_fram
 
 void tank_reattack_blaster (edict_t *self)
 {
-	if (skill->value >= 2)
-		if (visible (self, self->enemy))
-			if (self->enemy->health > 0)
-				if (random() <= 0.6)
-				{
-					self->monsterinfo.currentmove = &tank_move_reattack_blast;
-					return;
-				}
+//CW++	Fix potential crashes
+	if (!self->enemy || !self->enemy->inuse)
+	{
+		self->monsterinfo.currentmove = &tank_move_attack_post_blast;
+		return;
+	}
+//CW--
+
+	if ((visible(self, self->enemy)) && (self->enemy->health > 0))
+	{
+		if (random() <= (0.5 + 0.1*skill->value))	//CW: was just >= 0.6, for skill >= 2
+		{
+			self->monsterinfo.currentmove = &tank_move_reattack_blast;
+			return;
+		}
+	}
 	self->monsterinfo.currentmove = &tank_move_attack_post_blast;
 }
 
@@ -588,7 +596,7 @@ mmove_t tank_move_attack_strike = {FRAME_attak201, FRAME_attak238, tank_frames_a
 
 mframe_t tank_frames_attack_pre_rocket [] =
 {
-	ai_charge, 0,  NULL,
+/*	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,
@@ -598,8 +606,7 @@ mframe_t tank_frames_attack_pre_rocket [] =
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,			// 10
-
-	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL,*/	//CW: commented out to decrease time-to-fire
 	ai_charge, 1,  NULL,
 	ai_charge, 2,  NULL,
 	ai_charge, 7,  NULL,
@@ -609,10 +616,9 @@ mframe_t tank_frames_attack_pre_rocket [] =
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL,			// 20
-
 	ai_charge, -3, NULL
 };
-mmove_t tank_move_attack_pre_rocket = {FRAME_attak301, FRAME_attak321, tank_frames_attack_pre_rocket, tank_doattack_rocket};
+mmove_t tank_move_attack_pre_rocket = {FRAME_attak312, FRAME_attak321, tank_frames_attack_pre_rocket, tank_doattack_rocket};//CW: initial frame was 301
 
 mframe_t tank_frames_attack_fire_rocket [] =
 {
@@ -665,6 +671,30 @@ mframe_t tank_frames_attack_chain [] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
+
+//CW+++ Make sure Tank follows target when firing MG.
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+	ai_charge,      0, TankMachineGun,
+//CW---
+
+/*	//CW: commented out for above reason
 	NULL,      0, TankMachineGun,
 	NULL,      0, TankMachineGun,
 	NULL,      0, TankMachineGun,
@@ -684,6 +714,7 @@ mframe_t tank_frames_attack_chain [] =
 	NULL,      0, TankMachineGun,
 	NULL,      0, TankMachineGun,
 	NULL,      0, TankMachineGun,
+*/
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
@@ -694,15 +725,22 @@ mmove_t tank_move_attack_chain = {FRAME_attak401, FRAME_attak429, tank_frames_at
 
 void tank_refire_rocket (edict_t *self)
 {
-	// Only on hard or nightmare
-	if ( skill->value >= 2 )
-		if (self->enemy->health > 0)
-			if (visible(self, self->enemy) )
-				if (random() <= 0.4)
-				{
-					self->monsterinfo.currentmove = &tank_move_attack_fire_rocket;
-					return;
-				}
+//CW++	Fix potential crashes
+	if (!self->enemy || !self->enemy->inuse)
+	{
+		self->monsterinfo.currentmove = &tank_move_attack_post_rocket;
+		return;
+	}
+//CW--
+
+	if ((self->enemy->health > 0) && (visible(self, self->enemy)))
+	{
+		if (random() <= (0.3 + 0.1*skill->value))	//CW: was just >= 0.4, for skill >= 2
+		{
+			self->monsterinfo.currentmove = &tank_move_attack_fire_rocket;
+			return;
+		}
+	}
 	self->monsterinfo.currentmove = &tank_move_attack_post_rocket;
 }
 
@@ -742,22 +780,39 @@ void tank_attack(edict_t *self)
 	}
 	else if (range <= 250)
 	{
-		if (r < 0.5)
+		if (r < 0.6)	//CW: was 0.5
 			self->monsterinfo.currentmove = &tank_move_attack_chain;
 		else
 			self->monsterinfo.currentmove = &tank_move_attack_blast;
 	}
 	else
 	{
-		if (r < 0.33)
-			self->monsterinfo.currentmove = &tank_move_attack_chain;
-		else if (r < 0.66)
+//CW+++ Make rocket attacks more likely if using homing rockets; exact probability depends on skill level.
+		if (self->spawnflags & SF_MONSTER_SPECIAL)
 		{
-			self->monsterinfo.currentmove = &tank_move_attack_pre_rocket;
-			self->pain_debounce_time = level.time + 5.0;	// no pain for a while
-		}
+			if (r < (0.25 - 0.05*skill->value))
+				self->monsterinfo.currentmove = &tank_move_attack_chain;
+			else if (r < (0.75 + 0.05*skill->value))
+			{
+				self->monsterinfo.currentmove = &tank_move_attack_pre_rocket;
+				self->pain_debounce_time = level.time + 5.0;	// no pain for a while
+			}
+			else
+				self->monsterinfo.currentmove = &tank_move_attack_blast;
+			}
 		else
-			self->monsterinfo.currentmove = &tank_move_attack_blast;
+//CW---
+		{
+			if (r < 0.33)
+				self->monsterinfo.currentmove = &tank_move_attack_chain;
+			else if (r < 0.66)
+			{
+				self->monsterinfo.currentmove = &tank_move_attack_pre_rocket;
+				self->pain_debounce_time = level.time + 5.0;	// no pain for a while
+			}
+			else
+				self->monsterinfo.currentmove = &tank_move_attack_blast;
+		}
 	}
 }
 
@@ -766,18 +821,81 @@ void tank_attack(edict_t *self)
 // death
 //
 
-void tank_dead (edict_t *self)
+//CW++
+void tank_cmdr_body_think(edict_t *self)
 {
+	if (++self->s.frame < 24)
+		self->nextthink = level.time + FRAMETIME;
+	else
+	{
+		VectorSet(self->mins, -16, -16, -16);
+		VectorSet(self->maxs, 16, 16, -0);
+		self->think = NULL;
+		self->nextthink = 0;
+		gi.linkentity(self);
+		M_FlyCheck(self);
+
+		// Lazarus monster fade
+		if (world->effects & FX_WORLDSPAWN_CORPSEFADE)
+		{
+			self->think = FadeDieSink;
+			self->nextthink = level.time + corpse_fadetime->value;
+		}
+	}
+
+	if (self->s.frame == 3)
+		gi.sound(self, CHAN_BODY, gi.soundindex("makron/spine.wav"), 1, ATTN_NORM, 0);
+	else if (self->s.frame == 22)
+		gi.sound(self, CHAN_BODY, gi.soundindex("tank/thud.wav"), 1, ATTN_NORM, 0);
+}
+//CW--
+
+void tank_dead(edict_t *self)
+{
+//CW++
+	if (strcmp(self->classname, "monster_tank_commander") == 0)
+	{
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_EXPLOSION1);
+		gi.WritePosition(self->s.origin);
+		gi.multicast(self->s.origin, MULTICAST_PHS);
+		if (level.num_reflectors)
+			ReflectExplosion(TE_EXPLOSION1, self->s.origin);
+
+
+		self->item = FindItemByClassname("key_commander_head");
+		Drop_Item(self, self->item);
+		self->item = NULL;
+
+		self->movetype = MOVETYPE_TOSS;
+		self->svflags |= SVF_DEADMONSTER;
+		self->solid = SOLID_BBOX;
+		self->model = "models/monsters/commandr/tris.md2";
+		self->s.modelindex = gi.modelindex(self->model);
+		self->s.frame = 1;
+		VectorSet(self->mins, -32, -32, 0);
+		VectorSet(self->maxs, 32, 32, 48);
+		self->takedamage = DAMAGE_YES;
+		self->flags = FL_GODMODE;
+		self->s.renderfx |= RF_FRAMELERP;
+		self->think = tank_cmdr_body_think;
+		self->nextthink = level.time + FRAMETIME;
+		gi.linkentity(self);
+
+		return;
+	}
+//CW--
+
 	VectorSet (self->mins, -16, -16, -16);
 	VectorSet (self->maxs, 16, 16, -0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
-	gi.linkentity (self);
-	M_FlyCheck (self);
+	gi.linkentity(self);
+	M_FlyCheck(self);
 
 	// Lazarus monster fade
-	if(world->effects & FX_WORLDSPAWN_CORPSEFADE)
+	if (world->effects & FX_WORLDSPAWN_CORPSEFADE)
 	{
 		self->think=FadeDieSink;
 		self->nextthink=level.time+corpse_fadetime->value;
@@ -852,7 +970,6 @@ void tank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	
 }
 
-
 //
 // monster_tank
 //
@@ -868,7 +985,6 @@ void SP_monster_tank (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_TANK;
 
 	// Lazarus: special purpose skins
 	if (strcmp(self->classname, "monster_tank_commander") == 0)
@@ -905,23 +1021,23 @@ void SP_monster_tank (edict_t *self)
 	if (strcmp(self->classname, "monster_tank_commander") == 0)
 	{
 		// Lazarus: mapper-configurable health
-		if(!self->health)
+		if (!self->health)
 			self->health = 1000;
-		if(!self->gib_health)
-			self->gib_health = -225;
+		if (!self->gib_health)
+			self->gib_health = -10000;	//CW: was -225
 		self->common_name = "Tank Commander";
 	}
 	else
 	{
 		// Lazarus: mapper-configurable health
-		if(!self->health)
+		if (!self->health)
 			self->health = 750;
-		if(!self->gib_health)
-			self->gib_health = -200;
+		if (!self->gib_health)
+			self->gib_health = -250;	//CW: was -200
 		self->common_name = "Tank";
 	}
 
-	if(!self->mass)
+	if (!self->mass)
 		self->mass = 500;
 
 	self->pain = tank_pain;
@@ -935,17 +1051,27 @@ void SP_monster_tank (edict_t *self)
 	self->monsterinfo.sight = tank_sight;
 	self->monsterinfo.idle = tank_idle;
 
-	// Lazarus power armor
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.05;
+//DWH---
+
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.01;	//CW: was 0.05
 
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &tank_move_stand;
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&tank_move_death,
 								 NULL};

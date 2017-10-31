@@ -73,7 +73,6 @@ void PlayerNoise(edict_t *who, vec3_t where, int type)
 	{
 		noise = G_Spawn();
 		noise->classname = "player_noise";
-		noise->class_id = ENTITY_PLAYER_NOISE;
 		VectorSet (noise->mins, -8, -8, -8);
 		VectorSet (noise->maxs, 8, 8, 8);
 		noise->owner = who;
@@ -82,7 +81,6 @@ void PlayerNoise(edict_t *who, vec3_t where, int type)
 
 		noise = G_Spawn();
 		noise->classname = "player_noise";
-		noise->class_id = ENTITY_PLAYER_NOISE;
 		VectorSet (noise->mins, -8, -8, -8);
 		VectorSet (noise->maxs, 8, 8, 8);
 		noise->owner = who;
@@ -195,7 +193,7 @@ void ChangeWeapon (edict_t *ent)
 	ent->client->machinegun_shots = 0;
 
 	// set visible model
-	if (ent->s.modelindex == MAX_MODELS-1) {
+	if (ent->s.modelindex == 255) {
 		if (ent->client->pers.weapon)
 			i = ((ent->client->pers.weapon->weapmodel & 0xff) << 8);
 		else
@@ -225,7 +223,7 @@ void ChangeWeapon (edict_t *ent)
 	if(ITEM_INDEX(ent->client->pers.weapon) == noweapon_index)
 		ent->s.modelindex2 = 0;
 	else
-		ent->s.modelindex2 = MAX_MODELS-1;
+		ent->s.modelindex2 = 255;
 
 	ent->client->anim_priority = ANIM_PAIN;
 	if(ent->client->ps.pmove.pm_flags & PMF_DUCKED)
@@ -474,7 +472,7 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 {
 	int		n;
 
-	if(ent->deadflag || ent->s.modelindex != MAX_MODELS-1) // VWep animations screw up corpses
+	if(ent->deadflag || ent->s.modelindex != 255) // VWep animations screw up corpses
 	{
 		return;
 	}
@@ -676,7 +674,7 @@ void weapon_grenade_fire (edict_t *ent, qboolean held)
 
 	ent->client->grenade_time = level.time + 1.0;
 
-	if(ent->deadflag || ent->s.modelindex != MAX_MODELS-1) // VWep animations screw up corpses
+	if(ent->deadflag || ent->s.modelindex != 255) // VWep animations screw up corpses
 	{
 		return;
 	}
@@ -1071,8 +1069,8 @@ void Weapon_HyperBlaster_Fire (edict_t *ent)
 		else
 		{
 			rotation = (ent->client->ps.gunframe - 5) * 2*M_PI/6;
-			offset[1] = -4 * sin(rotation);
-			offset[0] = 0;
+			offset[0] = -4 * sin(rotation);
+			offset[1] = 0;
 			offset[2] = 4 * cos(rotation);
 
 			if ((ent->client->ps.gunframe == 6) || (ent->client->ps.gunframe == 9))

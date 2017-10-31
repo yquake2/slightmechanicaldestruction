@@ -654,7 +654,7 @@ void actor_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 
 	if(self->monsterinfo.aiflags & AI_CHASE_THING)
 	{
-		if(self->movetarget && (self->movetarget->class_id == ENTITY_THING))
+		if(self->movetarget && !Q_stricmp(self->movetarget->classname,"thing"))
 		{
 			G_FreeEdict(self->movetarget);
 			self->movetarget = NULL;
@@ -762,7 +762,7 @@ void actor_seekcover (edict_t *self)
 	}
 	// This shouldn't happen, we're just being cautious. Quit now if
 	// already chasing a "thing"
-	if(self->movetarget && (self->movetarget->class_id == ENTITY_THING))
+	if(self->movetarget && !Q_stricmp(self->movetarget->classname,"thing"))
 	{
 		actor_run(self);
 		return;
@@ -975,7 +975,7 @@ void actor_use (edict_t *self, edict_t *other, edict_t *activator)
 	vec3_t	v;
 
 	self->goalentity = self->movetarget = G_PickTarget(self->target);
-	if ((!self->movetarget) || (self->movetarget->class_id != ENTITY_TARGET_ACTOR))
+	if ((!self->movetarget) || (strcmp(self->movetarget->classname, "target_actor") != 0))
 	{
 		gi.dprintf ("%s has bad target %s at %s\n", self->classname, self->target, vtos(self->s.origin));
 		self->target = NULL;
@@ -1244,7 +1244,6 @@ void SP_misc_actor (edict_t *self)
 		return;
 	}
 
-	self->class_id = ENTITY_MISC_ACTOR;
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
@@ -1493,10 +1492,20 @@ void SP_misc_actor (edict_t *self)
 	if(!(self->spawnflags & SF_ACTOR_BAD_GUY) || (self->spawnflags & SF_MONSTER_GOODGUY))
 		self->monsterinfo.aiflags |= AI_GOOD_GUY;
 
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
+//DWH---
 
 	// Minimum distance
 	if(self->actor_weapon[1])
@@ -1700,7 +1709,7 @@ void SP_target_actor (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_TARGET_ACTOR;
+
 	if (!self->targetname)
 		gi.dprintf ("%s with no targetname at %s\n", self->classname, vtos(self->s.origin));
 
@@ -2095,7 +2104,7 @@ void actor_moveit (edict_t *player, edict_t *actor)
 		return;
 	travel = 256 + 128*crandom();
 	thing  = actor->vehicle;
-	if(!thing || !thing->inuse || (thing->class_id != ENTITY_THING))
+	if(!thing || !thing->inuse || Q_stricmp(thing->classname,"thing"))
 		thing = actor->vehicle = SpawnThing();
 	VectorSubtract(actor->s.origin,player->s.origin,dir);
 	dir[2] = 0;

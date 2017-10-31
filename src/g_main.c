@@ -1,4 +1,3 @@
-
 #include "g_local.h"
 
 game_locals_t	game;
@@ -92,7 +91,6 @@ cvar_t	*m_pitch;
 cvar_t	*m_yaw;
 cvar_t	*monsterjump;
 cvar_t	*packet_fmod_playback;
-cvar_t	*player_vampire;
 cvar_t	*readout;
 cvar_t	*rocket_strafe;
 cvar_t	*rotate_distance;
@@ -124,13 +122,13 @@ void G_RunFrame (void);
 void ShutdownGame (void)
 {
 	gi.dprintf ("==== ShutdownGame ====\n");
-	if(!deathmatch->value && !coop->value) {
+	if (!deathmatch->value && !coop->value) {
 		gi.cvar_forceset("m_pitch", va("%f",lazarus_pitch->value));
 		gi.cvar_forceset("cd_loopcount", va("%d",lazarus_cd_loop->value));
 		gi.cvar_forceset("gl_clear", va("%d", lazarus_gl_clear->value));
 	}
 	// Lazarus: Turn off fog if it's on
-	if(!dedicated->value)
+	if (!dedicated->value)
 		Fog_Off();
 	// and shut down FMOD
 	FMOD_Shutdown();
@@ -149,7 +147,7 @@ int Debug_Modelindex (char *name)
 {
 	int	modelnum;
 	modelnum = RealFunc.modelindex(name);
-	if(modelnum > max_modelindex)
+	if (modelnum > max_modelindex)
 	{
 		gi.dprintf("Model %03d %s\n",modelnum,name);
 		max_modelindex = modelnum;
@@ -161,7 +159,7 @@ int Debug_Soundindex (char *name)
 {
 	int soundnum;
 	soundnum = RealFunc.soundindex(name);
-	if(soundnum > max_soundindex)
+	if (soundnum > max_soundindex)
 	{
 		gi.dprintf("Sound %03d %s\n",soundnum,name);
 		max_soundindex = soundnum;
@@ -212,7 +210,7 @@ game_export_t *GetGameAPI (game_import_t *import)
 
 	developer = gi.cvar("developer", "0", CVAR_SERVERINFO);
 	readout   = gi.cvar("readout", "0", CVAR_SERVERINFO);
-	if(readout->value)
+	if (readout->value)
 	{
 		max_modelindex = 0;
 		max_soundindex = 0;
@@ -295,12 +293,8 @@ void ClientEndServerFrames (void)
 				continue;
 			if ( (ent->solid == SOLID_BSP) && (ent->movetype != MOVETYPE_PUSHABLE))
 				continue;
-			if (ent->client && ent->client->resp.spectator)
-				continue;
-			if (ent->client && player_vampire->value)
-				continue;
-			if (ent->s.renderfx & RF_VAMPIRE)
-				continue;
+			if (ent->client && (ent->client->resp.spectator || ent->health<=0 || ent->deadflag == DEAD_DEAD))
+				continue;		
 			AddReflection(ent);	
 		}
 	}
@@ -480,8 +474,8 @@ void ExitLevel (void)
 		ent = g_edicts + 1 + i;
 		if (!ent->inuse)
 			continue;
-		if (ent->health > ent->client->pers.max_health)
-			ent->health = ent->client->pers.max_health;
+//		if (ent->health > ent->client->pers.max_health) //CW: allow MH benefit to continue over level change
+//			ent->health = ent->client->pers.max_health;
 	}
 
 }
@@ -498,15 +492,15 @@ void G_RunFrame (void)
 	int		i;
 	edict_t	*ent;
 
-	if(level.freeze)
+	if (level.freeze)
 	{
 		level.freezeframes++;
-		if(level.freezeframes >= 300)
+		if (level.freezeframes >= 300)
 			level.freeze = false;
 	} else
 		level.framenum++;
 
-	level.time = level.framenum*FRAMETIME;
+	level.time = level.framenum * FRAMETIME;
 
 	// choose a client for monsters to target this frame
 	AI_SetSightClient ();

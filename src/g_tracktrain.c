@@ -128,7 +128,7 @@ void SP_path_track (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_PATH_TRACK;
+
 	self->solid = SOLID_TRIGGER;
 	self->use = path_track_use;
 	VectorSet (self->mins, -8, -8, -8);
@@ -299,7 +299,6 @@ void trackchange_use (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_func_trackchange (edict_t *self)
 {
-	self->class_id = ENTITY_FUNC_TRACKCHANGE;
 	self->movetype = MOVETYPE_PUSH;
 	VectorClear (self->s.angles);
 
@@ -1183,7 +1182,7 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 						continue;
 					if(!e->classname)
 						continue;
-					if(e->class_id != ENTITY_PATH_TRACK)
+					if(Q_stricmp(e->classname,"path_track"))
 						continue;
 					if(e->target && !Q_stricmp(e->target,path->targetname))
 					{
@@ -1312,7 +1311,7 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 					continue;
 				if(!e->classname)
 					continue;
-				if(e->class_id != ENTITY_PATH_TRACK)
+				if(Q_stricmp(e->classname,"path_track"))
 					continue;
 				if(e->target && !Q_stricmp(e->target,path->targetname))
 				{
@@ -1807,7 +1806,6 @@ void tracktrain_use (edict_t *self, edict_t *other, edict_t *activator)
 
 void SP_func_tracktrain (edict_t *self)
 {
-	self->class_id = ENTITY_FUNC_TRACKTRAIN;
 	self->movetype = MOVETYPE_PUSH;
 	self->flags |= FL_TRACKTRAIN;
 
@@ -1921,7 +1919,7 @@ void find_tracktrain (edict_t *self)
 	train = G_Find(NULL,FOFS(targetname),self->targetname);
 	while(train && !train_found)
 	{
-		if(train->class_id == ENTITY_FUNC_TRACKTRAIN)
+		if(!Q_stricmp(train->classname,"func_tracktrain"))
 			train_found = true;
 		else
 			train = G_Find(train,FOFS(targetname),self->targetname);
@@ -2008,7 +2006,6 @@ void SP_info_train_start (edict_t *self)
 		gi.dprintf("crosslevel train with no targetname\n");
 		G_FreeEdict(self);
 	}
-	self->class_id = ENTITY_INFO_TRAIN_START;
 	self->think = find_tracktrain;
 	self->nextthink = level.time + 1;
 }

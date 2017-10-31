@@ -4,7 +4,6 @@
 
 void SP_target_lock_digit (edict_t *self)
 {
-	self->class_id = ENTITY_TARGET_LOCK_DIGIT;
 	self->movetype = MOVETYPE_PUSH;
 	gi.setmodel (self, self->model);
 	self->solid = SOLID_BSP;
@@ -111,7 +110,6 @@ void SP_target_lock (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_TARGET_LOCK;
 	if (self->spawnflags & 2) game.lock_hud = true;
 	if (!self->key_message)
 		self->key_message = "00000000";
@@ -167,7 +165,6 @@ void SP_target_lock_code (edict_t *self)
 		gi.dprintf("non-crosslevel target_lock_code w/o target\n");
 		G_FreeEdict(self);
 	}
-	self->class_id = ENTITY_TARGET_LOCK_CODE;
 	self->use = lock_code_use;
 }
 
@@ -256,7 +253,6 @@ void SP_target_lock_clue (edict_t *self)
 		gi.dprintf("non-crosslevel target_lock_clue w/o target\n");
 		G_FreeEdict(self);
 	}
-	self->class_id = ENTITY_TARGET_LOCK_CLUE;
 	self->use = lock_clue_use;
 	self->think = lock_clue_initialize;
 	self->nextthink = level.time + 2*FRAMETIME;

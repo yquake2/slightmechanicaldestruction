@@ -2,7 +2,7 @@
 #include "m_player.h"
 
 int	nostatus = 0;
-int xray = 0;
+
 
 void RotateAngles(vec3_t in, vec3_t delta, vec3_t out)
 {
@@ -1763,312 +1763,6 @@ void ForcewallOff(edict_t *player)
 	G_FreeEdict(tr.ent);
 }
 
-#ifdef WESQ2
-
-void DeleteItem(edict_t *ent)
-{
-	edict_t		*target;
-
-	target = LookingAt(ent,LOOKAT_NOWORLD,NULL,NULL);
-	if(!target) return;
-	if(target->my_spawn != 0)
-	{
-		SpawnedItem[target->my_spawn-1].classname[0] = 0;
-		if(target->my_spawn == NumSpawnedItems)
-			NumSpawnedItems--;
-	}
-	G_FreeEdict(target);
-
-}
-/*
-=================
-GetEntFilename
-=================
-*/
-void GetEntFilename(char *filename)
-{
-	cvar_t	*game;
-	game = gi.cvar("game", "", CVAR_SERVERINFO| CVAR_LATCH);
-	strcpy(filename,game->string);
-	strcat(filename,"/maps/");
-	strcat(filename,level.mapname);
-	strcat(filename,".ent");
-}
-
-/*
-=================
-SaveItems
-Saves items spawned with "spawn" console command to a file with same name
-as map and ".ent" extension. This file is read by SpawnEntities the next
-time the map is run.
-=================
-*/
-void SaveItems()
-{
-	FILE	*f;
-	char	filename[256];
-	int		i;
-	int		count;
-
-	if(NumSpawnedItems == 0) return;
-
-	GetEntFilename(filename);
-	f = fopen(filename,"w");
-	count = 0;
-	for(i=0; i<NumSpawnedItems; i++)
-	{
-		if(!strlen(SpawnedItem[i].classname)) continue;
-		fprintf(f,"%s %f %f %f %f\n",
-			SpawnedItem[i].classname,SpawnedItem[i].origin[0],
-			SpawnedItem[i].origin[1],SpawnedItem[i].origin[2],
-			SpawnedItem[i].angle);
-		count++;
-	}
-	fclose(f);
-	gi.dprintf("%d spawned item(s) saved to %s\n",count,filename);
-
-}
-
-int SpawnSlot()
-{
-	// Find available slot in SpawnedItems array
-	int	i;
-
-	if(!NumSpawnedItems) return 0;
-	for(i=0; i<NumSpawnedItems; i++)
-	{
-		if(!strlen(SpawnedItem[i].classname)) return i;
-	}
-	return NumSpawnedItems;
-}
-/*
-====================================
-FindThickness
-Starting from end position of input trace,
-find thickness of solid in direction
-perpendicular to the surface tr.endpos
-lies on.
-====================================
-*/
-vec_t	FindThickness(trace_t tr)
-{
-	int			contents;
-	int			i;
-	vec_t		thickness;
-	vec3_t		front, forward, v;
-
-	VectorCopy(tr.endpos,front);
-	VectorCopy(tr.plane.normal,forward);
-	VectorNegate(forward,forward); // point into the wall
-
-	// Test every 0.5 units for up to 256 units for a point that is NOT in a solid.
-	for(i=1; i<512; i++)
-	{
-		thickness = i*0.5;
-		VectorMA(front,thickness,forward,v);
-		contents = gi.pointcontents(v);
-		if(!(contents && CONTENTS_SOLID))
-		{
-			thickness = (i-1)*0.5;
-			break;
-		}
-	}
-	if(i >= 512) thickness = 0.;
-	return thickness;
-}
-/*
-==============================
-GetMaterialPropertyFromTexture
-==============================
-*/
-void GetMaterialPropertyFromTexture(char *texture,char *matl)
-{
-	if(!texture)
-		strcpy(matl,"Unknown material");
-	else if(strstr(texture,"con") != NULL)
-		strcpy(matl,"concrete");
-	else if(strstr(texture,"wood") != NULL)
-		strcpy(matl,"wood");
-	else if(!Q_stricmp(texture,"smd/gray"))
-		strcpy(matl,"light metal");
-	else if(strstr(texture,"corr") != NULL)
-		strcpy(matl,"corrugated metal");
-	else if(strstr(texture,"met") != NULL)
-		strcpy(matl,"steel");
-	else if(strstr(texture,"rock") != NULL)
-		strcpy(matl,"solid rock");
-	else if((strstr(texture,"wnd") != NULL) || (strstr(texture,"wind") != NULL))
-		strcpy(matl,"unbreakable window");
-	else
-		sprintf(matl,"Unknown material, texture=%s",texture);
-}
-
-
-/*
-=================================
-Cmd_Identify_f
-identifies brush/entity looked at
-=================================
-*/
-void Cmd_Identify_f (edict_t *ent)
-{
-	extern vec3_t MOVEDIR_UP;
-	extern vec3_t MOVEDIR_DOWN;
-	char		matl[64];
-	char		message[1024];
-	char		append[256];
-	trace_t		tr;
-	vec3_t      end, forward, start;
-	vec_t		thickness;
-
-	if (ent->client->textdisplay)
-		Text_Close(ent);
-	
-	VectorCopy(ent->s.origin,start);
-	start[2] += ent->viewheight;
-	AngleVectors(ent->client->v_angle, forward, NULL, NULL);
-	VectorMA(start, 8192, forward, end);
-	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SHOT);
-	if (tr.fraction == 1.0)
-	{
-		// too far away
-		gi.sound (ent, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
-		return;
-	}
-	else if(!tr.ent)
-	{
-		// no hit
-		gi.sound (ent, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
-		return;
-	}
-	else if(Q_stricmp(tr.ent->classname,"worldspawn"))
-	{
-		// not a world brush
-		thickness = FindThickness(tr);
-		if(tr.ent->datafile)
-			Do_Text_Display(ent,1,tr.ent->datafile);
-		else
-		{
-			GetMaterialPropertyFromTexture(tr.surface->name,matl);
-			if(!Q_stricmp(tr.ent->classname,"func_door_rotating"))
-			{
-				int		axis;
-
-				axis = 1;
-				if(tr.ent->spawnflags &  64) axis = 2;
-				if(tr.ent->spawnflags & 128) axis = 0;
-				// Don't even try to report door width for doors not parallel to x or y
-				if(tr.plane.normal[0] == 0)
-				{
-					sprintf(message,"%s-hand door\nmaterial = %s\n"
-						"thickness = %i inches\nwidth = %i inches\nheight = %i inches",
-						(tr.ent->pos2[axis] > 0 ? "Right" : "Left"), matl,
-						(int)thickness,
-						(int)(tr.ent->absmax[0]-tr.ent->absmin[0]),
-						(int)(tr.ent->absmax[2]-tr.ent->absmin[2]));
-				}
-				else if(tr.plane.normal[1] == 0)
-				{
-					sprintf(message,"%s-hand door\nmaterial = %s\n"
-						"thickness = %i inches\nwidth = %i inches\nheight = %i inches",
-						(tr.ent->pos2[axis] > 0 ? "Right" : "Left"), matl,
-						(int)thickness,
-						(int)(tr.ent->absmax[1]-tr.ent->absmin[1]),
-						(int)(tr.ent->absmax[2]-tr.ent->absmin[2]));
-				}
-				else
-				{
-					sprintf(message,"%s-hand door\nmaterial = %s\n"
-							"thickness = %i inches\nheight = %i inches",
-						(tr.ent->pos2[axis] > 0 ? "Right" : "Left"), matl,
-						(int)thickness,(int)(tr.ent->absmax[2]-tr.ent->absmin[2]));
-				}
-			}
-			else if(!Q_stricmp(tr.ent->classname,"func_door"))
-			{
-				char	direction[16];
-
-				if(VectorCompare(tr.ent->movedir,MOVEDIR_UP))
-					strcpy(direction,"up");
-				else if(VectorCompare(tr.ent->movedir,MOVEDIR_DOWN))
-					strcpy(direction,"down");
-				else
-				{
-					vec_t	dot;
-					dot = DotProduct(tr.plane.normal,tr.ent->movedir);
-					if(dot > 0)
-						strcpy(direction,"to right");
-					else if(dot < 0)
-						strcpy(direction,"to left");
-					else
-					{
-						vec3_t	cross;
-						CrossProduct(tr.plane.normal,tr.ent->movedir,cross);
-						if(cross[2] > 0)
-							strcpy(direction,"to right");
-						else
-							strcpy(direction,"to left");
-					}
-				}
-				sprintf(message,"sliding door, opens %s\n"
-						"material = %s\nthickness = %i inches\n",
-						direction,matl,(int)thickness);
-				if(tr.plane.normal[0] == 0)
-				{
-					sprintf(append,"width = %i inches\n",
-						(int)(tr.ent->absmax[0]-tr.ent->absmin[0]));
-					strcat(message,append);
-				}
-				else if(tr.plane.normal[1] == 0)
-				{
-					sprintf(append,"width = %i inches\n",
-						(int)(tr.ent->absmax[1]-tr.ent->absmin[1]));
-					strcat(message,append);
-				}
-				sprintf(append,"height = %i inches\n",
-					(int)(tr.ent->absmax[2]-tr.ent->absmin[2]));
-				strcat(message,append);
-			}
-			else if(!Q_stricmp(tr.ent->classname,"func_explosive"))
-			{
-				if(tr.contents & CONTENTS_TRANSLUCENT)
-					sprintf(message,"Breakable window\n");
-				else
-					sprintf(message,"Breakable/Explodable object\n",
-									"damage when broken = %d\n",tr.ent->dmg);
-				sprintf(append,"thickness = %i inches\n",(int)thickness);
-				strcat(message,append);
-			}
-			else if(!Q_stricmp(tr.ent->classname,"func_pushable"))
-				sprintf(message,"Pushable crate\nweight = %d lb",tr.ent->mass);
-			else if(!Q_stricmp(tr.ent->classname,"misc_bomb"))
-				sprintf(message,"%d lb charge\n",tr.ent->mass);
-			else if(!Q_stricmp(tr.ent->classname,"misc_tank1"))
-				strcpy(message,"200 gallon tank\n");
-			else if(!Q_stricmp(tr.ent->classname,"misc_tank2"))
-				strcpy(message,"5000 gallon tank\n");
-			else
-			{
-				strcpy(message,tr.ent->classname);
-			}
-			Do_Text_Display(ent,2,message);
-		}
-		return;
-	}
-
-	GetMaterialPropertyFromTexture(tr.surface->name,matl);
-
-	thickness = FindThickness(tr);
-
-	if(thickness > 0.)
-		sprintf(message,"%s\nthickness = %g inches\n",matl,thickness);
-	else
-		sprintf(message,"%s\nunknown thickness\n",matl);
-
-	Do_Text_Display(ent, 2, message);
-}
-#endif
-
 /*
 =================
 ClientCommand
@@ -2355,7 +2049,7 @@ void ClientCommand (edict_t *ent)
 					if(e->classname)
 					{
 						// class-specific output
-						if(e->class_id == ENTITY_TARGET_CHANGELEVEL)
+						if(!Q_stricmp(e->classname,"target_changelevel"))
 							fprintf(f,"map=%s\n",e->map);
 					}
 					fprintf(f,"movetype=%d, solid=%d, clipmask=0x%08x\n",e->movetype,e->solid,e->clipmask);
@@ -2531,13 +2225,8 @@ void ClientCommand (edict_t *ent)
 		temp->think = Restart_FMOD;
 		temp->nextthink = level.time + 2;
 	}
-
-#ifdef WESQ2
-	else {
-#else
 	// debugging/developer stuff
 	else if(developer->value) {
-#endif
 		if (!Q_stricmp(cmd,"lightswitch"))
 			ToggleLights();
 		else if (!Q_stricmp(cmd,"bbox"))
@@ -2561,78 +2250,6 @@ void ClientCommand (edict_t *ent)
 				else
 					level.freeze = true;
 			}
-		}
-		else if (Q_stricmp (cmd, "goto") == 0)
-		{
-			if(!parm)
-				gi.dprintf("syntax: goto <target>\ntype \"destinations\" for a list of targets.\n");
-			else
-			{
-				edict_t		*dest;
-				int			i;
-				
-				dest = G_Find (NULL, FOFS(targetname), parm);
-				if (!dest)
-				{
-					gi.dprintf ("Couldn't find destination\n");
-					return;
-				}
-				
-				// unlink to make sure it can't possibly interfere with KillBox
-				gi.unlinkentity (ent);
-				VectorCopy (dest->s.origin, ent->s.origin);
-				VectorCopy (dest->s.origin, ent->s.old_origin);
-				ent->s.origin[2] += 10;
-				// clear the velocity and hold them in place briefly
-				VectorClear (ent->velocity);
-				ent->client->ps.pmove.pm_time = 160>>3;		// hold time
-				ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
-				// draw the teleport splash at source and on the player
-				ent->s.event = EV_PLAYER_TELEPORT;
-				// set angles
-				for (i=0 ; i<3 ; i++)
-				{
-					ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(dest->s.angles[i] - ent->client->resp.cmd_angles[i]);
-				}
-				VectorClear (ent->s.angles);
-				VectorClear (ent->client->ps.viewangles);
-				VectorClear (ent->client->v_angle);
-				// kill anything at the destination
-				KillBox (ent);
-				gi.linkentity (ent);
-			}
-		}
-		else if (Q_stricmp (cmd, "destinations") == 0 )
-		{
-			// Display a list of all named info_player_starts and info_notnulls with
-			// their locations. These entities might be used as targets of
-			// "goto" console commands (note that "goto" is not limited to these
-			// entity types, but these are the usual suspects.
-			edict_t	*dest;
-			int		count=0;
-			
-			dest = G_Find(NULL, FOFS(classname), "info_player_start");
-			while(dest)
-			{
-				if(dest->targetname)
-				{
-					gi.dprintf("\"%s\" at %s\n",dest->targetname,vtos(dest->s.origin));
-					count++;
-				}
-				dest = G_Find(dest, FOFS(classname), "info_player_start");
-			}
-			dest = G_Find(NULL, FOFS(classname), "info_notnull");
-			while(dest)
-			{
-				if(dest->targetname && (dest->spawnflags & 1))
-				{
-					gi.dprintf("\"%s\" at %s\n",dest->targetname,vtos(dest->s.origin));
-					count++;
-				}
-				dest = G_Find(dest, FOFS(classname), "info_notnull");
-			}
-			if(!count)
-				gi.dprintf("None found\n");
 		}
 		else if (!Q_stricmp(cmd,"hint_test"))
 		{
@@ -2670,9 +2287,6 @@ void ClientCommand (edict_t *ent)
 			}
 		}
 		else if (!Q_stricmp(cmd,"id")) {
-#ifdef WESQ2
-			Cmd_Identify_f(ent);
-#else
 			edict_t *viewing;
 			vec3_t	origin;
 			float	range;
@@ -2685,8 +2299,6 @@ void ClientCommand (edict_t *ent)
 			gi.dprintf("targetname=%s, target=%s, spawnflags=0x%04x\n",viewing->targetname,viewing->target,viewing->spawnflags);
 			gi.dprintf("absmin,absmax,size=%s, %s, %s, range=%g\n",vtos(viewing->absmin),vtos(viewing->absmax),vtos(viewing->size),range);
 			gi.dprintf("groundentity=%s\n",(viewing->groundentity ? viewing->groundentity->classname : "NULL"));
-			gi.dprintf("movedir=%g %g %g",viewing->movedir[0],viewing->movedir[1],viewing->movedir[2]);
-#endif
 		}
 		else if (!Q_stricmp(cmd, "item_left"))
 			ShiftItem(ent,1);
@@ -2710,12 +2322,6 @@ void ClientCommand (edict_t *ent)
 			ShiftItem(ent,512);
 		else if (!Q_stricmp(cmd, "item_release"))
 			ent->client->shift_dir = 0;
-#ifdef WESQ2
-		else if (!Q_stricmp(cmd, "delete_item"))
-			DeleteItem(ent);
-		else if (!Q_stricmp(cmd, "save_items"))
-			SaveItems();
-#endif
 		else if(!Q_stricmp(cmd,"medic_test"))
 		{
 			extern	int	medic_test;
@@ -2796,16 +2402,7 @@ void ClientCommand (edict_t *ent)
 		{
 			edict_t	*e;
 			vec3_t	forward;
-#ifdef WESQ2
-			int		iSpawn;
-
-			iSpawn = SpawnSlot();
-			if(iSpawn >= MAX_SPAWNED_ITEMS)
-			{
-				gi.sound (ent, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
-				return;
-			}
-#endif
+		
 			if(!parm)
 			{
 				gi.dprintf("syntax: spawn <classname>\n");
@@ -2818,13 +2415,6 @@ void ClientCommand (edict_t *ent)
 			VectorMA(ent->s.origin,128,forward,e->s.origin);
 			e->s.angles[YAW] = ent->s.angles[YAW];
 			ED_CallSpawn(e);
-#ifdef WESQ2
-			e->my_spawn = iSpawn+1;
-			strcpy(SpawnedItem[iSpawn].classname,e->classname);
-			VectorCopy(e->s.origin,SpawnedItem[iSpawn].origin);
-			SpawnedItem[iSpawn].angle = e->s.angles[1];
-			if(iSpawn == NumSpawnedItems) NumSpawnedItems++;
-#endif
 		}
 		else if(!Q_stricmp(cmd,"spawngoodguy"))
 		{
@@ -2880,13 +2470,6 @@ void ClientCommand (edict_t *ent)
 			VectorCopy(ent->maxs,decoy->maxs);
 			gi.linkentity (decoy); 
 		}
-		else if (!Q_stricmp(cmd,"stepleft")) {
-			vec3_t	left;
-			AngleVectors(ent->s.angles,NULL,left,NULL);
-			VectorNegate(left,left);
-			VectorMA(ent->s.origin,4,left,ent->s.origin);
-			gi.linkentity(ent);
-		}
 		else if (!Q_stricmp(cmd,"switch")) {
 			extern mmove_t	actor_move_switch;
 			edict_t *viewing;
@@ -2923,22 +2506,36 @@ void ClientCommand (edict_t *ent)
 					gi.dprintf("Texture=%s, surface=0x%08x, value=%d\n",tr.surface->name,tr.surface->flags,tr.surface->value);
 			}
 		}
-		else if(!Q_stricmp(cmd,"xray")) {
-			int		i;
-			edict_t	*e;
+		else if(!Q_stricmp(cmd,"surf")) {
+			trace_t	tr;
+			vec3_t	forward, start, end;
+			int		s;
 
-			xray = 1-xray;
-			for(i=game.maxclients+1; i<globals.num_edicts; i++)
+			if(gi.argc() < 2)
 			{
-				e = &g_edicts[i];
-				if(e->svflags & SVF_MONSTER)
-				{
-					if(xray)
-						e->s.renderfx |= RF_DEPTHHACK;
-					else
-						e->s.renderfx &= ~RF_DEPTHHACK;
-					gi.linkentity(e);
-				}
+				gi.dprintf("Syntax: surf <value>\n");
+				return;
+			}
+			else
+				s = atoi(gi.argv(1));
+
+			if(ent->client->chasetoggle)
+				VectorCopy(ent->client->chasecam->s.origin,start);
+			else {
+				VectorCopy(ent->s.origin, start);
+				start[2] += ent->viewheight;
+			}
+			AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+			VectorMA(start, 8192, forward, end);
+			tr = gi.trace(start,NULL,NULL,end,ent,MASK_ALL);
+			if(!tr.ent)
+				gi.dprintf("Nothing hit?\n");
+			else
+			{
+				if(!tr.surface)
+					gi.dprintf("Not a brush\n");
+				else
+					tr.surface->flags = s;
 			}
 		}
 		else
@@ -2946,9 +2543,6 @@ void ClientCommand (edict_t *ent)
 	}
 	// end debugging stuff
 
-#ifndef WESQ2
 	else	// anything that doesn't match a command will be a chat
 		Cmd_Say_f (ent, false, true);
-#endif
-
 }

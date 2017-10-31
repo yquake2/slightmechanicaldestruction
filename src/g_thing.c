@@ -56,21 +56,6 @@ void thing_think (edict_t *self)
 			{
 				if(monster->health > 0)
 				{
-					if(monster->monsterinfo.aiflags & AI_SEEK_ENEMY)
-					{
-						if(monster->enemy && monster->enemy->inuse)
-						{
-							if(visible(monster,monster->enemy))
-							{
-								monster->monsterinfo.aiflags &= ~(AI_CHASE_THING | AI_SEEK_ENEMY);
-								monster->movetarget = monster->goalentity = monster->enemy;
-								VectorSubtract (monster->enemy->s.origin, monster->s.origin, vec);
-								monster->ideal_yaw = vectoyaw(vec);
-								G_FreeEdict(self);
-								return;
-							}
-						}
-					}
 					VectorSubtract(monster->s.origin,self->s.origin,vec);
 					vec[2] = 0;
 					dist = VectorLength(vec);
@@ -117,7 +102,7 @@ void thing_think (edict_t *self)
 		monster->monsterinfo.pausetime = level.time + 100000;
 	}
 	monster->vehicle = NULL;
-	monster->monsterinfo.aiflags &= ~(AI_CHASE_THING | AI_SEEK_COVER | AI_EVADE_GRENADE | AI_SEEK_ENEMY);
+	monster->monsterinfo.aiflags &= ~(AI_CHASE_THING | AI_SEEK_COVER | AI_EVADE_GRENADE);
 
 	G_FreeEdict(self);
 	if (has_valid_enemy(monster))
@@ -223,7 +208,7 @@ void thing_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 			// make sure this is still a grenade
 			if(grenade->inuse)
 			{
-				if((grenade->class_id != ENTITY_GRENADE) && (grenade->class_id != ENTITY_HANDGRENADE))
+				if(Q_stricmp(grenade->classname,"grenade") && Q_stricmp(grenade->classname,"hgrenade"))
 					other->next_grenade = grenade = NULL;
 			}
 			else
@@ -287,7 +272,6 @@ void thing_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 
 void SP_thing (edict_t *self)
 {
-	self->class_id = ENTITY_THING;
 	self->solid                = SOLID_TRIGGER;
 	VectorSet(self->mins,-4,-4,-4);
 	VectorSet(self->maxs, 4, 4, 4);

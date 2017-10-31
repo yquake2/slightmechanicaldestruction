@@ -47,7 +47,6 @@ void ChasecamStart (edict_t *ent)
 	* slowly backwards from the player model */
 	VectorCopy (ent->s.origin, chasecam->s.origin); 	   
 	chasecam->classname = "chasecam";
-	chasecam->class_id  = ENTITY_CHASECAM;
 	chasecam->prethink = ChasecamTrack;
 	// Lazarus: Need think???
 	chasecam->think = ChasecamTrack;
@@ -115,7 +114,6 @@ void ChasecamRemove (edict_t *ent, int opt)
 		VectorClear (ent->client->chasecam->mins);
 		VectorClear (ent->client->chasecam->maxs);
 		ent->client->chasecam->classname = "chasecam";
-		ent->client->chasecam->class_id = ENTITY_CHASECAM;
 		ent->client->chasecam->prethink = ChasecamRestart; // begin checking for emergence from the water
 		// Lazarus: Need think don't we???
 		ent->client->chasecam->think = ChasecamRestart;

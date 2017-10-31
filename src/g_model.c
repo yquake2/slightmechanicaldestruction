@@ -109,7 +109,6 @@ void SP_model_spawn (edict_t *ent)
 		G_FreeEdict(ent);
 		return;
 	}
-	ent->class_id = ENTITY_MODEL_SPAWN;
 
 	switch (ent->solidstate)
 	{
@@ -189,7 +188,7 @@ void SP_model_spawn (edict_t *ent)
 	{
 		if (ent->spawnflags & PLAYER_MODEL) {
 			if(!ent->usermodel || !strlen(ent->usermodel))
-				ent->s.modelindex = MAX_MODELS-1;
+				ent->s.modelindex = 255;
 			else
 			{
 				if(strstr(ent->usermodel,"tris.md2"))

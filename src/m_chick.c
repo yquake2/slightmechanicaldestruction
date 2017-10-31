@@ -9,6 +9,11 @@ chick
 #include "g_local.h"
 #include "m_chick.h"
 
+//CW+++
+#define CHICK_FLIP_TIME		0.5		//duration of backflip (seconds)
+#define CHICK_FLIP_SPEED	100		//horizontal velocity for backflip
+//CW---
+
 qboolean visible (edict_t *self, edict_t *other);
 
 void chick_stand (edict_t *self);
@@ -33,6 +38,7 @@ static int	sound_pain3;
 static int	sound_sight;
 static int	sound_search;
 
+float chick_flip_z[6] = {60, 48, 28, 20, -10, -15};	//CW: z-axis origin offsets during flip frames
 
 void ChickMoan (edict_t *self)
 {
@@ -267,12 +273,15 @@ void chick_pain (edict_t *self, edict_t *other, float kick, int damage)
 	else
 		gi.sound (self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;				// no pain anims in nightmare (CW: or hard)
 
-	if (damage <= 10)
+	if (damage <= 10)		//CW: shrug off low damage
+		return;
+
+	if (damage <= 20)		//CW: increased damage resistance
 		self->monsterinfo.currentmove = &chick_move_pain1;
-	else if (damage <= 25)
+	else if (damage <= 35)	//CW: increased damage resistance
 		self->monsterinfo.currentmove = &chick_move_pain2;
 	else
 		self->monsterinfo.currentmove = &chick_move_pain3;
@@ -280,6 +289,11 @@ void chick_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void chick_dead (edict_t *self)
 {
+//CW+++ Reset from backflip.
+	self->s.angles[0] = 0.0;
+	self->avelocity[0] = 0.0;
+//CW---
+
 	VectorSet (self->mins, -16, -16, 0);
 	VectorSet (self->maxs, 16, 16, 16);
 	self->movetype = MOVETYPE_TOSS;
@@ -289,10 +303,10 @@ void chick_dead (edict_t *self)
 	M_FlyCheck (self);
 
 	// Lazarus monster fade
-	if(world->effects & FX_WORLDSPAWN_CORPSEFADE)
+	if (world->effects & FX_WORLDSPAWN_CORPSEFADE)
 	{
-		self->think=FadeDieSink;
-		self->nextthink=level.time+corpse_fadetime->value;
+		self->think = FadeDieSink;
+		self->nextthink = level.time + corpse_fadetime->value;
 	}
 }
 
@@ -347,6 +361,7 @@ void chick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	int		n;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_NONE;
+
 // check for gib
 	if (self->health <= self->gib_health && !(self->spawnflags & SF_MONSTER_NOGIB))
 	{
@@ -380,15 +395,14 @@ void chick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	}
 }
 
-
 void chick_duck_down (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_DUCKED)
 		return;
+
 	self->monsterinfo.aiflags |= AI_DUCKED;
 	self->maxs[2] -= 32;
 	self->takedamage = DAMAGE_YES;
-	self->monsterinfo.pausetime = level.time + 1;
 	gi.linkentity (self);
 }
 
@@ -420,15 +434,93 @@ mframe_t chick_frames_duck [] =
 };
 mmove_t chick_move_duck = {FRAME_duck01, FRAME_duck07, chick_frames_duck, chick_run};
 
-void chick_dodge (edict_t *self, edict_t *attacker, float eta)
+//CW+++ Dodge by flipping back and up.
+void chick_start_backflip(edict_t *self)
 {
-	if (random() > 0.25)
+	if (self->monsterinfo.aiflags & AI_DUCKED)
 		return;
 
+	self->bobframe = 0;
+	self->monsterinfo.aiflags |= AI_DUCKED;
+	self->maxs[2] -= 32;
+	self->takedamage = DAMAGE_YES;
+	self->monsterinfo.pausetime = level.time + CHICK_FLIP_TIME + FRAMETIME;
+	self->avelocity[0] = -360 / CHICK_FLIP_TIME;
+	self->velocity[0] = (crandom() * 40) - (CHICK_FLIP_SPEED * cos(self->s.angles[1] * PI/180));
+	self->velocity[1] = (crandom() * 40) - (CHICK_FLIP_SPEED * sin(self->s.angles[1] * PI/180));
+	self->s.origin[2] += chick_flip_z[self->bobframe++];
+	gi.linkentity(self);
+}
+
+void chick_backflip(edict_t *self)
+{
+	if (level.time > self->monsterinfo.pausetime)
+	{
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->avelocity[0] = 0.0;
+		gi.linkentity(self);
+	}
+	else
+	{
+		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		self->s.origin[2] += chick_flip_z[self->bobframe++];
+		gi.linkentity(self);
+	}
+}
+
+void chick_end_backflip(edict_t *self)
+{
+	self->monsterinfo.aiflags &= ~AI_DUCKED;
+	self->maxs[2] += 32;
+	self->takedamage = DAMAGE_AIM;
+	self->s.angles[0] = 0.0;
+	self->avelocity[0] = 0.0;
+	gi.linkentity (self);
+}
+
+mframe_t chick_frames_backflip[] =
+{
+	ai_move, -10, chick_start_backflip,
+	ai_move,  0, chick_backflip,
+	ai_move,  0, NULL,
+	ai_move,  0, NULL,
+	ai_move,  2, chick_end_backflip
+};
+mmove_t chick_move_backflip = {FRAME_duck03, FRAME_duck07, chick_frames_backflip, chick_run};
+//CW---
+
+void chick_dodge(edict_t *self, edict_t *attacker, float eta)
+{
 	if (!self->enemy)
 		self->enemy = attacker;
 
-	self->monsterinfo.currentmove = &chick_move_duck;
+//CW+++
+	if (self->monsterinfo.aiflags & AI_DUCKED)
+		return;
+
+	if (self->busy)		//don't dodge if currently firing
+		return;
+//CW---
+
+	if (random() > (0.5 + 0.1*skill->value))	//CW: was 0.25; changed due to backflipping
+		return;
+
+//CW+++
+//	Mostly backflip to dodge.
+
+	if ((random() < 0.75) || (eta > 1.0))
+		self->monsterinfo.currentmove = &chick_move_backflip;
+	else
+	{
+		if (eta > 1.0)			// would be vulnerable for too long
+			return;
+		else
+		{
+			self->monsterinfo.pausetime = level.time + eta + 0.5;	//CW: was + 1, in duck_down()
+//CW---
+			self->monsterinfo.currentmove = &chick_move_duck;
+		}
+	}
 }
 
 void ChickSlash (edict_t *self)
@@ -453,28 +545,29 @@ void ChickRocket (edict_t *self)
 	vec3_t	vec;
 	int		rocketSpeed;
 
+	if (!self->enemy || !self->enemy->inuse)	//CW
+		return;
+
 	AngleVectors (self->s.angles, forward, right, NULL);
 	G_ProjectSource (self->s.origin, monster_flash_offset[MZ2_CHICK_ROCKET_1], forward, right, start);
 
-	if((self->spawnflags & SF_MONSTER_SPECIAL))
+	if ((self->spawnflags & SF_MONSTER_SPECIAL))
 		rocketSpeed = 400; // DWH: Homing rockets are tougher if slow
 	else
 		rocketSpeed = 500 + (100 * skill->value);	// PGM rock & roll.... :)
 
-	if(visible(self,self->enemy))
+	if (visible(self, self->enemy))
 	{
 		VectorCopy (self->enemy->s.origin, vec);
-		if(!(self->enemy->flags & FL_REFLECT))
-		{
-			if(random() < 0.66 || (start[2] < self->enemy->absmin[2]))
-				vec[2] += self->enemy->viewheight;
-			else
-				vec[2] = self->enemy->absmin[2];
-		}
+		if (random() < 0.66 || (start[2] < self->enemy->absmin[2]))
+			vec[2] += self->enemy->viewheight;
+		else
+			vec[2] = self->enemy->absmin[2];
+
 		VectorSubtract (vec, start, dir);
 
 		// Lazarus fog reduction of accuracy
-		if(self->monsterinfo.visibility < FOG_CANSEEGOOD)
+		if (self->monsterinfo.visibility < FOG_CANSEEGOOD)
 		{
 			vec[0] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
 			vec[1] += crandom() * 640 * (FOG_CANSEEGOOD - self->monsterinfo.visibility);
@@ -485,7 +578,8 @@ void ChickRocket (edict_t *self)
 		// 20, 35, 50, 65 chance of leading
 		// DWH: Switched this around from Rogue code... it led target more often
 		//      for Easy, which seemed backwards
-		if( (random() < (0.2 + skill->value * 0.15) ) && !(self->spawnflags & SF_MONSTER_SPECIAL))
+
+		if ((random() < (0.2 + skill->value * 0.15) ) && !(self->spawnflags & SF_MONSTER_SPECIAL))
 		{
 			float	dist;
 			float	time;
@@ -501,36 +595,27 @@ void ChickRocket (edict_t *self)
 		// Fire at feet of last known position
 		VectorCopy(self->monsterinfo.last_sighting,vec);
 		vec[2] += self->enemy->mins[2];
-		VectorSubtract(vec,start,dir);
+		VectorSubtract(vec, start, dir);
 	}
 
 	VectorNormalize(dir);
 
-	if(self->enemy->flags & FL_REFLECT)
+	// paranoia, make sure we're not shooting a target right next to us
+	trace = gi.trace(start, vec3_origin, vec3_origin, vec, self, MASK_SHOT);
+	if (trace.ent == self->enemy || trace.ent == world)
 	{
-		// If forcing chick to shoot at reflection, go ahead
-		monster_fire_rocket (self, start, dir, 50, rocketSpeed, MZ2_CHICK_ROCKET_1,
-			(self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL) );
-	}
-	else
-	{
-		// paranoia, make sure we're not shooting a target right next to us
-		trace = gi.trace(start, vec3_origin, vec3_origin, vec, self, MASK_SHOT);
-		if(trace.ent == self->enemy || trace.ent == world)
+		VectorSubtract(trace.endpos,start,vec);
+		if (VectorLength(vec) > MELEE_DISTANCE)
 		{
-			VectorSubtract(trace.endpos,start,vec);
-			if(VectorLength(vec) > MELEE_DISTANCE)
-			{
-				if(trace.fraction > 0.5 || (trace.ent && trace.ent->client))
-					monster_fire_rocket (self, start, dir, 50, rocketSpeed, MZ2_CHICK_ROCKET_1,
-						(self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL) );
-			}
+			if (trace.fraction > 0.5 || (trace.ent && trace.ent->client))
+				monster_fire_rocket (self, start, dir, 50, rocketSpeed, MZ2_CHICK_ROCKET_1, (self->spawnflags & SF_MONSTER_SPECIAL ? self->enemy : NULL));
 		}
 	}
 }	
 
 void Chick_PreAttack1 (edict_t *self)
 {
+	self->busy = true;		//CW: ensure dodging routines don't get executed
 	gi.sound (self, CHAN_VOICE, sound_missile_prelaunch, 1, ATTN_NORM, 0);
 }
 
@@ -541,15 +626,15 @@ void ChickReload (edict_t *self)
 
 void chick_skip_frames (edict_t *self)
 {
-	if(skill->value >= 1)
+	if (skill->value >= 1)
 	{
-		if(self->s.frame == FRAME_attak102)
+		if (self->s.frame == FRAME_attak102)
 			self->s.frame = FRAME_attak103;
-		if(self->s.frame == FRAME_attak105)
+		if (self->s.frame == FRAME_attak105)
 			self->s.frame = FRAME_attak106;
 	}
-	if(skill->value > 1)
-		if(self->s.frame == FRAME_attak109)
+	if (skill->value > 1)
+		if (self->s.frame == FRAME_attak109)
 			self->s.frame = FRAME_attak112;
 }
 
@@ -588,7 +673,6 @@ mframe_t chick_frames_attack1 [] =
 	ai_charge, 6,	NULL,
 	ai_charge, 4,	NULL,
 	ai_charge, 3,	chick_rerocket
-
 };
 mmove_t chick_move_attack1 = {FRAME_attak114, FRAME_attak127, chick_frames_attack1, NULL};
 
@@ -604,16 +688,20 @@ mmove_t chick_move_end_attack1 = {FRAME_attak128, FRAME_attak132, chick_frames_e
 
 void chick_rerocket(edict_t *self)
 {
-	if (self->enemy->health > 0)
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
+	if ((self->enemy->health > 0) && (range(self, self->enemy) > RANGE_MELEE) && (visible(self, self->enemy)))
 	{
-		if (range (self, self->enemy) > RANGE_MELEE)
-			if ( visible (self, self->enemy) )
-				if (random() <= 0.6)
-				{
-					self->monsterinfo.currentmove = &chick_move_attack1;
-					return;
-				}
-	}	
+		if (random() <= (0.5 + 0.1*skill->value))	//CW: was just >= 0.6
+		{
+			self->monsterinfo.currentmove = &chick_move_attack1;
+			return;
+		}
+	}
+	self->busy = false;		//CW: reset so dodging routines can be executed as normal
 	self->monsterinfo.currentmove = &chick_move_end_attack1;
 }
 
@@ -648,6 +736,11 @@ mmove_t chick_move_end_slash = {FRAME_attak213, FRAME_attak216, chick_frames_end
 
 void chick_reslash(edict_t *self)
 {
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return;
+//CW--
+
 	if (self->enemy->health > 0)
 	{
 		if (range (self, self->enemy) == RANGE_MELEE)
@@ -706,7 +799,6 @@ void SP_monster_chick (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_CHICK;
 
 	sound_missile_prelaunch	= gi.soundindex ("chick/chkatck1.wav");	
 	sound_missile_launch	= gi.soundindex ("chick/chkatck2.wav");	
@@ -742,7 +834,7 @@ void SP_monster_chick (edict_t *self)
 	if(!self->health)
 		self->health = 175;
 	if(!self->gib_health)
-		self->gib_health = -70;
+		self->gib_health = -100;	//CW: was -70
 	if(!self->mass)
 		self->mass = 200;
 
@@ -757,15 +849,25 @@ void SP_monster_chick (edict_t *self)
 	self->monsterinfo.melee = chick_melee;
 	self->monsterinfo.sight = chick_sight;
 
-	// Lazarus
-	if(self->powerarmor) {
+//CW+++ Use negative powerarmor values to give the monster a Power Screen.
+	if (self->powerarmor < 0)
+	{
+		self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+		self->monsterinfo.power_armor_power = -self->powerarmor;
+	}
+//CW---
+//DWH+++
+	else if (self->powerarmor > 0)
+	{
 		self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 		self->monsterinfo.power_armor_power = self->powerarmor;
 	}
-	if(!self->monsterinfo.flies)
-		self->monsterinfo.flies = 0.40;
-	self->common_name = "Iron Maiden";
+//DWH---
 
+	//if (!self->monsterinfo.flies)
+	//	self->monsterinfo.flies = 0.40;
+
+	self->common_name = "Iron Maiden";
 	gi.linkentity (self);
 
 	self->monsterinfo.currentmove = &chick_move_stand;

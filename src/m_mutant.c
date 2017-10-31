@@ -239,7 +239,7 @@ void mutant_hit_left (edict_t *self)
 	vec3_t	aim;
 
 	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 8);
-	if (fire_hit (self, aim, (10 + (rand() %5)), 100))
+	if (fire_hit (self, aim, (15 + (rand() %5)), 100))	//CW: base dmg was 10
 		gi.sound (self, CHAN_WEAPON, sound_hit, 1, ATTN_NORM, 0);
 	else
 		gi.sound (self, CHAN_WEAPON, sound_swing, 1, ATTN_NORM, 0);
@@ -250,7 +250,7 @@ void mutant_hit_right (edict_t *self)
 	vec3_t	aim;
 
 	VectorSet (aim, MELEE_DISTANCE, self->maxs[0], 8);
-	if (fire_hit (self, aim, (10 + (rand() %5)), 100))
+	if (fire_hit (self, aim, (15 + (rand() %5)), 100))	//CW: base dmg was 10
 		gi.sound (self, CHAN_WEAPON, sound_hit2, 1, ATTN_NORM, 0);
 	else
 		gi.sound (self, CHAN_WEAPON, sound_swing, 1, ATTN_NORM, 0);
@@ -261,7 +261,7 @@ void mutant_check_refire (edict_t *self)
 	if (!self->enemy || !self->enemy->inuse || self->enemy->health <= 0)
 		return;
 
-	if ( ((skill->value == 3) && (random() < 0.5)) || (range(self, self->enemy) == RANGE_MELEE) )
+	if ((random() <= (0.2*skill->value)) || (range(self, self->enemy) == RANGE_MELEE)) //CW: was < 0.5 (for skill 3 only)
 		self->monsterinfo.nextframe = FRAME_attack09;
 }
 
@@ -380,8 +380,14 @@ void mutant_jump (edict_t *self)
 
 qboolean mutant_check_melee (edict_t *self)
 {
-	if (range (self, self->enemy) == RANGE_MELEE)
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return false;
+//CW--
+
+	if (range(self, self->enemy) == RANGE_MELEE)
 		return true;
+
 	return false;
 }
 
@@ -390,6 +396,11 @@ qboolean mutant_check_jump (edict_t *self)
 	vec3_t	v;
 	float	distance;
 	vec_t	speed=0;
+
+//CW++	Fix potential crashes
+	if (!self->enemy)
+		return false;
+//CW--
 
 	if (monsterjump->value)
 	{
@@ -419,13 +430,15 @@ qboolean mutant_check_jump (edict_t *self)
 
 	if (distance < 100)
 		return false;
+
 	if (distance > 100)
 	{
 		if (random() < 0.9)
 			return false;
 	}
-	if(speed)
+	if (speed)
 		self->velocity[2] = speed;
+
 	return true;
 }
 
@@ -443,7 +456,7 @@ qboolean mutant_checkattack (edict_t *self)
 	if (mutant_check_jump(self))
 	{
 		self->monsterinfo.attack_state = AS_MISSILE;
-		// FIXME play a jump sound here
+		//CWFIXME: play a jump sound here
 		return true;
 	}
 
@@ -504,8 +517,11 @@ void mutant_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (skill->value > 1)  
+		return;		// no pain anims in nightmare (CW: or hard)
+
+	if (damage <= 10)	//CW: shrug off low damage
+		return;
 
 	r = random();
 	if (r < 0.33)
@@ -643,8 +659,6 @@ void SP_monster_mutant (edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_MONSTER_MUTANT;
-	self->spawnflags |= SF_MONSTER_KNOWS_MIRRORS;
 
 	sound_swing = gi.soundindex ("mutant/mutatck1.wav");
 	sound_hit = gi.soundindex ("mutant/mutatck2.wav");
@@ -678,7 +692,7 @@ void SP_monster_mutant (edict_t *self)
 	if(!self->health)
 		self->health = 300;
 	if(!self->gib_health)
-		self->gib_health = -120;
+		self->gib_health = -130;		//CW: was -120
 	if(!self->mass)
 		self->mass = 300;
 
@@ -698,15 +712,15 @@ void SP_monster_mutant (edict_t *self)
 	if(monsterjump->value)
 	{
 		self->monsterinfo.jump = mutant_fake_jump;
-		self->monsterinfo.jumpup = 96;
-		self->monsterinfo.jumpdn = 160;
+		self->monsterinfo.jumpup = 130;		//CW: was 96
+		self->monsterinfo.jumpdn = 270;		//CW: was 160
 	}
 
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &mutant_move_stand;
-	if(!self->monsterinfo.flies)
+	if (!self->monsterinfo.flies)
 		self->monsterinfo.flies = 0.90;
-	if(self->health < 0)
+	if (self->health < 0)
 	{
 		mmove_t	*deathmoves[] = {&mutant_move_death1,
 			                     &mutant_move_death2,

@@ -116,9 +116,9 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	VectorAdd (ent->s.origin, move, neworg);
 
 	AngleVectors(ent->s.angles,forward,NULL,up);
-	if(ent->enemy)
+	if (ent->enemy)
 		target = ent->enemy;
-	else if(ent->movetarget)
+	else if (ent->movetarget)
 		target = ent->movetarget;
 	else
 		target = NULL;
@@ -217,15 +217,15 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 
 	// Determine whether monster is capable of and/or should jump
 	jump = 0;
-	if((ent->monsterinfo.jump) && !(ent->monsterinfo.aiflags & AI_DUCKED))
+	if ((ent->monsterinfo.jump) && !(ent->monsterinfo.aiflags & AI_DUCKED))
 	{
 		// Don't jump if path is blocked by monster or player. Otherwise,
 		// monster might attempt to jump OVER the monster/player, which 
 		// ends up looking a bit goofy. Also don't jump if the monster's
 		// movement isn't deliberate (target=NULL)
-		if(trace.ent && (trace.ent->client || (trace.ent->svflags & SVF_MONSTER)))
+		if (trace.ent && (trace.ent->client || (trace.ent->svflags & SVF_MONSTER)))
 			canjump = false;
-		else if(target)
+		else if (target)
 		{
 			// Never jump unless it places monster closer to his goal
 			vec3_t	dir;
@@ -233,7 +233,7 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 			d1 = VectorLength(dir);
 			VectorSubtract(target->s.origin, trace.endpos, dir);
 			d2 = VectorLength(dir);
-			if(d2 < d1)
+			if (d2 < d1)
 				canjump = true;
 			else
 				canjump = false;
@@ -246,13 +246,13 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 
 	if (trace.allsolid)
 	{
-		if(canjump && (ent->monsterinfo.jumpup > 0))
+		if (canjump && (ent->monsterinfo.jumpup > 0))
 		{
 			neworg[2] += ent->monsterinfo.jumpup - stepsize;
 			trace = gi.trace (neworg, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
 			if (!trace.allsolid && !trace.startsolid && trace.fraction > 0 && (trace.plane.normal[2] > 0.9))
 			{
-				if(!trace.ent || (!trace.ent->client && !(trace.ent->svflags & SVF_MONSTER) && !(trace.ent->svflags & SVF_DEADMONSTER)))
+				if (!trace.ent || (!trace.ent->client && !(trace.ent->svflags & SVF_MONSTER) && !(trace.ent->svflags & SVF_DEADMONSTER)))
 				{
 					// Good plane to jump on. Make sure monster is more or less facing
 					// the obstacle to avoid cutting-corners jumps
@@ -261,7 +261,7 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 
 					VectorMA(ent->s.origin,1024,forward,p2);
 					tr = gi.trace(ent->s.origin,ent->mins,ent->maxs,p2,ent,MASK_MONSTERSOLID);
-					if(DotProduct(tr.plane.normal,forward) < -0.95)
+					if (DotProduct(tr.plane.normal,forward) < -0.95)
 					{
 						jump = 1;
 						jumpheight = trace.endpos[2] - ent->s.origin[2];
@@ -320,29 +320,29 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	// Lazarus: Don't intentionally move closer to a grenade,
 	//          but don't perform this check if we're already evading some
 	//          other problem (maybe even this grenade)
-	if(!(ent->monsterinfo.aiflags & AI_CHASE_THING))
+	if (!(ent->monsterinfo.aiflags & AI_CHASE_THING))
 	{
 		grenade = NULL;
 		while( (grenade=findradius(grenade,neworg,128)) != NULL)
 		{
-			if(!grenade->inuse)
+			if (!grenade->inuse)
 				continue;
-			if(!grenade->classname)
+			if (!grenade->classname)
 				continue;
-			if((grenade->class_id == ENTITY_GRENADE) || (grenade->class_id == ENTITY_HANDGRENADE))
+			if (!Q_stricmp(grenade->classname,"grenade") || !Q_stricmp(grenade->classname,"hgrenade"))
 			{
 				VectorSubtract(grenade->s.origin,oldorg,dir);
 				g1 = VectorLength(dir);
 				VectorSubtract(grenade->s.origin,neworg,dir);
 				g2 = VectorLength(dir);
-				if(g2 < g1)
+				if (g2 < g1)
 					return false;
 			}
 		}
 	}
 	// Lazarus: Don't intentionally walk into lasers.
 	dist = VectorLength(move);
-	if(dist > 0.)
+	if (dist > 0.)
 	{
 		edict_t		*e;
 		trace_t		laser_trace;
@@ -354,23 +354,23 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 		for(i=game.maxclients+1; i<globals.num_edicts; i++)
 		{
 			e = &g_edicts[i];
-			if(!e->inuse)
+			if (!e->inuse)
 				continue;
-			if(!e->classname)
+			if (!e->classname)
 				continue;
-			if(e->class_id != ENTITY_TARGET_LASER)
+			if (Q_stricmp(e->classname,"target_laser"))
 				continue;
-			if(e->svflags & SVF_NOCLIENT)
+			if (e->svflags & SVF_NOCLIENT)
 				continue;
-			if( (e->style == 2) || (e->style == 3))
+			if ( (e->style == 2) || (e->style == 3))
 				continue;
-			if(!gi.inPVS(ent->s.origin,e->s.origin))
+			if (!gi.inPVS(ent->s.origin,e->s.origin))
 				continue;
 			// Check to see if monster is ALREADY in the path of this laser.
 			// If so, allow the move so he can get out.
 			VectorMA(e->s.origin,2048,e->movedir,laser_end);
 			laser_trace = gi.trace(e->s.origin,NULL,NULL,laser_end,NULL,CONTENTS_SOLID|CONTENTS_MONSTER);
-			if(laser_trace.ent == ent)
+			if (laser_trace.ent == ent)
 				continue;
 			VectorCopy(laser_trace.endpos,laser_end);
 			laser_mins[0] = min(e->s.origin[0],laser_end[0]);
@@ -385,12 +385,12 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 			monster_maxs[0] = max(oldorg[0],trace.endpos[0]) + ent->maxs[0];
 			monster_maxs[1] = max(oldorg[1],trace.endpos[1]) + ent->maxs[1];
 			monster_maxs[2] = max(oldorg[2],trace.endpos[2]) + ent->maxs[2];
-			if( monster_maxs[0] < laser_mins[0] ) continue;
-			if( monster_maxs[1] < laser_mins[1] ) continue;
-			if( monster_maxs[2] < laser_mins[2] ) continue;
-			if( monster_mins[0] > laser_maxs[0] ) continue;
-			if( monster_mins[1] > laser_maxs[1] ) continue;
-			if( monster_mins[2] > laser_maxs[2] ) continue;
+			if ( monster_maxs[0] < laser_mins[0] ) continue;
+			if ( monster_maxs[1] < laser_mins[1] ) continue;
+			if ( monster_maxs[2] < laser_mins[2] ) continue;
+			if ( monster_mins[0] > laser_maxs[0] ) continue;
+			if ( monster_mins[1] > laser_maxs[1] ) continue;
+			if ( monster_mins[2] > laser_maxs[2] ) continue;
 			// If we arrive here, some part of the bounding box surrounding
 			// monster's total movement intersects laser bounding box.
 			// If laser is parallel to x, y, or z, we definitely
@@ -403,11 +403,11 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 			VectorNormalize2(move,dir);
 			while(delta < dist+15.875)
 			{
-				if(delta > dist) delta = dist;
+				if (delta > dist) delta = dist;
 				VectorMA(e->s.origin,    -delta,dir,laser_start);
 				VectorMA(e->s.old_origin,-delta,dir,laser_end);
 				laser_trace = gi.trace(laser_start,NULL,NULL,laser_end,world,CONTENTS_SOLID|CONTENTS_MONSTER);
-				if(laser_trace.ent == ent)
+				if (laser_trace.ent == ent)
 					return false;
 				delta += 16;
 			}
@@ -417,9 +417,9 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	{
 		end[2] = oldorg[2] + move[2] - ent->monsterinfo.jumpdn;
 		trace = gi.trace (neworg, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID | MASK_WATER);
-		if(trace.fraction < 1 && (trace.plane.normal[2] > 0.9) && (trace.contents & MASK_SOLID) && (neworg[2] - 16 > trace.endpos[2]))
+		if (trace.fraction < 1 && (trace.plane.normal[2] > 0.9) && (trace.contents & MASK_SOLID) && (neworg[2] - 16 > trace.endpos[2]))
 		{
-			if(!trace.ent || (!trace.ent->client && !(trace.ent->svflags & SVF_MONSTER) && !(trace.ent->svflags & SVF_DEADMONSTER)))
+			if (!trace.ent || (!trace.ent->client && !(trace.ent->svflags & SVF_MONSTER) && !(trace.ent->svflags & SVF_DEADMONSTER)))
 				jump = -1;
 		}
 	}
@@ -445,7 +445,7 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	// check point traces down for dangling corners
 	VectorCopy (trace.endpos, ent->s.origin);
 
-	if(!jump)
+	if (!jump)
 	{
 		qboolean	skip = false;
 		// if monster CAN jump down, and a position just a bit forward would be 
@@ -457,19 +457,19 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 
 			VectorMA(oldorg,48,forward,p1);
 			tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, p1, ent, MASK_MONSTERSOLID);
-			if(tr.fraction == 1)
+			if (tr.fraction == 1)
 			{
 				p2[0] = p1[0];
 				p2[1] = p1[1];
 				p2[2] = p1[2] - ent->monsterinfo.jumpdn;
 				tr = gi.trace(p1,ent->mins,ent->maxs,p2,ent,MASK_MONSTERSOLID | MASK_WATER);
-				if(tr.fraction < 1 && (tr.plane.normal[2] > 0.9) && (tr.contents & MASK_SOLID) && (p1[2] - 16 > tr.endpos[2]))
+				if (tr.fraction < 1 && (tr.plane.normal[2] > 0.9) && (tr.contents & MASK_SOLID) && (p1[2] - 16 > tr.endpos[2]))
 				{
-					if(!tr.ent || (!tr.ent->client && !(tr.ent->svflags & SVF_MONSTER) && !(tr.ent->svflags & SVF_DEADMONSTER)))
+					if (!tr.ent || (!tr.ent->client && !(tr.ent->svflags & SVF_MONSTER) && !(tr.ent->svflags & SVF_DEADMONSTER)))
 					{
 						VectorSubtract(target->s.origin, tr.endpos, dir);
 						d2 = VectorLength(dir);
-						if(d2 < d1)
+						if (d2 < d1)
 							skip = true;
 					}
 				}
@@ -501,14 +501,14 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 		ent->flags &= ~FL_PARTIALGROUND;
 	}
 	ent->groundentity = trace.ent;
-	if(trace.ent)
+	if (trace.ent)
 		ent->groundentity_linkcount = trace.ent->linkcount;
 
 // the move is ok
-	if(jump)
+	if (jump)
 	{
 		VectorScale(move, 10, ent->velocity);
-		if(jump > 0)
+		if (jump > 0)
 		{
 			ent->monsterinfo.jump(ent);
 			ent->velocity[2] = 2.5*jumpheight + 80;
@@ -516,10 +516,10 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 		else
 		{
 			ent->velocity[2] = max(ent->velocity[2],100);
-			if(oldorg[2] - ent->s.origin[2] > 48)
+			if (oldorg[2] - ent->s.origin[2] > 48)
 				ent->s.origin[2] = oldorg[2] + ent->velocity[2]*FRAMETIME;
 		}
-		if(relink)
+		if (relink)
 		{
 			gi.linkentity (ent);
 			G_TouchTriggers (ent);
@@ -651,7 +651,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	if (!enemy)
 		return;
 
-	if(actor->flags & FL_ROBOT)
+	if (actor->flags & FL_ROBOT)
 		olddir = anglemod( (int)(actor->ideal_yaw+0.5) );
 	else
 		olddir = anglemod( (int)(actor->ideal_yaw/45)*45 );
@@ -660,7 +660,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	deltax = enemy->s.origin[0] - actor->s.origin[0];
 	deltay = enemy->s.origin[1] - actor->s.origin[1];
 
-	if(actor->flags & FL_ROBOT)
+	if (actor->flags & FL_ROBOT)
 	{
 		d[1] = d[2] = olddir;
 	}
@@ -683,7 +683,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 // try direct route
 	if (d[1] != DI_NODIR && d[2] != DI_NODIR)
 	{
-		if(actor->flags & FL_ROBOT)
+		if (actor->flags & FL_ROBOT)
 			tdir = d[1];
 		else
 		{
@@ -697,7 +697,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	}
 
 	// Robots give up if direct path doesn't work
-	if(actor->flags & FL_ROBOT)
+	if (actor->flags & FL_ROBOT)
 	{
 		actor->ideal_yaw = olddir;		// can't move
 		if (!M_CheckBottom (actor))
@@ -720,11 +720,11 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 			return;
 
 //ROGUE
-	if(actor->monsterinfo.blocked)
+	if (actor->monsterinfo.blocked)
 	{
 		if ((actor->inuse) && (actor->health > 0))
 		{
-			if((actor->monsterinfo.blocked)(actor, dist))
+			if ((actor->monsterinfo.blocked)(actor, dist))
 				return;
 		}
 	}
@@ -804,7 +804,7 @@ void M_MoveToGoal (edict_t *ent, float dist)
 		if (ent->enemy && (ent->monsterinfo.min_range > 0) && ((goal==ent->enemy) || !goal) ) {
 			float dist;
 			dist = realrange(ent,ent->enemy);
-			if(dist < ent->monsterinfo.min_range)
+			if (dist < ent->monsterinfo.min_range)
 			{
 				ent->monsterinfo.aiflags |= (AI_STAND_GROUND | AI_RANGE_PAUSE);
 				ent->monsterinfo.rangetime = level.time + 0.5;
@@ -816,14 +816,14 @@ void M_MoveToGoal (edict_t *ent, float dist)
 		{
 			float dist;
 			dist = realrange(ent,ent->enemy);
-			if((dist < ent->monsterinfo.ideal_range[0]) && (rand() & 3))
+			if ((dist < ent->monsterinfo.ideal_range[0]) && (rand() & 3))
 			{
 				ent->monsterinfo.aiflags |= (AI_STAND_GROUND | AI_RANGE_PAUSE);
 				ent->monsterinfo.rangetime = level.time + 1.0;
 				ent->monsterinfo.stand(ent);
 				return;
 			}
-			if((dist < ent->monsterinfo.ideal_range[1]) && (dist > ent->monsterinfo.ideal_range[0]) && (rand() & 1))
+			if ((dist < ent->monsterinfo.ideal_range[1]) && (dist > ent->monsterinfo.ideal_range[0]) && (rand() & 1))
 			{
 				ent->monsterinfo.aiflags |= (AI_STAND_GROUND | AI_RANGE_PAUSE);
 				ent->monsterinfo.rangetime = level.time + 0.2;
@@ -833,21 +833,21 @@ void M_MoveToGoal (edict_t *ent, float dist)
 		}
 	}
 
-	if( (ent->monsterinfo.aiflags & AI_FOLLOW_LEADER) &&
+	if ( (ent->monsterinfo.aiflags & AI_FOLLOW_LEADER) &&
 		(ent->movetarget) &&
 		(ent->movetarget->inuse) &&
 		(ent->movetarget->health > 0) ) {
 
-		if(ent->enemy)
+		if (ent->enemy)
 			ent->monsterinfo.currentmove = &actor_move_run;
 		else
 		{
 			float	R;
 
 			R = realrange(ent,ent->movetarget);
-			if(R > ACTOR_FOLLOW_RUN_RANGE)
+			if (R > ACTOR_FOLLOW_RUN_RANGE)
 				ent->monsterinfo.currentmove = &actor_move_run;
-			else if(R < ACTOR_FOLLOW_STAND_RANGE && ent->movetarget->client) {
+			else if (R < ACTOR_FOLLOW_STAND_RANGE && ent->movetarget->client) {
 				ent->monsterinfo.pausetime = level.time + 0.5;
 				ent->monsterinfo.currentmove = &actor_move_stand;
 				return;

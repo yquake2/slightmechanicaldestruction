@@ -1,10 +1,5 @@
 #include "g_local.h"
 
-#ifdef WESQ2
-int				NumSpawnedItems;
-SPAWNED_ITEM	SpawnedItem[MAX_SPAWNED_ITEMS];
-#endif
-
 void SP_item_health (edict_t *self);
 void SP_item_health_small (edict_t *self);
 void SP_item_health_large (edict_t *self);
@@ -61,6 +56,7 @@ void SP_target_actor (edict_t *ent);
 void SP_target_lightramp (edict_t *self);
 void SP_target_earthquake (edict_t *ent);
 void SP_target_character (edict_t *ent);
+void SP_target_string (edict_t *ent);
 void SP_target_string (edict_t *ent);
 
 void SP_worldspawn (edict_t *ent);
@@ -188,7 +184,6 @@ void SP_trigger_look (edict_t *self);
 void SP_trigger_mass (edict_t *self);
 void SP_trigger_scales (edict_t *self);
 void SP_trigger_speaker (edict_t *self);
-void SP_trigger_switch (edict_t *self);
 void SP_trigger_teleporter (edict_t *self);
 void SP_trigger_transition (edict_t *self);
 // transition entities
@@ -202,12 +197,17 @@ void SP_rocket (edict_t *self);
 //
 // end Lazarus
 
-#ifdef WESQ2
-void SP_misc_bomb (edict_t *self);
-void SP_misc_ladder (edict_t *self);
-void SP_misc_tank1 (edict_t *self);
-void SP_misc_tank2 (edict_t *self);
-#endif
+//CW+++
+void SP_monster_sentrybot(edict_t *self);
+void SP_func_air(edict_t *self);
+void SP_target_bubbles(edict_t *self);
+void SP_target_holo(edict_t *self);
+void SP_trigger_medibot(edict_t *self);
+void SP_trigger_command(edict_t *self);
+void SP_func_clock_screen(edict_t *ent);
+void SP_target_viewshake(edict_t *self);
+void SP_plasma_bolt(edict_t *self);			//transition entity
+//CW---
 
 spawn_t	spawns[] = {
 	{"item_health", SP_item_health},
@@ -396,7 +396,6 @@ spawn_t	spawns[] = {
 	{"trigger_mass", SP_trigger_mass},
 	{"trigger_scales", SP_trigger_scales},
 	{"trigger_speaker", SP_trigger_speaker},
-	{"trigger_switch", SP_trigger_switch},
 	{"trigger_teleporter", SP_trigger_teleporter},
 	{"trigger_transition", SP_trigger_transition},
 // transition entities
@@ -410,12 +409,17 @@ spawn_t	spawns[] = {
 	{"homing rocket", SP_rocket},
 // end Lazarus
 
-#ifdef WESQ2
-	{"misc_bomb", SP_misc_bomb},
-	{"misc_ladder", SP_misc_ladder},
-	{"misc_tank1", SP_misc_tank1},
-	{"misc_tank2", SP_misc_tank2},
-#endif
+//CW+++
+	{"monster_sentrybot", SP_monster_sentrybot},
+	{"func_air", SP_func_air},
+	{"target_bubbles", SP_target_bubbles},
+	{"target_holo", SP_target_holo},
+	{"trigger_medibot", SP_trigger_medibot},
+	{"trigger_command", SP_trigger_command},
+	{"func_clock_screen", SP_func_clock_screen},
+	{"target_viewshake", SP_target_viewshake},
+	{"plasma_bolt", SP_plasma_bolt},				//transition entity
+//CW---
 
 	{NULL, NULL}
 };
@@ -644,9 +648,11 @@ void G_FindTeams (void)
 		if (e->flags & FL_TEAMSLAVE)
 			continue;
 		// Lazarus: some entities may have psuedo-teams that shouldn't be handled here
-		if (e->class_id == ENTITY_TARGET_CHANGE)
+		if (e->classname && !Q_stricmp(e->classname,"target_change"))
 			continue;
-		if (e->class_id == ENTITY_TARGET_CLONE)
+		if (e->classname && !Q_stricmp(e->classname,"target_bmodel_spawner"))
+			continue;
+		if (e->classname && !Q_stricmp(e->classname,"target_clone"))
 			continue;
 		chain = e;
 		e->teammaster = e;
@@ -696,7 +702,7 @@ void LoadTransitionEnts()
 			spawn = G_Find(NULL,FOFS(targetname),game.spawnpoint);
 			while(spawn)
 			{
-				if(spawn->class_id == ENTITY_INFO_PLAYER_START)
+				if(!Q_stricmp(spawn->classname,"info_player_start"))
 				{
 					VectorCopy(spawn->s.origin,v_spawn);
 					break;
@@ -757,110 +763,6 @@ void LoadTransitionEnts()
 		}
 	}
 }
-
-#ifdef WESQ2
-/*
-==============
-SpawnEntfileItems
-==============
-*/
-void SpawnEntfileItems()
-{
-	void GetEntFilename(char *);
-	char	filename[256];
-	FILE	*f;
-	int		result;
-	edict_t	*spawn;
-
-	GetEntFilename(filename);
-	f = fopen(filename,"r");
-	if(!f) return;
-	NumSpawnedItems = 0;
-	while (1)
-	{
-		result = fscanf(f,"%s %f %f %f %f",
-			SpawnedItem[NumSpawnedItems].classname,
-			&SpawnedItem[NumSpawnedItems].origin[0],
-			&SpawnedItem[NumSpawnedItems].origin[1],
-			&SpawnedItem[NumSpawnedItems].origin[2],
-			&SpawnedItem[NumSpawnedItems].angle     );
-		if(result != 5) break;
-		spawn = G_Spawn();
-		spawn->classname = gi.TagMalloc((strlen(SpawnedItem[NumSpawnedItems].classname)+1)*sizeof(char), TAG_LEVEL);
-		spawn->classname = SpawnedItem[NumSpawnedItems].classname;
-		VectorCopy(SpawnedItem[NumSpawnedItems].origin,spawn->s.origin);
-		spawn->s.angles[1] = SpawnedItem[NumSpawnedItems].angle;
-		ED_CallSpawn (spawn);
-		gi.unlinkentity (spawn);
-		KillBox (spawn);
-		gi.linkentity (spawn);
-		spawn->s.renderfx |= RF_IR_VISIBLE;
-		spawn->my_spawn = NumSpawnedItems+1;
-		NumSpawnedItems++;
-		if(NumSpawnedItems >= MAX_SPAWNED_ITEMS) break;
-	}
-	fclose(f);
-}
-/*
-=================
-ReadPeakPressures
-
-Reads <mapname>.prs if it exists for peak pressure/temperature info and
-charge locations
-=================*/
-void ReadPeakPressures()
-{
-
-	cvar_t	*game;
-	FILE	*f;
-	char	filename[256];
-	int		i;
-
-	game = gi.cvar("game", "", CVAR_SERVERINFO| CVAR_LATCH);
-	strcpy(filename,game->string);
-	strcat(filename,"/maps/");
-	strcat(filename,level.mapname);
-	strcat(filename,".prs");
-	f = fopen(filename,"rt");
-	if(!f) return;
-	gNumCharges = 0;
-	gNumTargets = 0;
-	gTargetSpacing = 0;
-	if(PT) free(PT);
-	if(TNT) free(TNT);
-	fscanf(f,"%f %f %f",&gWorld[0],&gWorld[1],&gWorld[2]);
-	fscanf(f,"%d",&gNumCharges);
-	if(gNumCharges) {
-		edict_t	*bomb;
-		TNT = (EXPLOSIVE *)calloc(gNumCharges,sizeof(EXPLOSIVE));
-		for(i=0; i<gNumCharges; i++) {
-			fscanf(f,"%f %f %f %f %f",&TNT[i].loc[0],&TNT[i].loc[1],&TNT[i].loc[2],
-				&TNT[i].weight,&TNT[i].delay);
-			bomb = G_Spawn();
-			bomb->classname = gi.TagMalloc((strlen("misc_bomb")+1)*sizeof(char), TAG_LEVEL);
-			bomb->classname = "misc_bomb";
-			VectorCopy(TNT[i].loc,bomb->s.origin);
-			ED_CallSpawn (bomb);
-			gi.unlinkentity (bomb);
-			KillBox (bomb);
-			gi.linkentity (bomb);
-			bomb->s.renderfx |= RF_IR_VISIBLE;
-			bomb->mass = (int)(TNT[i].weight);
-			bomb->dmg  = (int)(TNT[i].weight*DAMAGE_PER_POUND);
-		}
-	}
-	fscanf(f,"%f",&gTargetSpacing);
-	fscanf(f,"%d",&gNumTargets);
-	if(gNumTargets) {
-		PT = (PRESSURE_TEMP *)calloc(gNumTargets,sizeof(PRESSURE_TEMP));
-		for(i=0; i<gNumTargets; i++) {
-			fscanf(f,"%f %f %f %f %f",&PT[i].loc[0],&PT[i].loc[1],&PT[i].loc[2],
-				&PT[i].pressure,&PT[i].temperature);
-		}
-	}
-	fclose(f);
-}
-#endif
 /*
 ==============
 SpawnEntities
@@ -882,6 +784,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 	if(developer->value)
 		gi.dprintf("====== SpawnEntities ========\n");
+
 	skill_level = floor (skill->value);
 	if (skill_level < 0)
 		skill_level = 0;
@@ -893,9 +796,9 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	SaveClientData ();
 
 	gi.FreeTags (TAG_LEVEL);
-
 	memset (&level, 0, sizeof(level));
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
+
 	// Lazarus: these are used to track model and sound indices
 	//          in g_main.c:
 	max_modelindex = 0;
@@ -939,9 +842,9 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		{
 			if (deathmatch->value)
 			{
-				if ( ent->spawnflags & SPAWNFLAG_NOT_DEATHMATCH )
+				if (ent->spawnflags & SPAWNFLAG_NOT_DEATHMATCH)
 				{
-					G_FreeEdict (ent);	
+					G_FreeEdict(ent);	
 					inhibit++;
 					continue;
 				}
@@ -950,26 +853,20 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			{
 				if (((skill->value == 0) && (ent->spawnflags & SPAWNFLAG_NOT_EASY)) ||
 					((skill->value == 1) && (ent->spawnflags & SPAWNFLAG_NOT_MEDIUM)) ||
-					(((skill->value == 2) || (skill->value == 3)) && (ent->spawnflags & SPAWNFLAG_NOT_HARD))
-					)
+					(((skill->value == 2) || (skill->value == 3)) && (ent->spawnflags & SPAWNFLAG_NOT_HARD)))
 					{
-						G_FreeEdict (ent);	
+						G_FreeEdict(ent);	
 						inhibit++;
 						continue;
 					}
 			}
 
-			ent->spawnflags &= ~(SPAWNFLAG_NOT_EASY|SPAWNFLAG_NOT_MEDIUM|SPAWNFLAG_NOT_HARD|SPAWNFLAG_NOT_DEATHMATCH);
+			ent->spawnflags &= ~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD | SPAWNFLAG_NOT_DEATHMATCH);
 		}
 
 		ED_CallSpawn (ent);
 		ent->s.renderfx |= RF_IR_VISIBLE;		//PGM
 	}	
-
-#ifdef WESQ2
-	SpawnEntfileItems();
-	ReadPeakPressures();
-#endif
 
 	gi.dprintf ("%i entities inhibited\n", inhibit);
 
@@ -1014,11 +911,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		// allows us to have movewith parent with same targetname as
 		// other entities
 		while(ent->movewith_ent &&
-			( (ent->movewith_ent->class_id != ENTITY_FUNC_TRAIN)     &&
-			  (ent->movewith_ent->class_id != ENTITY_MODEL_TRAIN)    &&
-			  (ent->movewith_ent->class_id != ENTITY_FUNC_DOOR)      &&
-			  (ent->movewith_ent->class_id != ENTITY_FUNC_VEHICLE)   &&
-			  (ent->movewith_ent->class_id != ENTITY_FUNC_TRACKTRAIN)   ) )
+			(Q_stricmp(ent->movewith_ent->classname,"func_train")     &&
+			 Q_stricmp(ent->movewith_ent->classname,"model_train")    &&
+			 Q_stricmp(ent->movewith_ent->classname,"func_door")      &&
+			 Q_stricmp(ent->movewith_ent->classname,"func_vehicle")   &&
+			 Q_stricmp(ent->movewith_ent->classname,"func_tracktrain")  ))
 			 ent->movewith_ent = G_Find(ent->movewith_ent,FOFS(targetname),ent->movewith);
 		if(ent->movewith_ent)
 			movewith_init(ent->movewith_ent);
@@ -1069,66 +966,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 #endif
 
-#ifdef WESQ2
-
-char *single_statusbar = 
-"yb	-24 "
-
-// pressure
-"if 18 "
-"   xv 0 "
-"	num 5 19 "
-"	xv	90 "
-"   pic 18 "
-"endif "
-
-// temperature
-"if 20 "
-"   xv 200 "
-"	num 5 21 "
-"	xv 290 "
-"   pic 20 "
-"endif "
-
-// vehicle speed
-"if 22 "
-"	yb -90 "
-"	xv 128 "
-"	pic 22 "
-"endif "
-
-;
-
-char *dm_statusbar = 
-"yb	-24 "
-
-// pressure
-"if 18 "
-"	xv	80 "
-"   pic 18 "
-"   xv 106 "
-"	num 5 19 "
-"endif "
-
-// temperature
-"if 20 "
-"	xv	220 "
-"   pic 20 "
-"   xv 246 "
-"	num 5 21 "
-"endif "
-
-// vehicle speed
-"if 22 "
-"	yb -90 "
-"	xv 128 "
-"	pic 22 "
-"endif "
-;
-
-#else
-
-char *single_statusbar = 
+extern char *single_statusbar =  //CW: made it external for [target_monitor] in g_target.c
 "yb	-24 "
 
 // health
@@ -1198,6 +1036,14 @@ char *single_statusbar =
 "   xv 0 "
 "   pic 23 "
 "endif "
+
+//CW++	Clock timer
+"if 24 "
+  "xv 128 "
+  "yb -78 "
+  "stat_string 24 "
+"endif "
+//CW--
 ;
 
 
@@ -1287,8 +1133,6 @@ char *dm_statusbar =
 "endif "
 ;
 
-#endif	// ifdef WESQ2
-
 /*QUAKED worldspawn (0 0 0) ?
 
 Only used for the world.
@@ -1302,7 +1146,6 @@ Only used for the world.
 //void SetChromakey();
 void SP_worldspawn (edict_t *ent)
 {
-	ent->class_id = ENTITY_WORLDSPAWN;
 	ent->movetype = MOVETYPE_PUSH;
 	ent->solid = SOLID_BSP;
 	ent->inuse = true;			// since the world doesn't use G_Spawn()

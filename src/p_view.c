@@ -73,7 +73,7 @@ void P_DamageFeedback (edict_t *player)
 		return;		// didn't take any damage
 
 	// start a pain animation if still in the player model
-	if (client->anim_priority < ANIM_PAIN && player->s.modelindex == MAX_MODELS-1)
+	if (client->anim_priority < ANIM_PAIN && player->s.modelindex == 255)
 	{
 		static int		i;
 
@@ -572,7 +572,7 @@ void P_SlamDamage (edict_t *ent)
 	vec3_t	dir;
 	vec3_t	deltav;
 
-	if (ent->s.modelindex != MAX_MODELS-1)
+	if (ent->s.modelindex != 255)
 		return;		// not in the player model
 
 	if (ent->movetype == MOVETYPE_NOCLIP)
@@ -616,7 +616,7 @@ void P_FallingDamage (edict_t *ent)
 	int		damage;
 	vec3_t	dir;
 
-	if (ent->s.modelindex != MAX_MODELS-1)
+	if (ent->s.modelindex != 255)
 		return;		// not in the player model
 
 	if (ent->movetype == MOVETYPE_NOCLIP)
@@ -658,12 +658,12 @@ void P_FallingDamage (edict_t *ent)
 		return;
 	}
 
-	ent->client->fall_value = delta*0.5;
-	if (ent->client->fall_value > 40)
-		ent->client->fall_value = 40;
+	ent->client->fall_value = delta * 0.5;
+	if (ent->client->fall_value > 40) ent->client->fall_value = 40;
+
 	ent->client->fall_time = level.time + FALL_TIME;
 
-	if (delta > 30)
+	if (delta > MAX_SAFE_FALLDIST)	//CW: reduced safe falling distance, and replaced hardcoded value
 	{
 		if (ent->health > 0)
 		{
@@ -676,20 +676,17 @@ void P_FallingDamage (edict_t *ent)
 			else
 				ent->s.event = EV_FALL;
 */
-			if (delta >= 55)
-				gi.sound(ent,CHAN_VOICE,gi.soundindex("*fall1.wav"),1.0,ATTN_NORM,0);
-			else
-				gi.sound(ent,CHAN_VOICE,gi.soundindex("*fall2.wav"),1.0,ATTN_NORM,0);
+			if (delta >= FALL_HURTBAD) gi.sound(ent, CHAN_VOICE, gi.soundindex("*fall1.wav"), 1.0, ATTN_NORM, 0);
+			else gi.sound(ent, CHAN_VOICE, gi.soundindex("*fall2.wav"), 1.0, ATTN_NORM, 0);
 
-			if(world->effects & FX_WORLDSPAWN_ALERTSOUNDS)
-				PlayerNoise(ent,ent->s.origin,PNOISE_SELF);
+			if (world->effects & FX_WORLDSPAWN_ALERTSOUNDS) PlayerNoise(ent, ent->s.origin, PNOISE_SELF);
 
 		}
 
 		ent->pain_debounce_time = level.time;	// no normal pain sound
-		damage = (delta-30)/2;
-		if (damage < 1)
-			damage = 1;
+		damage = (delta - MAX_SAFE_FALLDIST) * FALLDAMAGE_FACTOR;	//CW: increased falling damage, and replaced hardcoded values
+		if (damage < 1)	damage = 1;
+
 		VectorSet (dir, 0, 0, 1);
 
 		if (!deathmatch->value || !((int)dmflags->value & DF_NO_FALLING) )
@@ -698,8 +695,8 @@ void P_FallingDamage (edict_t *ent)
 	else
 	{
 		ent->s.event = EV_FALLSHORT;
-		if(world->effects & FX_WORLDSPAWN_ALERTSOUNDS)
-			PlayerNoise(ent,ent->s.origin,PNOISE_SELF);
+		if (world->effects & FX_WORLDSPAWN_ALERTSOUNDS)	PlayerNoise(ent, ent->s.origin, PNOISE_SELF);
+
 		return;
 	}
 }
@@ -715,6 +712,7 @@ void P_WorldEffects (void)
 {
 	qboolean	breather;
 	qboolean	envirosuit;
+	qboolean	airy;		//CW
 	int			waterlevel, old_waterlevel, old_watertype;
 
 	if (current_player->movetype == MOVETYPE_NOCLIP)
@@ -731,6 +729,7 @@ void P_WorldEffects (void)
 
 	breather = current_client->breather_framenum > level.framenum;
 	envirosuit = current_client->enviro_framenum > level.framenum;
+	airy = current_client->in_func_air;	//CW
 
 	//
 	// if just entered a water volume, play a sound
@@ -758,7 +757,7 @@ void P_WorldEffects (void)
 	if (old_waterlevel && ! waterlevel)
 	{
 		PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
-		if(old_watertype & CONTENTS_MUD)
+		if (old_watertype & CONTENTS_MUD)
 			gi.sound (current_player, CHAN_BODY, gi.soundindex("mud/mud_out1.wav"), 1, ATTN_NORM, 0);
 		else
 			gi.sound (current_player, CHAN_BODY, gi.soundindex("player/watr_out.wav"), 1, ATTN_NORM, 0);
@@ -770,7 +769,7 @@ void P_WorldEffects (void)
 	//
 	if (old_waterlevel != 3 && waterlevel == 3)
 	{
-		if(current_player->in_mud)
+		if (current_player->in_mud)
 			gi.sound (current_player, CHAN_BODY, gi.soundindex("mud/mud_un1.wav"), 1, ATTN_NORM, 0);
 		else
 			gi.sound (current_player, CHAN_BODY, gi.soundindex("player/watr_un.wav"), 1, ATTN_NORM, 0);
@@ -810,20 +809,47 @@ void P_WorldEffects (void)
 		}
 #endif
 		// breather or envirosuit give air
-		if (breather || envirosuit)
+		if (breather || envirosuit || airy)	//CW: or in a func_air
 		{
 			current_player->air_finished = level.time + 10;
 
-			if (((int)(current_client->breather_framenum - level.framenum) % 25) == 0)
+			if (!airy)  //CW
 			{
-				if (!current_client->breather_sound)
-					gi.sound (current_player, CHAN_AUTO, gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
-				else
-					gi.sound (current_player, CHAN_AUTO, gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
-				current_client->breather_sound ^= 1;
-				PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
-				//FIXME: release a bubble?
+				if (((int)(current_client->breather_framenum - level.framenum) % 25) == 0)
+				{
+					if (!current_client->breather_sound)
+						gi.sound (current_player, CHAN_AUTO, gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
+					else
+						gi.sound (current_player, CHAN_AUTO, gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
+					current_client->breather_sound ^= 1;
+					PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
+					//FIXME: release a bubble?
+				}
 			}
+//CW+++
+			else
+			{
+				if (!current_client->entered_func_air)
+				{
+					gi.sound(current_player, CHAN_VOICE, gi.soundindex("player/gasp1.wav"), 1, ATTN_NORM, 0);
+					PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
+					current_client->entered_func_air = true;
+					current_client->func_air_frame = level.framenum;
+				}
+				else
+				{
+					if (((int)(level.framenum - current_client->func_air_frame) % 20) == 0)
+					{
+						if (!current_client->airy_sound)
+							gi.sound(current_player, CHAN_AUTO, gi.soundindex("player/gasp2.wav"), 1, ATTN_NORM, 0);
+						else
+							gi.sound (current_player, CHAN_AUTO, gi.soundindex("player/gasp1.wav"), 1, ATTN_NORM, 0);
+						current_client->airy_sound = !current_client->airy_sound;
+						PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
+					}
+				}
+			}
+//CW---
 		}
 
 		// if out of air, start drowning
@@ -858,6 +884,13 @@ void P_WorldEffects (void)
 		current_player->air_finished = level.time + 12;
 		current_player->dmg = 2;
 	}
+
+//CW+++
+	if (!airy)
+		current_client->entered_func_air = false;
+
+	current_client->in_func_air = false;			//reset in case player moves out of field
+//CW--
 
 	//
 	// check for sizzle damage
@@ -1117,7 +1150,7 @@ void G_SetClientFrame (edict_t *ent)
 	gclient_t	*client;
 	qboolean	duck, run;
 
-	if (ent->s.modelindex != MAX_MODELS-1)
+	if (ent->s.modelindex != 255)
 		return;		// not in the player model
 
 	client = ent->client;

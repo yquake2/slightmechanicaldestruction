@@ -35,17 +35,17 @@ void Text_BuildDisplay(texthnd_t *hnd)
 	int i, imax, n;
 	char *p1, *p2, *p3;
 
-	for(i=0; i<hnd->page_length+2; i++)
+	for(i=0; i<MAX_LINES; i++)
 		text[i].text = NULL;
 
 	if(!(hnd->flags & 2))
 	{
-		text[hnd->page_length+1].text = "Esc to quit";
-		if(hnd->nlines > hnd->page_length)
-			text[hnd->page_length].text = "Use [ and ] to scroll";
+		text[MAX_LINES-1].text = "Esc to quit";
+		if(hnd->nlines > MAX_LINES-2)
+			text[MAX_LINES-2].text = "Use [ and ] to scroll";
 	}
 
-	p1 = hnd->buffer+hnd->start_char;
+	p1 = hnd->buffer;
 	p3 = hnd->buffer+hnd->size-1;
 	if(hnd->curline > 0)
 	{
@@ -61,10 +61,10 @@ void Text_BuildDisplay(texthnd_t *hnd)
 	i = 0;
 	p2 = p1;
 	text[i].text = p2;
-	if(hnd->nlines > hnd->page_length)
-		imax = hnd->page_length-2;
+	if(hnd->nlines > MAX_LINES-2)
+		imax = MAX_LINES-4;
 	else
-		imax = hnd->page_length-1;
+		imax = MAX_LINES-3;
 	while(p2 <= p3 && i < imax)
 	{
 		if(*p2 == 0 && p2 < p3)
@@ -82,7 +82,6 @@ void Text_Update(edict_t *ent)
 {
 	int align;
 	int i;
-	int	x0, y0;
 	text_t *p;
 	int x, xlast;
 	char *t, *tnext;
@@ -100,17 +99,10 @@ void Text_Update(edict_t *ent)
 	if(hnd->last_update + 2*FRAMETIME > level.time) return;
 	hnd->last_update = level.time;
 
-
-	x0 = (35 - hnd->page_width)*4;
-	y0 = (22 - hnd->page_length)*4;
-
 	if(!(hnd->flags & 2))
-	{
-		sprintf(string,"xv %d yv %d picn %s ",
-			x0, y0, hnd->background_image);
-	}
+		strcpy(string, "xv 0 yv 0 picn textdisplay ");
 	xlast = 9999;
-	for (i = 0, p = hnd->lines; i < hnd->page_length+2; i++, p++) {
+	for (i = 0, p = hnd->lines; i < MAX_LINES; i++, p++) {
 		if (!p->text || !*(p->text))
 			continue; // blank line
 		t = p->text;
@@ -138,13 +130,13 @@ void Text_Update(edict_t *ent)
 		}
 		if(strlen(t))
 		{
-			sprintf(string + strlen(string), "yv %d ", y0 + 24 + i * 8);
+			sprintf(string + strlen(string), "yv %d ", 24 + i * 8);
 			if (align == TEXT_CENTER)
-				x = x0 + 20 + (hnd->page_width-1-strlen(t))*4;
+				x = 20 + (MAX_LINE_LENGTH-1-strlen(t))*4;
 			else if (align == TEXT_RIGHT)
-				x = x0 + 20 + (hnd->page_width-1-strlen(t))*8;
+				x = 20 + (MAX_LINE_LENGTH-1-strlen(t))*8;
 			else
-				x = x0 + 20;
+				x = 20;
 			if(x != xlast)
 			{
 				sprintf(string + strlen(string), "xv %d ",x);
@@ -158,8 +150,8 @@ void Text_Update(edict_t *ent)
 		}
 		alt = false;
 	}
-//	if(strlen(string) > 1000)
-//		gi.dprintf("WARNING: formatted string length (%d) > 1000\n",strlen(string));
+	if(strlen(string) > 1000)
+		gi.dprintf("WARNING: formatted string length (%d) > 1000\n",strlen(string));
 
 	gi.WriteByte (svc_layout);
 	gi.WriteString (string);
@@ -179,13 +171,15 @@ void Text_Next(edict_t *ent)
 
 	hnd = ent->client->textdisplay;
 
-	displayed_lines = hnd->page_length;
-	if(hnd->nlines > hnd->page_length) displayed_lines--;
+	// Limit updates to 2/sec
+//	if(hnd->last_update + 0.5 > level.time) return;
+
+	displayed_lines = MAX_LINES-2;
+	if(hnd->nlines > MAX_LINES-2) displayed_lines--;
 	if(hnd->curline+displayed_lines+1 < hnd->nlines)
 	{
 		current = hnd->curline;
-///		hnd->curline = min(hnd->curline+MAX_LINES/2,hnd->nlines-displayed_lines-1);
-		hnd->curline = hnd->curline+hnd->page_length-1;
+		hnd->curline = min(hnd->curline+MAX_LINES/2,hnd->nlines-displayed_lines-1);
 		if(hnd->curline > current)
 		{
 			Text_BuildDisplay(hnd);
@@ -205,10 +199,12 @@ void Text_Prev(edict_t *ent)
 
 	hnd = ent->client->textdisplay;
 
+	// Limit updates to 2/sec
+//	if(hnd->last_update + 0.5 > level.time) return;
+
 	if(hnd->curline > 0)
 	{
-///		hnd->curline = max(0, hnd->curline-MAX_LINES/2);
-		hnd->curline = max(0, hnd->curline-hnd->page_length+1);
+		hnd->curline = max(0, hnd->curline-MAX_LINES/2);
 		Text_BuildDisplay(hnd);
 		Text_Update(ent);
 	}
@@ -226,7 +222,6 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 	int			new_line_length;
 	qboolean	alt, centered, right_justified;
 	qboolean	linebreak;
-	qboolean	do_linebreaks;
 
 	hnd = malloc(sizeof(*hnd));
 	// If a file, open and read it
@@ -342,49 +337,8 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 	}
 	
 	hnd->size = strlen(hnd->buffer) + 1;
-
-	// Default page length:
-	hnd->page_length = MAX_LINES-2;
-	hnd->page_width  = MAX_LINE_LENGTH;
-	strcpy(hnd->background_image,"textdisplay");
-	hnd->start_char = 0;
-	do_linebreaks = true;
-
-	// If 1st line starts with $, read page length, width, and image name
-	p1 = hnd->buffer;
-	if(*p1 == '$')
-	{
-		p3 = p1;
-		while((p3 < hnd->buffer+hnd->size) && (*p3 != 13))
-			p3++;
-
-		p2 = strstr(p1,"L=");
-		if(p2 && (p2 < p3))
-		{
-			p2 += 2;
-			sscanf(p2,"%d",&hnd->page_length);
-			hnd->page_length += 1;
-		}
-		p2 = strstr(p1,"W=");
-		if(p2 && (p2 < p3))
-		{
-			p2 += 2;
-			sscanf(p2,"%d",&hnd->page_width);
-		}
-		p2 = strstr(p1,"I=");
-		if(p2 && (p2 < p3))
-		{
-			p2 += 2;
-			sscanf(p2,"%s",hnd->background_image);
-		}
-		p3++;
-		if(*p3 == 10) p3++;
-		hnd->start_char = p3-p1;
-		do_linebreaks = false;
-	}
-
 	// Eliminate all <CR>'s so lines are delineated with <LF>'s only
-	p1 = hnd->buffer+hnd->start_char;
+	p1 = hnd->buffer;
 	while(p1 < hnd->buffer+hnd->size)
 	{
 		if(*p1 == 13)
@@ -398,7 +352,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 	}
 	// Count number of lines and replace all line feeds with 0's
 	hnd->nlines = 1;
-	for(p1 = hnd->buffer+hnd->start_char; p1 < hnd->buffer+hnd->size; p1++)
+	for(p1 = hnd->buffer; p1 < hnd->buffer+hnd->size; p1++)
 	{
 		if(*p1 == 10)
 		{
@@ -407,11 +361,8 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		}
 	}
 	// Line break stuff
-	if(!do_linebreaks)
-		goto done_linebreaks;
-
 	line_length = 0;
-	p1 = hnd->buffer+hnd->start_char;
+	p1 = hnd->buffer;
 	alt = false;
 	centered = false;
 	right_justified = false;
@@ -447,7 +398,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		if((line_length == 0) && (*p1 == '\\')) p1 += 2;
 		if(*p1 != 0) line_length++;
 		linebreak = false;
-		if(line_length > hnd->page_width)
+		if(line_length > MAX_LINE_LENGTH)
 		{
 			if(*p1 == 32)
 			{
@@ -462,7 +413,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 				// back up from current position to last space character and
 				// replace with a 0 (but don't go past previous 0)
 				p2 = p1;
-				while(p1 > hnd->buffer+hnd->start_char && *p1 != 0)
+				while(p1 > hnd->buffer && *p1 != 0)
 				{
 					if(*p1 == 32)
 					{
@@ -595,7 +546,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		}
 		// If we're at a 0, check to see if subsequent words will fit on this line
 		if((!linebreak) && (*p1 == 0) && (p1 < hnd->buffer+hnd->size-1) && 
-			(line_length < hnd->page_width) )
+			(line_length < MAX_LINE_LENGTH) )
 		{
 			// Don't do this if 2 consecutive 0's are found (end of paragraph)
 			// or if 1st character in next line is '*' or '\'
@@ -613,7 +564,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 						new_line_length++;
 						p2++;
 					}
-					if(new_line_length <= hnd->page_width)
+					if(new_line_length <= MAX_LINE_LENGTH)
 					{
 						*p1 = 32;
 						line_length++; // include the space that was a 0
@@ -625,34 +576,26 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		if(*p1 == 0) line_length = 0;
 		p1++;
 	}
-
-done_linebreaks:
-
 	// Finally, scan for a \a code (embedded audio). If present remove that line
 	// and play the sound
-	p1 = hnd->buffer+hnd->start_char;
+	p1 = hnd->buffer;
 	while(p1 < hnd->buffer+hnd->size)
 	{
-		if((*p1 == 0) || (p1 == hnd->buffer+hnd->start_char))
+		if(*p1 == '\\')
 		{
-			if(*p1 == 0)
-				p1++;
-			if(*p1 == '\\')
+			p1++;
+			if(*p1 == 'a')
 			{
-				p1++;
-				if(*p1 == 'a')
-				{
-					strcpy(sound,p1+1);
-					p1--;
-					p2=p1;
-					while(*p2 != 0)
-						p2++;
+				strcpy(sound,p1+1);
+				p1--;
+				p2=p1;
+				while(*p2 != 0)
 					p2++;
-					memcpy(p1,p2,hnd->buffer+hnd->size-p2+1);
-					hnd->nlines--;
-					// Found one (only one is allowed)
-					gi.sound (activator, CHAN_AUTO, gi.soundindex (sound), 1, ATTN_NORM, 0);
-				}
+				p2++;
+				memcpy(p1,p2,hnd->buffer+hnd->size-p2+1);
+				hnd->nlines--;
+				// Found one (only one is allowed)
+				gi.sound (activator, CHAN_AUTO, gi.soundindex (sound), 1, ATTN_NORM, 0);
 			}
 		}
 		p1++;
@@ -690,7 +633,6 @@ void SP_target_text(edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
-	self->class_id = ENTITY_TARGET_TEXT;
 	self->use = Use_Target_Text;
 }
 

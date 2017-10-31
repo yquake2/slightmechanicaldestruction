@@ -10,6 +10,12 @@
 #define SF_TURRET_INACTIVE           16
 #define SF_TURRET_MD2                32
 
+//CW++
+#define	FL_TURRET_DOUBLE			0x00000001
+#define	FL_TURRET_DOUBLE_ALT		0x00000002
+#define	FL_TURRET_DOUBLE_ALT_FIRING	0x00000004
+//CW--
+
 void NoAmmoWeaponChange (edict_t *ent);
 
 #define TURRET_GRENADE_SPEED 800
@@ -116,6 +122,36 @@ void turret_blocked(edict_t *self, edict_t *other)
 	}
 }
 
+
+//CW++
+void hrocket_turret_fire(edict_t *self, edict_t *owner, vec3_t start, vec3_t dir, vec3_t start2, vec3_t dir2, int damage, int speed, float damage_radius, int radius_damage, edict_t *home_target)
+{
+	if (self->moreflags & FL_TURRET_DOUBLE)
+	{
+		if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+		{
+			if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+			{
+				fire_rocket(owner, start2, dir2, damage, speed, 150, damage, home_target);
+				self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+			}
+			else
+			{
+				fire_rocket(owner, start, dir, damage, speed, 150, damage, home_target);
+				self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+			}
+		}
+		else
+		{
+			fire_rocket(owner, start, dir, damage, speed, 150, damage, home_target);
+			fire_rocket(owner, start2, dir2, damage, speed, 150, damage, home_target);
+		}
+	}
+	else
+		fire_rocket(owner, start, dir, damage, speed, 150, damage, home_target);
+}
+//CW--
+
 void turret_breach_fire (edict_t *self)
 {
 	edict_t	*owner;
@@ -124,10 +160,25 @@ void turret_breach_fire (edict_t *self)
 	int		damage;
 	int		speed;
 
+//CW++
+	vec3_t	forward2, right2, up2;
+	vec3_t	start2;
+//CW--
+
 	AngleVectors (self->s.angles, forward, right, up);
 	VectorMA (self->s.origin, self->move_origin[0], forward, start);
 	VectorMA (start, self->move_origin[1], right, start);
 	VectorMA (start, self->move_origin[2], up, start);
+
+//CW++
+	if (self->moreflags & FL_TURRET_DOUBLE)
+	{ 
+		AngleVectors(self->s.angles, forward2, right2, up2);
+		VectorMA(self->s.origin, self->muzzle2[0], forward2, start2);
+		VectorMA(start2, self->muzzle2[1], right2, start2);
+		VectorMA(start2, self->muzzle2[2], up2, start2);
+	}
+//CW--
 
 	speed = 550 + 50 * skill->value;
 
@@ -150,8 +201,33 @@ void turret_breach_fire (edict_t *self)
 			case 1: // railgun
 			{
 				damage = 150;
-				fire_rail (owner, start, forward, damage, 0);
-				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/railgf1a.wav"), 1, ATTN_NORM, 0);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_rail(owner, start2, forward2, damage, 0);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_rail(owner, start, forward, damage, 0);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_rail(owner, start, forward, damage, 0);
+						fire_rail(owner, start2, forward2, damage, 0);
+					}
+				}
+				else
+//CW--
+					fire_rail(owner, start, forward, damage, 0);
+
+				gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/railgf1a.wav"), 1, ATTN_NORM, 0);
 
 				//ed - muzzleflash ? on a turret ? Yeah baby
 				gi.WriteByte (svc_muzzleflash);
@@ -166,8 +242,33 @@ void turret_breach_fire (edict_t *self)
 			case 2: // rocket
 			{
 				damage = 100 + random() * 50;
-				fire_rocket (owner, start, forward, damage, speed, 150, damage, NULL);
-				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_rocket(owner, start2, forward2, damage, speed, 150, damage, NULL);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+						fire_rocket(owner, start2, forward2, damage, speed, 150, damage, NULL);
+					}
+				}
+				else
+//CW--
+					fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+
+				gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
 				
 				self->delay = level.time + self->wait;
 
@@ -176,7 +277,32 @@ void turret_breach_fire (edict_t *self)
 			case 3: // BFG
 			{
 				damage = 500;
-				fire_bfg (owner, start, forward, damage, speed, 1000);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_bfg(owner, start2, forward2, damage, speed, 1000);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_bfg(owner, start, forward, damage, speed, 1000);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_bfg(owner, start, forward, damage, speed, 1000);
+						fire_bfg(owner, start2, forward2, damage, speed, 1000);
+					}
+				}
+				else
+//CW--
+					fire_bfg(owner, start, forward, damage, speed, 1000);
+
 				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/laser2.wav"), 1, ATTN_NORM, 0);
 
 				self->delay = level.time + self->wait;
@@ -186,28 +312,60 @@ void turret_breach_fire (edict_t *self)
 			case 4: // Homing rockets
 			{
 				damage = 100 + random() * 50;
-				if(owner->target_ent == self || owner == self) {
+				if (owner->target_ent == self || owner == self)
+				{
 					// monster-controlled or automated turret
-					fire_rocket (owner, start, forward, damage, speed, 150, damage, owner->enemy);
-				} else if(self->spawnflags & SF_TURRET_PLAYER_CONTROLLABLE) {
+					//fire_rocket(owner, start, forward, damage, speed, 150, damage, owner->enemy);							//CW
+					hrocket_turret_fire(self, owner, start, forward, start2, forward2, damage, speed, 150, damage, owner->enemy);	//CW
+				}
+				else if (self->spawnflags & SF_TURRET_PLAYER_CONTROLLABLE)
+				{
 					// what is player aiming at?
 					edict_t *target;
 					target = TurretTarget(self);
-					fire_rocket (owner, start, forward, damage, speed, 150, damage, target);
-				} else {
-					// shouldn't be possible to get here
-					fire_rocket (owner, start, forward, damage, speed, 150, damage, NULL);
+					//fire_rocket (owner, start, forward, damage, speed, 150, damage, target);								//CW
+					hrocket_turret_fire(self, owner, start, forward, start2, forward2, damage, speed, 150, damage, target);		//CW
 				}
-				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
-				
+				else
+				{
+					// shouldn't be possible to get here
+					//fire_rocket (owner, start, forward, damage, speed, 150, damage, NULL);								//CW
+					hrocket_turret_fire(self, owner, start, forward, start2, forward2, damage, speed, 150, damage, NULL);			//CW
+				}
+				gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
 				self->delay = level.time + self->wait;
-
 				break;
 			}
 			case 5: // Machinegun
 			{
 				// "wait" = damage for machinegun - default = 2
-				fire_bullet (owner, start, forward, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_bullet(owner, start2, forward2, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_bullet(owner, start, forward, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_bullet(owner, start, forward, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+						fire_bullet(owner, start2, forward2, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+					}
+				}
+				else
+//CW--
+					fire_bullet(owner, start, forward, self->wait, 4, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
+
 				gi.WriteByte (svc_muzzleflash);
 				gi.WriteShort (self-g_edicts);
 				gi.WriteByte (MZ_MACHINEGUN);
@@ -217,14 +375,64 @@ void turret_breach_fire (edict_t *self)
 			}
 			case 6: // Hyperblaster
 			{
-				fire_blaster (owner, start, forward, self->wait, 1000, EF_HYPERBLASTER, true);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_blaster(owner, start2, forward2, self->wait, 1000, EF_HYPERBLASTER, true);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_blaster(owner, start, forward, self->wait, 1000, EF_HYPERBLASTER, true);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_blaster(owner, start, forward, self->wait, 1000, EF_HYPERBLASTER, true);
+						fire_blaster(owner, start2, forward2, self->wait, 1000, 0, true);
+					}
+				}
+				else
+//CW--
+					fire_blaster(owner, start, forward, self->wait, 1000, EF_HYPERBLASTER, true);
+
 				gi.positioned_sound(start,self,CHAN_WEAPON,gi.soundindex("weapons/hyprbf1a.wav"),1,ATTN_NORM,0);
 				self->delay = level.time; // No delay
 				break;
 			}
 			case 7: // Grenade launcher
 			{
-				fire_grenade (owner, start, forward, 50, self->fog_far, 2.5, 90);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_grenade (owner, start2, forward2, 50, self->fog_far, 2.5, 90);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_grenade (owner, start, forward, 50, self->fog_far, 2.5, 90);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_grenade (owner, start, forward, 50, self->fog_far, 2.5, 90);
+						fire_grenade (owner, start2, forward2, 50, self->fog_far, 2.5, 90);
+					}
+				}
+				else
+//CW--
+					fire_grenade (owner, start, forward, 50, self->fog_far, 2.5, 90);
+
 				gi.WriteByte (svc_muzzleflash2);
 				gi.WriteShort (self - g_edicts);
 				gi.WriteByte (MZ2_GUNNER_GRENADE_1);
@@ -235,7 +443,32 @@ void turret_breach_fire (edict_t *self)
 			default:
 			{
 				damage = 100;
-				fire_rocket (owner, start, forward, damage, speed, 150, damage, NULL);
+//CW++
+				if (self->moreflags & FL_TURRET_DOUBLE)
+				{
+					if (self->moreflags & FL_TURRET_DOUBLE_ALT)
+					{
+						if (self->moreflags & FL_TURRET_DOUBLE_ALT_FIRING)
+						{
+							fire_rocket(owner, start2, forward2, damage, speed, 150, damage, NULL);
+							self->moreflags &= ~FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+						else
+						{
+							fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+							self->moreflags |= FL_TURRET_DOUBLE_ALT_FIRING;
+						}
+					}
+					else
+					{
+						fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+						fire_rocket(owner, start2, forward2, damage, speed, 150, damage, NULL);
+					}
+				}
+				else
+//CW--
+					fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
+		
 				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
 				
 				self->delay = level.time + self->wait;
@@ -883,16 +1116,34 @@ void turret_breach_finish_init (edict_t *self)
 	}
 	else
 	{
-		self->target_ent = G_PickTarget (self->target);
-		if(!self->target_ent)
+		self->target_ent = G_PickTarget(self->target);
+		if (!self->target_ent)
 		{
 			gi.dprintf("%s at %s, target %s does not exist\n",
 				self->classname,vtos(self->s.origin),self->target);
 			G_FreeEdict(self);
 			return;
 		}
-		VectorSubtract (self->target_ent->s.origin, self->s.origin, self->move_origin);
+		VectorSubtract(self->target_ent->s.origin, self->s.origin, self->move_origin);
 		G_FreeEdict(self->target_ent);
+
+//CW++	Double-barrelled turrets.
+
+		if (self->combattarget)
+		{
+			self->target_ent = NULL;
+			self->target_ent = G_PickTarget(self->combattarget);
+			if (self->target_ent)
+			{
+				VectorSubtract(self->target_ent->s.origin, self->s.origin, self->muzzle2);
+				self->moreflags |= FL_TURRET_DOUBLE;
+				if (self->style > 0)
+					self->moreflags |= FL_TURRET_DOUBLE_ALT;
+
+				G_FreeEdict(self->target_ent);
+			}
+		}
+//CW--
 	}
 
 	if (!self->team)
@@ -1095,7 +1346,6 @@ void turret_breach_touch(edict_t *self, edict_t *other, cplane_t *plane, csurfac
 
 void SP_turret_breach (edict_t *self)
 {
-	self->class_id = ENTITY_TURRET_BREACH;
 	// Good guy turrets shoot at monsters, not players. Turn TRACK on if it ain't already
 	if(self->spawnflags & SF_TURRET_GOODGUY)
 		self->spawnflags |= (SF_TURRET_TRACKING | SF_TURRET_INACTIVE);
@@ -1214,7 +1464,6 @@ void SP_model_turret(edict_t *self)
 {
 	self->spawnflags |= SF_TURRET_MD2;
 	SP_turret_breach(self);
-	self->class_id = ENTITY_MODEL_TURRET;
 }
 
 /*QUAKED turret_base (0 0 0) ?
@@ -1242,7 +1491,6 @@ void use_turret_base(edict_t *self, edict_t *other, edict_t *activator)
 }
 void SP_turret_base (edict_t *self)
 {
-	self->class_id = ENTITY_TURRET_BASE;
 	if(self->spawnflags & SF_TURRET_TRIGGER_SPAWN) {
 		self->svflags |= SVF_NOCLIENT;
 		self->solid = SOLID_NOT;
@@ -1424,7 +1672,7 @@ void SP_turret_driver (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-	self->class_id = ENTITY_TURRET_DRIVER;
+
 	self->movetype = MOVETYPE_PUSH;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/infantry/tris.md2");
@@ -1461,7 +1709,8 @@ void SP_turret_driver (edict_t *self)
 	self->think = turret_driver_link;
 	self->nextthink = level.time + FRAMETIME;
 
-	if(self->spawnflags & SF_TURRETDRIVER_REMOTE_DRIVER) {
+	if(self->spawnflags & SF_TURRETDRIVER_REMOTE_DRIVER)
+	{
 		// remote turret driver - go ahead and create his "real" infantry replacement
 		// NOW so the switch won't be so time-consuming
 		edict_t	*infantry;

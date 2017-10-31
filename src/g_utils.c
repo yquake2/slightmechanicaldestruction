@@ -253,10 +253,10 @@ void G_UseTargets (edict_t *ent, edict_t *activator)
 						level.total_monsters--;
 			}
 			// and decrement secret count if target_secret is removed
-			else if(t->class_id == ENTITY_TARGET_SECRET)
+			else if(!Q_stricmp(t->classname,"target_secret"))
 				level.total_secrets--;
 			// same deal with target_goal, but also turn off CD music if applicable
-			else if(t->class_id == ENTITY_TARGET_GOAL)
+			else if(!Q_stricmp(t->classname,"target_goal"))
 			{
 				level.total_goals--;
 				if (level.found_goals >= level.total_goals)
@@ -280,9 +280,9 @@ void G_UseTargets (edict_t *ent, edict_t *activator)
 		while ((t = G_Find (t, FOFS(targetname), ent->target)))
 		{
 			// doors fire area portals in a specific way
-			if ( (t->class_id == ENTITY_FUNC_AREAPORTAL) &&
-				( (ent->class_id == ENTITY_FUNC_DOOR) || 
-				  (ent->class_id == ENTITY_FUNC_DOOR_ROTATING)) ) 
+			if (!Q_stricmp(t->classname, "func_areaportal") &&
+				(!Q_stricmp(ent->classname, "func_door") || !Q_stricmp(ent->classname, "func_door_rotating") 
+				/*DWH*/ || !Q_stricmp(ent->classname,"func_door_rot_dh")))
 				continue;
 
 			if (t == ent)
@@ -354,6 +354,28 @@ char	*vtos (vec3_t v)
 	return s;
 }
 
+//CW++
+/*
+=============
+VectorToString - floating point
+
+Prints out vector components to 3dp.
+=============
+*/
+char *vtosf(vec3_t v)
+{
+	static	int		index;
+	static	char	str[8][64];
+	char	*s;
+
+	// use an array so that multiple vtos won't collide
+	s = str[index];
+	index = (index + 1)&7;
+
+	Com_sprintf(s, 64, "(%.3f %.3f %.3f)", v[0], v[1], v[2]);
+	return s;
+}
+//CW--
 
 vec3_t VEC_UP		= {0, -1, 0};
 vec3_t MOVEDIR_UP	= {0, 0, 1};
@@ -545,7 +567,7 @@ edict_t *G_Spawn (void)
 
 	globals.num_edicts++;
 
-	if(developer->value && readout->value)
+	if (developer->value && readout->value)
 		gi.dprintf("num_edicts = %d\n",globals.num_edicts);
 
 	G_InitEdict (e);
@@ -869,7 +891,7 @@ edict_t	*LookingAt(edict_t *ent, int filter, vec3_t endpos, float *range)
 		gi.sound (ent, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
 		return NULL;
 	}
-	if( (tr.ent == world) && (filter & LOOKAT_NOWORLD))
+	if((Q_stricmp(tr.ent->classname,"worldspawn") == 0) && (filter & LOOKAT_NOWORLD))
 	{
 		// world brush
 		gi.sound (ent, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
@@ -977,9 +999,9 @@ void G_UseTarget (edict_t *ent, edict_t *activator, edict_t *target)
 	if (target)
 	{
 		// doors fire area portals in a specific way
-		if ( (target->class_id == ENTITY_FUNC_AREAPORTAL) &&
-			((ent->class_id == ENTITY_FUNC_DOOR) ||
-			 (ent->class_id == ENTITY_FUNC_DOOR_ROTATING)))
+		if (!Q_stricmp(target->classname, "func_areaportal") &&
+			(!Q_stricmp(ent->classname, "func_door") || !Q_stricmp(ent->classname, "func_door_rotating") 
+			|| !Q_stricmp(ent->classname,"func_door_rot_dh")))
 			return;
 
 		if (target == ent)

@@ -58,6 +58,7 @@ void PlayerTrail_Add (vec3_t spot)
 
 	VectorSubtract (spot, trail[PREV(trail_head)]->s.origin, temp);
 	trail[trail_head]->s.angles[1] = vectoyaw (temp);
+
 	trail_head = NEXT(trail_head);
 }
 
