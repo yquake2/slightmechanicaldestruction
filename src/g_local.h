@@ -17,6 +17,13 @@
 
 #define PI		3.14159265359
 
+#define max(X,Y)	(X > Y ? X : Y)
+#define min(X,Y)	(X < Y ? X : Y)
+
+#ifndef _WIN32
+ #define DISABLE_FMOD
+#endif
+
 // protocol bytes that can be directly added to messages
 #define	svc_muzzleflash		1
 #define	svc_muzzleflash2	2

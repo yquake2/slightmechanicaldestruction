@@ -1,0 +1,111 @@
+Credits:
+Thanks goes to (alphabetically) David Hyde, Knightmare, Musashi, and Yamagi for their respective work on keeping Q2 both alive and also playable on modern architectures.
+
+
+Known Bugs:
+- The game will crash if a door tries to close on any monster either living or dead.  Be sure to gib any monsters that die in a doorway.
+- After the cutscene, gun and crosshair visibility are not automatically restored.  To restore the Q2 defaults, you can set "cl_gun 2" and "crosshair 1" in the console.
+
+
+Release 2 Notes:
+- Saving now works on all maps!  The "target_effect" entity has been disabled because it was causing the game to crash when loading save files in maps that use it.  SPOILER: In SMD3 the hallway with the Brains near the start of the map consequently has an invisible trap now.  Be sure to locate the switch to disable the "invisible steam" before passing down the hallway.
+
+Release 2 Change Log:
+g_func_decs.h
+Missing function declaration added
+
+g_target.c
+Disabled the SP_target_effect entity and all related functions
+
+
+Release 1 Notes:
+- No attempt has been made to clean up the original Lazarus_SMD code beyond simply getting it compiling with GCC and as operational in-game as I could.
+- Music and footstep noises are unavailable on non-Windows platforms due to FMOD being Windows-only.
+- Fog is disabled on all platforms.  Re-enabling it on Windows would require removing all code related to the 3dfxgl implementation of GLide (which neither GCC or YamagiQ2 supports).
+- On Windows the old Lazarus save-file system is used w/o Knightmare's enhancements.  This is because the list of game functions is slightly different when compiled on Windows, owing to the differences in Sound listed above.
+
+Release 1 Change Log:
+g_cmds.c
+Change _MAX_PATH to MAX_OSPATH
+Added Q_strlwr() definition to replace non-standard strlwr() reference
+Change stricmp() references to Q_stricmp()
+Added Knightmare's SetLazarusCrosshair() definition
+
+g_crane.c
+Change stricmp() references to Q_stricmp()
+
+g_fog.c
+Uncomment "#define DISABLE_FOG"
+
+g_func_decs.h & g_func_list.h
+Files added to support Knightmare's changes to g_save.c
+
+g_items.c
+*_armor_index variable declarations now match g_local.h
+Per Knightmare: Removed "static" modifier from declarations for drop_temp_touch() and drop_make_touchable()
+
+g_local.h
+Added max/min macros
+Added "#define DISABLE_FMOD" if not compiled on Windows
+
+g_misc.c
+Don't patch models; comment out Windows-specific direct.h
+Make sure self->activator->classname isn't NULL before using it in func_clock_screen_think()
+Per Knightmare: Removed "static" modifier from declarations for func_clock_reset(), func_clock_format_countdown(), and light_use()
+
+g_mmove_decs.h & g_mmove_list.h
+Files added to support Knightmare's changes to g_save.c
+
+g_monster.c
+Comment out Windows-specific direct.h
+
+g_patchplayermodels.c
+Don't patch models; comment out Windows-specific direct.h
+
+g_target.c
+Change stricmp() references to Q_stricmp()
+
+g_trigger.c
+Change stricmp() references to Q_stricmp()
+Added Yamagi's code for locating the YamagiQ2 save directory to trans_ent_filename()
+
+g_save.c
+Replaced original g_save.c file with Knightmare's version
+Moved Knightmare's "#define"s related to saving from q_shared.h to g_save.c
+Add "#ifndef DISABLE_FMOD" block around call to FMOD's ReadTextureSurfaceAssignments()
+Re-order text displayed when InitGame() is called to match YamagiQ2's expected formatting
+
+g_sound.c
+Added Knightmare's "#ifdef DISABLE_FMOD" code-block
+
+g_spawn.c
+Change _MAX_PATH to MAX_OSPATH
+Add "#ifndef DISABLE_FMOD" block around use of FMOD footsteps boolean
+
+g_trigger.c
+Change _MAX_PATH to MAX_OSPATH
+
+g_weapon.c
+Per Knightmare: Removed "static" modifier from declarations for check_dodge(), check_dodge_inf_mg(), fire_lead(), Grenade_Add_To_Chain(), Grenade_Remove_From_Chain(), Grenade_Explode(), Grenade_Touch(), rocket_explode(), and rocket_die()
+
+p_client.c
+Change stricmp() references to Q_stricmp()
+Per Knightmare: Removed "static" modifier from declarations for SP_FixCoopSpots() and SP_CreateCoopSpots()
+
+m_actor.c
+Change stricmp() references to Q_stricmp()
+
+p_client.c
+Added Knightmare's calls to SetLazarusCrosshair()
+
+p_text.c
+Explicitly cast temp_buffer variable as char before math operations
+Change stricmp() references to Q_stricmp()
+Use "/" instead of "\\" when delineating folder names
+
+p_view.c
+Add "#ifndef DISABLE_FMOD" block around use of FMOD footsteps boolean
+Change stricmp() references to Q_stricmp()
+
+q_shared.c
+Added "#define GCC_COMP" to disable operations unsupported by GCC

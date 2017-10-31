@@ -1050,7 +1050,7 @@ void InitiallyDead (edict_t *self)
 #define MAX_SKINS		16
 #define MAX_SKINNAME	64
 
-#include <direct.h>
+//#include <direct.h>
 #include "pak.h"
 
 int PatchMonsterModel (char *modelname)

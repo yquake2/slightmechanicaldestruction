@@ -242,14 +242,14 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		strcpy(filename,basedir->string);
 		if(strlen(gamedir->string))
 		{
-			strcat(filename,"\\");
+			strcat(filename,"/");
 			strcat(filename,gamedir->string);
 		}
 		// First check for existence of text file in pak0.pak -> pak9.pak
 		in_pak = false;
 		for(i=0; i<=9 && !in_pak; i++)
 		{
-			sprintf(pakfile,"%s\\pak%d.pak",filename,i);
+			sprintf(pakfile,"%s/pak%d.pak",filename,i);
 			if (NULL != (f = fopen(pakfile, "rb")))
 			{
 				num=fread(&pakheader,1,sizeof(pak_header_t),f);
@@ -266,7 +266,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 						for(k=0; k<numitems && !in_pak; k++)
 						{
 							fread(&pakitem,1,sizeof(pak_item_t),f);
-							if(!stricmp(pakitem.name,textname))
+							if(!Q_stricmp(pakitem.name,textname))
 							{
 								in_pak = true;
 								fseek(f,pakitem.start,SEEK_SET);
@@ -291,7 +291,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		}
 		if(!in_pak)
 		{
-			strcat(filename,"\\maps\\");
+			strcat(filename,"/maps/");
 			strcat(filename,message);
 			f = fopen(filename,"rb");
 			if(!f)
@@ -441,7 +441,9 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 						}
 						memset(hnd->buffer,0,hnd->allocated);
 						memcpy(hnd->buffer,temp_buffer,hnd->size);
-						p1 = hnd->buffer + (p2-temp_buffer);
+
+						char *force_char_cast = temp_buffer;
+						p1 = hnd->buffer + (p2-force_char_cast);
 						p2 = p1;
 						free(temp_buffer);
 					}
@@ -478,7 +480,10 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 				memset(hnd->buffer,0,hnd->allocated);
 				memcpy(hnd->buffer,temp_buffer,hnd->size);
 				p2 = p1;
-				p1 = hnd->buffer + (p2-temp_buffer);
+
+				char *force_char_cast = temp_buffer;
+
+				p1 = hnd->buffer + (p2-force_char_cast);
 				free(temp_buffer);
 			}
 			p2 = hnd->buffer + hnd->size;
@@ -508,7 +513,10 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 				memset(hnd->buffer,0,hnd->allocated);
 				memcpy(hnd->buffer,temp_buffer,hnd->size);
 				p2 = p1;
-				p1 = hnd->buffer + (p2-temp_buffer);
+
+				char *force_char_cast = temp_buffer;
+
+				p1 = hnd->buffer + (p2-force_char_cast);
 				free(temp_buffer);
 			}
 			p2 = hnd->buffer + hnd->size;
@@ -592,7 +600,9 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 				while(*p2 != 0)
 					p2++;
 				p2++;
-				memcpy(p1,p2,hnd->buffer+hnd->size-p2+1);
+
+				char *force_char_cast = hnd->buffer+hnd->size;
+				memcpy(p1,p2,force_char_cast-p2+1);
 				hnd->nlines--;
 				// Found one (only one is allowed)
 				gi.sound (activator, CHAN_AUTO, gi.soundindex (sound), 1, ATTN_NORM, 0);

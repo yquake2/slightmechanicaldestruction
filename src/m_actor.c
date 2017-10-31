@@ -1768,7 +1768,7 @@ qboolean InPak(char *basedir, char *gamedir, char *filename)
 					for(kk=0; kk<numitems && !found; kk++)
 					{
 						fread(&pakitem,1,sizeof(pak_item_t),f);
-						if(!stricmp(pakitem.name,filename))
+						if(!Q_stricmp(pakitem.name,filename))
 							found = true;
 					}
 				}

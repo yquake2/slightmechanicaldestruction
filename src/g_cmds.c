@@ -3,6 +3,17 @@
 
 int	nostatus = 0;
 
+char *Q_strlwr(char *str)
+{
+  unsigned char *p = (unsigned char *)str;
+
+  while (*p) {
+     *p = tolower((unsigned char)*p);
+      p++;
+  }
+
+  return str;
+}
 
 void RotateAngles(vec3_t in, vec3_t delta, vec3_t out)
 {
@@ -875,7 +886,7 @@ void Cmd_Use_f (edict_t *ent)
 	}
 	index = ITEM_INDEX(it);
 #ifdef JETPACK_MOD
-	if(!stricmp(s,"jetpack"))
+	if(!Q_stricmp(s,"jetpack"))
 	{
 		// Special case - turns on/off
 		if(!ent->client->jetpack)
@@ -897,7 +908,7 @@ void Cmd_Use_f (edict_t *ent)
 		return;
 	}
 #endif
-	if (!stricmp(s,"stasis generator"))
+	if (!Q_stricmp(s,"stasis generator"))
 	{
 		// Special case - turn freeze off if already on
 		if(level.freeze)
@@ -1032,7 +1043,7 @@ void Cmd_InvUse_f (edict_t *ent)
 	}
 
 #ifdef JETPACK_MOD
-	if(!stricmp(it->classname,"item_jetpack"))
+	if(!Q_stricmp(it->classname,"item_jetpack"))
 	{
 		if(!ent->client->jetpack)
 		{
@@ -1533,6 +1544,18 @@ void Cmd_Bbox_f (edict_t *ent)
 	viewing = LookingAt(ent, 0, NULL, NULL);
 	if(!viewing) return;
 	DrawBBox(viewing);
+}
+
+void SetLazarusCrosshair (edict_t *ent)
+{
+	if (deathmatch->value || coop->value) return;
+	if (!ent->inuse) return;
+	if (!ent->client) return;
+	if (ent->client->zoomed || ent->client->zooming)
+		return;
+
+	gi.cvar_forceset("lazarus_crosshair",      va("%d",(int)(crosshair->value)));
+	gi.cvar_forceset("lazarus_cl_gun",         va("%d",(int)(cl_gun->value)));
 }
 
 void SetSensitivities(edict_t *ent,qboolean reset)
@@ -2081,7 +2104,7 @@ void ClientCommand (edict_t *ent)
 		{
 			edict_t *temp;
 
-			strlwr(parm);
+			Q_strlwr(parm);
 			temp = G_Spawn();
 			temp->message = parm;
 			temp->volume = 255;
@@ -2101,7 +2124,7 @@ void ClientCommand (edict_t *ent)
 	else if(!Q_stricmp(cmd, "properties"))
 	{
 		if(parm) {
-			char	filename[_MAX_PATH];
+			char	filename[MAX_OSPATH];
 			edict_t	*e;
 			FILE	*f;
 //			int		i;

@@ -2160,27 +2160,17 @@ TE_FORCEWALL,          37  ??
 */
 void target_effect_at (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (self->style);
 	gi.WritePosition (self->s.origin);
 	gi.WriteShort (self - g_edicts);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
-*/ }
+}
 /* Poor man's target_steam
   TE_STEAM           40
 */
 void target_effect_steam (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	static int nextid;
 	int	wait;
 
@@ -2206,7 +2196,7 @@ void target_effect_steam (edict_t *self, edict_t *activator)
 
 	if (level.num_reflectors)
 		ReflectSteam (self->s.origin,self->movedir,self->count,self->sounds,(int)(self->speed),wait,nextid);
-*/ }
+}
 
 //=========================================================================
 /*
@@ -2220,11 +2210,6 @@ moving in (movedir) direction.
 //=========================================================================
 void target_effect_splash (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(self->style);
 	gi.WriteByte(self->count);
@@ -2232,7 +2217,7 @@ void target_effect_splash (edict_t *self, edict_t *activator)
 	gi.WriteDir(self->movedir);
 	gi.WriteByte(self->sounds);
 	gi.multicast(self->s.origin, MULTICAST_PVS);
-*/ }
+}
 
 //======================================================
 /*
@@ -2254,11 +2239,6 @@ in Potentially Visible Set from vector (origin)
 //======================================================
 void target_effect_trail (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	edict_t	*target;
 
 	if (!self->target) return;
@@ -2285,18 +2265,13 @@ void target_effect_trail (edict_t *self, edict_t *activator)
 		   (self->style == TE_BUBBLETRAIL2))
 		   ReflectTrail(self->style,self->s.origin,target->s.origin);
 	}
-*/ }
+}
 //===========================================================================
 /* TE_LIGHTNING   33 Lightning bolt
 
   Similar but slightly different syntax to trail stuff */
 void target_effect_lightning(edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	edict_t	*target;
 
 	if (!self->target) return;
@@ -2310,7 +2285,7 @@ void target_effect_lightning(edict_t *self, edict_t *activator)
 	gi.WritePosition (target->s.origin);
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
-*/ }
+}
 //===========================================================================
 /*
 Spawns sparks of (type) from (start) in direction of (movdir) and
@@ -2337,11 +2312,6 @@ Broadcasts to all in Potentially Visible Set from vector (origin)
 //======================================================
 void target_effect_sparks (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(self->style);
 	gi.WritePosition(self->s.origin);
@@ -2351,7 +2321,7 @@ void target_effect_sparks (edict_t *self, edict_t *activator)
 
 	if (level.num_reflectors)
 		ReflectSparks(self->style,self->s.origin,self->movedir);
-*/ }
+}
 
 //======================================================
 /*
@@ -2380,11 +2350,6 @@ Potentially Hearable set from vector (origin)
 //==============================================================================
 void target_effect_explosion (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(self->style);
 	gi.WritePosition(self->s.origin);
@@ -2393,7 +2358,7 @@ void target_effect_explosion (edict_t *self, edict_t *activator)
 	if (level.num_reflectors)
 		ReflectExplosion (self->style, self->s.origin);
 
-*/ }
+}
 //===============================================================================
 /*  TE_TUNNEL_SPARKS    29 
     Similar to other splash effects, but Xatrix does some funky things with
@@ -2401,11 +2366,6 @@ void target_effect_explosion (edict_t *self, edict_t *activator)
 
 void target_effect_tunnel_sparks (edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	vec3_t	origin;
 	int		i;
 
@@ -2421,32 +2381,22 @@ void target_effect_tunnel_sparks (edict_t *self, edict_t *activator)
 		gi.WriteByte (self->sounds + (rand()&7));  // color
 		gi.multicast (self->s.origin, MULTICAST_PVS);
 	}
-*/ }
+}
 //===============================================================================
 /*  TE_WIDOWBEAMOUT     50
 */
 void target_effect_widowbeam(edict_t *self, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_WIDOWBEAMOUT);
 	gi.WriteShort (20001);
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
-*/ }
+}
 //===============================================================================
 
 void target_effect_use(edict_t *self, edict_t *other, edict_t *activator)
 {
-/*	if(!self || !activator)
-	{
-		return;
-	}
-
 	if (self->spawnflags & 1) {
 		// currently looped on - turn it off
 		self->spawnflags &= ~1;
@@ -2470,25 +2420,15 @@ void target_effect_use(edict_t *self, edict_t *other, edict_t *activator)
 		if (!VectorLength(mover->velocity)) return;
 	}
 	self->play(self,activator);
-*/ }
+}
 void target_effect_think(edict_t *self)
 {
-/*	if(!self || !self->play || !level.time || !self->wait)
-	{
-		return;
-	}
-
 	self->play(self,NULL);
 	self->nextthink = level.time + self->wait;
-*/ }
+}
 //===============================================================================
 void SP_target_effect (edict_t *self)
 {
-/*	if(!self)
-	{
-		return;
-	}
-
 	if (self->movewith)
 		self->movetype = MOVETYPE_PUSH;
 	else
@@ -2597,7 +2537,7 @@ void SP_target_effect (edict_t *self)
 	if (self->spawnflags & 1)
 		self->nextthink = level.time + 1;
 
-*/ }
+}
 
 /*=====================================================================================
  TARGET_ATTRACTOR - pulls target entity towards its origin

@@ -20,7 +20,7 @@ void SP_misc_teleporter_dest (edict_t *ent);
 // we use carnal knowledge of the maps to fix the coop spot targetnames to match
 // that of the nearest named single player spot
 
-static void SP_FixCoopSpots (edict_t *self)
+/*static*/ void SP_FixCoopSpots (edict_t *self)
 {
 	edict_t	*spot;
 	vec3_t	d;
@@ -51,7 +51,7 @@ static void SP_FixCoopSpots (edict_t *self)
 // some maps don't have any coop spots at all, so we need to create them
 // where they should have been
 
-static void SP_CreateCoopSpots (edict_t *self)
+/*static*/ void SP_CreateCoopSpots (edict_t *self)
 {
 	edict_t	*spot;
 
@@ -513,6 +513,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	self->client->pers.spawn_landmark = false; // paranoia check
 	self->client->pers.spawn_levelchange = false;
+	SetLazarusCrosshair(self); //backup crosshair
 	self->client->zooming = 0;
 	self->client->zoomed = false;
 	SetSensitivities(self,true);
@@ -1647,6 +1648,7 @@ void ClientBegin (edict_t *ent)
 	}
 
 	// DWH
+	SetLazarusCrosshair(ent); //backup crosshair
 	SetSensitivities(ent,true);
 
 	if (game.maxclients == 1)
@@ -2417,13 +2419,13 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			viewing = LookingAt(ent,0,intersect,&range);
 			if(viewing && viewing->classname)
 			{
-				if(!stricmp(viewing->classname,"crane_control"))
+				if(!Q_stricmp(viewing->classname,"crane_control"))
 					crane_control_action(viewing,ent,intersect);
-				if(!stricmp(viewing->classname,"target_lock_digit"))
+				if(!Q_stricmp(viewing->classname,"target_lock_digit"))
 					lock_digit_increment(viewing,ent);
-				if(!stricmp(viewing->classname,"func_trainbutton") && (viewing->spawnflags & 1))
+				if(!Q_stricmp(viewing->classname,"func_trainbutton") && (viewing->spawnflags & 1))
 					trainbutton_use(viewing,ent,ent);
-				if(!stricmp(viewing->classname,"func_monitor") && range <= 100) {
+				if(!Q_stricmp(viewing->classname,"func_monitor") && range <= 100) {
 					use_camera(viewing,ent,ent);
 					if(client->spycam && client->spycam->viewer == ent) {
 						client->old_owner_angles[0] = ucmd->angles[0];

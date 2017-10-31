@@ -1,5 +1,10 @@
 #include "g_local.h"
 
+
+#ifdef _WIN32
+#include <shlobj.h>
+#endif
+
 #define TRIGGER_MONSTER      1
 #define TRIGGER_NOT_PLAYER   2
 #define TRIGGER_START_OFF    4
@@ -1102,7 +1107,7 @@ void trigger_inside_think (edict_t *self)
 		hit = touch[i];
 		if (!hit->inuse) continue;
 		if (!hit->targetname) continue;
-		if (stricmp(self->pathtarget, hit->targetname)) continue;
+		if (Q_stricmp(self->pathtarget, hit->targetname)) continue;
 		// must be COMPLETELY inside
 		if (hit->absmin[0] < self->absmin[0]) continue;
 		if (hit->absmin[1] < self->absmin[1]) continue;
@@ -1794,12 +1799,96 @@ entlist_t DoNotMove[] = {
 
 void trans_ent_filename (char *filename)
 {
-	GameDirRelativePath("save/trans.ent",filename);
+	char *gamedirname = "";
+	char *cfgdir;
+	char *savedirfilename = "save/trans.ent";
+
+	cvar_t	*gamedircvar = gi.cvar("gamedir", "", 0);
+	if(strlen(gamedircvar->string))
+	{
+		gamedirname = strcat(gamedircvar->string, "/");
+	}
+#ifdef _WIN32
+	char *cur;
+	char *old;
+	char profile[MAX_PATH];
+	int len;
+	wchar_t sprofile[MAX_PATH];
+	wchar_t uprofile[MAX_PATH];
+	cfgdir = "YamagiQ2";
+
+	/* The following lines implement a horrible
+	   hack to connect the UTF-16 WinAPI to the
+	   ASCII Quake II. While this should work in
+	   most cases, it'll fail if the "Windows to
+	   DOS filename translation" is switched off.
+	   In that case the function will return NULL
+	   and no homedir is used. */
+
+	/* Get the path to "My Documents" directory */
+	SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, 0, uprofile);
+
+	/* Create a UTF-16 DOS path */
+    len = GetShortPathNameW(uprofile, sprofile, sizeof(sprofile));
+
+	if (len == 0)
+	{
+		GameDirRelativePath(savedirfilename,filename);
+		return;
+	}
+
+	/* Since the DOS path contains no UTF-16 characters, just convert it to ASCII */
+	WideCharToMultiByte(CP_ACP, 0, sprofile, -1, profile, sizeof(profile), NULL, NULL);
+
+	if (len == 0)
+	{
+		GameDirRelativePath(savedirfilename,filename);
+		return;
+	}
+
+	/* Check if path is too long */
+    if (len + 11 >= 256)
+	{
+		GameDirRelativePath(savedirfilename,filename);
+		return;
+	}
+
+	/* Replace backslashes by slashes */
+	cur = old = profile;
+
+	if (strstr(cur, "\\") != NULL)
+	{
+		while (cur != NULL)
+		{
+			if ((cur - old) > 1)
+			{
+				*cur = '/';
+
+			}
+
+			old = cur;
+			cur = strchr(old + 1, '\\');
+		}
+	}
+#else
+	char *profile;
+	cfgdir = ".yq2";
+
+	profile = getenv("HOME");
+
+	if (!profile)
+	{
+		GameDirRelativePath(savedirfilename,filename);
+		return;
+	}
+#endif
+
+	sprintf(filename, "%s/%s/%s%s", profile, cfgdir, gamedirname, savedirfilename);
 }
 
 int trigger_transition_ents (edict_t *changelevel, edict_t *self)
 {
-	char		t_file[_MAX_PATH];
+	char		t_file[MAX_OSPATH];
 	int			i, j;
 	int			total=0;
 	qboolean	nogo;

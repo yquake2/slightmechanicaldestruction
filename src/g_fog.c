@@ -1,6 +1,6 @@
 #include "g_local.h"
 
-//#define DISABLE_FOG
+#define DISABLE_FOG
 
 #ifdef DISABLE_FOG
 void Fog_Init()

@@ -7,7 +7,7 @@
 //   PatchPlayerModels (ent);
 
 
-#include <direct.h>
+//#include <direct.h>
 #include "g_local.h"
 
 
@@ -21,6 +21,8 @@
 //
 int PatchPlayerModels (char *modelname)
 {
+	return 1;
+
 	cvar_t	*game;
 	int		j;
 	int		numskins;		// number of skin entries

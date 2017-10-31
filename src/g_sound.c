@@ -1,4 +1,37 @@
 #include "g_local.h"
+
+#ifdef DISABLE_FMOD
+void PlayFootstep (edict_t *ent, footstep_t index)	{}
+void FootStep (edict_t *ent)	{}
+qboolean FMOD_Init ()
+{
+	return false;
+}
+void FMOD_Shutdown ()	{}
+void FMOD_UpdateListenerPos ()	{}
+void FMOD_UpdateSpeakerPos (edict_t *speaker)	{}
+void FMOD_Stop ()	{}
+void CheckEndMusic (edict_t *ent)	{}
+void CheckEndSample (edict_t *ent)	{}
+int FMOD_PlaySound (edict_t *ent)
+{
+	return 0;
+}
+void FMOD_StopSound (edict_t *ent, qboolean free)	{}
+void target_playback_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)	{}
+void target_playback_fadeout (edict_t *ent)	{}
+void target_playback_fadein (edict_t *ent)	{}
+qboolean FMOD_IsPlaying (edict_t *ent)
+{
+	return false;
+}
+void Use_Target_Playback (edict_t *ent, edict_t *other, edict_t *activator)	{}
+void target_playback_delayed_start (edict_t *ent)	{}
+void target_playback_delayed_restart (edict_t *ent)	{}
+void SP_target_playback (edict_t *ent)	{}
+
+#else // DISABLE_FMOD
+
 #include "fmod.h"
 #include <windows.h>
 
@@ -1396,3 +1429,4 @@ void SP_target_playback (edict_t *ent)
 	}
 }
 
+#endif // DISABLE_FMOD

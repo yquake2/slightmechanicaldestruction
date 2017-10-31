@@ -5,6 +5,7 @@ vec3_t vec3_origin = {0,0,0};
 //============================================================================
 
 #ifdef _WIN32
+#define GCC_COMP
 #pragma optimize( "", off )
 #endif
 
@@ -240,7 +241,7 @@ float Q_fabs (float f)
 #endif
 }
 
-#if defined _M_IX86 && !defined C_ONLY
+#if defined _M_IX86 && !defined GCC_COMP
 #pragma warning (disable:4035)
 __declspec( naked ) long Q_ftol( float f )
 {
@@ -324,7 +325,8 @@ BoxOnPlaneSide
 Returns 1, 2, or 1 + 2
 ==================
 */
-#if !id386 || defined __linux__ 
+
+#if !id386 || !defined _WIN32 || defined GCC_COMP 
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	float	dist1, dist2;

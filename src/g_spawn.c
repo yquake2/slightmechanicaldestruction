@@ -689,7 +689,7 @@ void LoadTransitionEnts()
 		gi.dprintf("==== LoadTransitionEnts ====\n");
 	if(game.transition_ents)
 	{
-		char		t_file[_MAX_PATH];
+		char		t_file[MAX_OSPATH];
 		int			i, j;
 		FILE		*f;
 		vec3_t		v_spawn;
@@ -1326,6 +1326,7 @@ void SP_worldspawn (edict_t *ent)
 	if(footstep_sounds->value)
 		world->effects |= FX_WORLDSPAWN_STEPSOUNDS;
 
+#ifndef DISABLE_FMOD
 	if(deathmatch->value || coop->value)
 		qFMOD_Footsteps = false;
 	else if(world->effects & FX_WORLDSPAWN_STEPSOUNDS)
@@ -1334,7 +1335,8 @@ void SP_worldspawn (edict_t *ent)
 		FMOD_Init();
 	}
 	else
-		qFMOD_Footsteps = false;
+		qFMOD_Footsteps = false; 
+#endif
 }
 
 // Hud toggle ripped from TPP source

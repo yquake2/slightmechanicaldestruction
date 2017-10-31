@@ -10,7 +10,7 @@ a non-instant attack weapon.  It checks to see if a
 monster's dodge function should be called.
 =================
 */
-static void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed)
+/*static*/ void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed)
 {
 	vec3_t	end;
 	vec3_t	v;
@@ -35,7 +35,7 @@ static void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed)
 }
 
 //CW++	Infantry guards can roll-dodge MG bursts
-static void check_dodge_inf_mg(edict_t *self, vec3_t start, vec3_t dir)
+/*static*/ void check_dodge_inf_mg(edict_t *self, vec3_t start, vec3_t dir)
 {
 	vec3_t	end;
 	trace_t	tr;
@@ -154,7 +154,7 @@ fire_lead
 This is an internal support routine used for bullet/pellet based weapons.
 =================
 */
-static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
+/*static*/ void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
 {
 	trace_t		tr;
 	vec3_t		dir;
@@ -676,7 +676,7 @@ void Grenade_Evade (edict_t *monster)
 	}
 }
 
-static void Grenade_Add_To_Chain (edict_t *grenade)
+/*static*/ void Grenade_Add_To_Chain (edict_t *grenade)
 {
 	edict_t	*ancestor;
 
@@ -687,7 +687,7 @@ static void Grenade_Add_To_Chain (edict_t *grenade)
 	grenade->prev_grenade = ancestor;
 }
 
-static void Grenade_Remove_From_Chain (edict_t *grenade)
+/*static*/ void Grenade_Remove_From_Chain (edict_t *grenade)
 {
 	if (grenade->prev_grenade)
 	{
@@ -699,7 +699,7 @@ static void Grenade_Remove_From_Chain (edict_t *grenade)
 	}
 }
 
-static void Grenade_Explode (edict_t *ent)
+/*static*/ void Grenade_Explode (edict_t *ent)
 {
 	vec3_t		origin;
 	int			mod;
@@ -763,7 +763,7 @@ static void Grenade_Explode (edict_t *ent)
 	G_FreeEdict (ent);
 }
 
-static void Grenade_Touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+/*static*/ void Grenade_Touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	if (other == ent->owner)
 		return;
@@ -1205,7 +1205,7 @@ void rocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 	G_FreeEdict (ent);
 }
 
-static void rocket_explode (edict_t *ent)
+/*static*/ void rocket_explode (edict_t *ent)
 {
 	vec3_t	origin;
 	int		type;
@@ -1232,7 +1232,7 @@ static void rocket_explode (edict_t *ent)
 
 	G_FreeEdict (ent);
 }
-static void rocket_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+/*static*/ void rocket_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	self->takedamage = DAMAGE_NO;
 	self->nextthink = level.time + FRAMETIME;

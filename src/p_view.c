@@ -528,7 +528,7 @@ void SV_CalcBlend (edict_t *ent)
 		float alpha;
 
 		// Turn off fade for dead software players or they won't see menu
-		if((ent->health <= 0) && (stricmp(vid_ref->string,"gl")))
+		if((ent->health <= 0) && (Q_stricmp(vid_ref->string,"gl")))
 			ent->client->fadein = 0;
 
 		if(ent->client->fadein > level.framenum)
@@ -1073,6 +1073,7 @@ void G_SetClientEvent (edict_t *ent)
 						int	r;
 						r = rand() & 1 + ent->client->leftfoot*2;
 						ent->client->leftfoot = 1 - ent->client->leftfoot;
+#ifndef DISABLE_FMOD
 						if(qFMOD_Footsteps)
 						{
 							switch (r){
@@ -1084,13 +1085,16 @@ void G_SetClientEvent (edict_t *ent)
 						}
 						else
 						{
+#endif
 							switch (r){
 							case 0:	gi.sound(ent,CHAN_VOICE,gi.soundindex("player/pl_ladder1.wav"),1.0,ATTN_NORM,0); break;
 							case 1: gi.sound(ent,CHAN_VOICE,gi.soundindex("player/pl_ladder3.wav"),1.0,ATTN_NORM,0); break;
 							case 2:	gi.sound(ent,CHAN_VOICE,gi.soundindex("player/pl_ladder2.wav"),1.0,ATTN_NORM,0); break;
 							case 3:	gi.sound(ent,CHAN_VOICE,gi.soundindex("player/pl_ladder4.wav"),1.0,ATTN_NORM,0); break;
 							}
+#ifndef DISABLE_FMOD
 						}
+#endif
 					}
 				}
 			}
