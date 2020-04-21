@@ -102,6 +102,8 @@ cvar_t	*vid_ref;
 cvar_t	*zoomrate;
 cvar_t	*zoomsnap;
 
+cvar_t  *aimfix;
+
 void SpawnEntities (char *mapname, char *entities, char *spawnpoint);
 void ClientThink (edict_t *ent, usercmd_t *cmd);
 qboolean ClientConnect (edict_t *ent, char *userinfo);

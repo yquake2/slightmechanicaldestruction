@@ -421,6 +421,9 @@ void InitGame (void)
 	bounce_bounce = gi.cvar("bounce_bounce", "0.5", 0);
 	bounce_minv   = gi.cvar("bounce_minv",   "60",  0);
 
+	/* others */
+	aimfix = gi.cvar("aimfix", "0", CVAR_ARCHIVE);
+
 	// items
 	InitItems ();
 
