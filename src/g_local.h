@@ -773,6 +773,8 @@ extern	cvar_t	*vid_ref;
 extern	cvar_t	*zoomrate;
 extern	cvar_t	*zoomsnap;
 
+extern  cvar_t  *aimfix;
+
 extern	int		max_modelindex;
 extern	int		max_soundindex;
 
@@ -1281,7 +1283,7 @@ void ClientEndServerFrame (edict_t *ent);
 // p_weapon.c
 //
 void PlayerNoise(edict_t *who, vec3_t where, int type);
-void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);
+void P_ProjectSource (edict_t *ent, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);
 void kick_attack (edict_t *ent);
 
 // ROGUE
