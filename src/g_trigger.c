@@ -1419,7 +1419,6 @@ void trigger_look_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		// Then trigger only fires if looking at TARGET, not trigger bbox
 		edict_t	*target;
 		int		num_triggered=0;
-		vec3_t	endpos;
 
 		target = G_Find(NULL,FOFS(targetname),self->target);
 		while(target && !num_triggered)

@@ -117,7 +117,7 @@ void RotateAngles(vec3_t in, vec3_t delta, vec3_t out)
 		ytemp = c*Y[1] + s*Y[0];
 		Y[0] = xtemp; Y[1] = ytemp;
 	}
-	
+
 	out[PITCH] = (180./M_PI) * atan2(X[2],X[0]);
 	if(out[PITCH] != 0)
 	{
@@ -359,7 +359,7 @@ void ShiftItem(edict_t *ent, int direction)
 	if(!target) return;
 
 	ent->client->shift_dir = direction;
-	
+
 	VectorClear(move);
 	VectorCopy(ent->s.origin,start);
 	VectorAdd(target->s.origin,target->origin_offset,end);
@@ -1057,7 +1057,7 @@ void Cmd_InvUse_f (edict_t *ent)
 		}
 	}
 #endif
-	
+
 	it->use (ent, it);
 }
 
@@ -1390,7 +1390,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
         i = cl->flood_whenhead - flood_msgs->value + 1;
         if (i < 0)
             i = (sizeof(cl->flood_when)/sizeof(cl->flood_when[0])) + i;
-		if (cl->flood_when[i] && 
+		if (cl->flood_when[i] &&
 			level.time - cl->flood_when[i] < flood_persecond->value) {
 			cl->flood_locktill = level.time + flood_waitdelay->value;
 			gi.cprintf(ent, PRINT_CHAT, "Flood protection:  You can't talk for %d seconds.\n",
@@ -1699,7 +1699,7 @@ void SpawnForcewall(edict_t	*player)
 	edict_t  *wall;
 	vec3_t	forward, point, start;
 	trace_t  tr;
-	
+
 	wall = G_Spawn();
 	VectorCopy(player->s.origin,start);
 	start[2] += player->viewheight;
@@ -1707,19 +1707,19 @@ void SpawnForcewall(edict_t	*player)
 	VectorMA(start,8192,forward,point);
 	tr = gi.trace(start,NULL,NULL,point,player,MASK_SOLID);
 	VectorCopy(tr.endpos,wall->s.origin);
-	
+
 	if(fabs(forward[0]) > fabs(forward[1]))
 	{
 		wall->pos1[0] = wall->pos2[0] = wall->s.origin[0];
 		wall->mins[0] =  -1;
 		wall->maxs[0] =   1;
-		
+
 		VectorCopy(wall->s.origin,point);
 		point[1] -= 8192;
 		tr = gi.trace(wall->s.origin,NULL,NULL,point,NULL,MASK_SOLID);
 		wall->pos1[1] = tr.endpos[1];
 		wall->mins[1] = wall->pos1[1] - wall->s.origin[1];
-		
+
 		point[1] = wall->s.origin[1] + 8192;
 		tr = gi.trace(wall->s.origin,NULL,NULL,point,NULL,MASK_SOLID);
 		wall->pos2[1] = tr.endpos[1];
@@ -1732,24 +1732,24 @@ void SpawnForcewall(edict_t	*player)
 		tr = gi.trace(wall->s.origin,NULL,NULL,point,NULL,MASK_SOLID);
 		wall->pos1[0] = tr.endpos[0];
 		wall->mins[0] = wall->pos1[0] - wall->s.origin[0];
-		
+
 		point[0] = wall->s.origin[0] + 8192;
 		tr = gi.trace(wall->s.origin,NULL,NULL,point,NULL,MASK_SOLID);
 		wall->pos2[0] = tr.endpos[0];
 		wall->maxs[0] = wall->pos2[0] - wall->s.origin[0];
-		
+
 		wall->pos1[1] = wall->pos2[1] = wall->s.origin[1];
 		wall->mins[1] = -1;
 		wall->maxs[1] =  1;
 	}
 	wall->mins[2] = 0;
-	
+
 	VectorCopy(wall->s.origin,point);
 	point[2] = wall->s.origin[2] + 8192;
 	tr = gi.trace(wall->s.origin,NULL,NULL,point,NULL,MASK_SOLID);
 	wall->maxs[2] = tr.endpos[2] - wall->s.origin[2];
 	wall->pos1[2] = wall->pos2[2] = tr.endpos[2];
-	
+
 	wall->style = 208;	// Color from Q2 palette
 	wall->movetype = MOVETYPE_NONE;
 	wall->solid = SOLID_BBOX;
@@ -1767,7 +1767,7 @@ void ForcewallOff(edict_t *player)
 {
 	vec3_t	forward, point, start;
 	trace_t  tr;
-	
+
 	VectorCopy(player->s.origin,start);
 	start[2] += player->viewheight;
 	AngleVectors(player->client->v_angle,forward,NULL,NULL);
@@ -2091,8 +2091,6 @@ void ClientCommand (edict_t *ent)
 	}
 	else if(!Q_stricmp(cmd, "playsound"))
 	{
-		vec3_t	pos = {0, 0, 0};
-		vec3_t	vel = {0, 0, 0};
 		if(s_primary->value)
 		{
 			gi.dprintf("target_playback requires s_primary be set to 0.\n"
@@ -2131,7 +2129,7 @@ void ClientCommand (edict_t *ent)
 
 			e = LookingAt(ent,0,NULL,NULL);
 			if(!e) return;
-	
+
 			GameDirRelativePath(parm,filename);
 			strcat(filename,".txt");
 			f = fopen(filename,"w");
@@ -2314,7 +2312,7 @@ void ClientCommand (edict_t *ent)
 			vec3_t	origin;
 			float	range;
 			viewing = LookingAt(ent,0,NULL,&range);
-			if(!viewing) 
+			if(!viewing)
 				return;
 			VectorAdd(viewing->s.origin,viewing->origin_offset,origin);
 			gi.dprintf("classname = %s at %s, velocity = %s\n",viewing->classname,vtos(origin),vtos(viewing->velocity));
@@ -2409,7 +2407,7 @@ void ClientCommand (edict_t *ent)
 			int		skinnum;
 
 			viewing = LookingAt(ent,0,NULL,NULL);
-			if(!viewing) 
+			if(!viewing)
 				return;
 
 			if(parm) {
@@ -2425,7 +2423,7 @@ void ClientCommand (edict_t *ent)
 		{
 			edict_t	*e;
 			vec3_t	forward;
-		
+
 			if(!parm)
 			{
 				gi.dprintf("syntax: spawn <classname>\n");
@@ -2443,7 +2441,7 @@ void ClientCommand (edict_t *ent)
 		{
 			edict_t	*e;
 			vec3_t	forward;
-		
+
 			if(gi.argc() < 3)
 			{
 				gi.dprintf("syntax: spawngoodguy <modelname> <weapon>\n");
@@ -2471,10 +2469,10 @@ void ClientCommand (edict_t *ent)
 			decoy->classname    = "fakeplayer";
 			memcpy(&decoy->s,&ent->s,sizeof(entity_state_t));
 			decoy->s.number     = decoy-g_edicts;
-			decoy->s.frame      = ent->s.frame; 
+			decoy->s.frame      = ent->s.frame;
 			AngleVectors(ent->client->v_angle,forward,NULL,NULL);
 			VectorMA(ent->s.origin,64,forward,decoy->s.origin);
-			decoy->s.angles[YAW] = ent->s.angles[YAW]; 
+			decoy->s.angles[YAW] = ent->s.angles[YAW];
 			decoy->takedamage   = DAMAGE_AIM;
 			decoy->flags        = (ent->flags & FL_NOTARGET);
 			decoy->movetype     = MOVETYPE_TOSS;
@@ -2491,7 +2489,7 @@ void ClientCommand (edict_t *ent)
 			decoy->nextthink    = level.time + FRAMETIME;
 			VectorCopy(ent->mins,decoy->mins);
 			VectorCopy(ent->maxs,decoy->maxs);
-			gi.linkentity (decoy); 
+			gi.linkentity (decoy);
 		}
 		else if (!Q_stricmp(cmd,"switch")) {
 			extern mmove_t	actor_move_switch;

@@ -488,7 +488,7 @@ void LookAtKiller (edict_t *self, edict_t *inflictor, edict_t *attacker)
 	}
 	if (self->client->killer_yaw < 0)
 		self->client->killer_yaw += 360;
-	
+
 
 }
 
@@ -645,7 +645,7 @@ void SelectStartWeapon (gclient_t *client, int style)
 	// Lazarus: We allow choice of weapons (or no weapon) at startup
 	// If style is non-zero, first clear player inventory of all
 	// weapons and ammo that might have been passed over through
-	// target_changelevel or acquired when previously called by 
+	// target_changelevel or acquired when previously called by
 	// InitClientPersistant
 	if(style)
 	{
@@ -784,7 +784,7 @@ void InitClientResp (gclient_t *client)
 ==================
 SaveClientData
 
-Some information that should be persistant, like health, 
+Some information that should be persistant, like health,
 is still stored in the edict structure, so it needs to
 be mirrored out to the client structure before all the
 edicts are wiped.
@@ -1181,7 +1181,7 @@ void respawn (edict_t *self)
 	gi.AddCommandString ("menu_loadgame\n");
 }
 
-/* 
+/*
  * only called when pers.spectator changes
  * note that resp.spectator should be the opposite of pers.spectator here
  */
@@ -1194,8 +1194,8 @@ void spectator_respawn (edict_t *ent)
 
 	if (ent->client->pers.spectator) {
 		char *value = Info_ValueForKey (ent->client->pers.userinfo, "spectator");
-		if (*spectator_password->string && 
-			strcmp(spectator_password->string, "none") && 
+		if (*spectator_password->string &&
+			strcmp(spectator_password->string, "none") &&
 			strcmp(spectator_password->string, value)) {
 			gi.cprintf(ent, PRINT_HIGH, "Spectator password incorrect.\n");
 			ent->client->pers.spectator = false;
@@ -1223,7 +1223,7 @@ void spectator_respawn (edict_t *ent)
 		// he was a spectator and wants to join the game
 		// he must have the right password
 		char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
-		if (*password->string && strcmp(password->string, "none") && 
+		if (*password->string && strcmp(password->string, "none") &&
 			strcmp(password->string, value)) {
 			gi.cprintf(ent, PRINT_HIGH, "Password incorrect.\n");
 			ent->client->pers.spectator = true;
@@ -1255,7 +1255,7 @@ void spectator_respawn (edict_t *ent)
 
 	ent->client->respawn_time = level.time;
 
-	if (ent->client->pers.spectator) 
+	if (ent->client->pers.spectator)
 		gi.bprintf (PRINT_HIGH, "%s has moved to the sidelines\n", ent->client->pers.netname);
 	else
 		gi.bprintf (PRINT_HIGH, "%s joined the game\n", ent->client->pers.netname);
@@ -1274,7 +1274,6 @@ a deathmatch.
 */
 void PutClientInServer (edict_t *ent)
 {
-	extern	int			nostatus;
 	vec3_t				mins = {-16, -16, -24};
 	vec3_t				maxs = {16, 16, 32};
 	int					index;
@@ -1545,7 +1544,7 @@ void PutClientInServer (edict_t *ent)
 =====================
 ClientBeginDeathmatch
 
-A client has just connected to the server in 
+A client has just connected to the server in
 deathmatch mode, so clear everything out before starting them.
 =====================
 */
@@ -1594,7 +1593,7 @@ void ClientBegin (edict_t *ent)
 
 	// Lazarus: Set the alias for our alternate attack
 	stuffcmd(ent, "alias +attack2 attack2_on; alias -attack2 attack2_off\n");
-	
+
 	if (deathmatch->value)
 	{
 		ClientBeginDeathmatch (ent);
@@ -1781,8 +1780,8 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	if (deathmatch->value && *value && strcmp(value, "0")) {
 		int i, numspec;
 
-		if (*spectator_password->string && 
-			strcmp(spectator_password->string, "none") && 
+		if (*spectator_password->string &&
+			strcmp(spectator_password->string, "none") &&
 			strcmp(spectator_password->string, value)) {
 			Info_SetValueForKey(userinfo, "rejmsg", "Spectator password required or incorrect.");
 			return false;
@@ -1800,7 +1799,7 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	} else {
 		// check for a password
 		value = Info_ValueForKey (userinfo, "password");
-		if (*password->string && strcmp(password->string, "none") && 
+		if (*password->string && strcmp(password->string, "none") &&
 			strcmp(password->string, value)) {
 			Info_SetValueForKey(userinfo, "rejmsg", "Password required or incorrect.");
 			return false;
@@ -2007,7 +2006,7 @@ void ClientSpycam(edict_t *ent)
 			camera = G_FindNextCamera(camera,client->monitor);
 		else
 			camera = G_FindPrevCamera(camera,client->monitor);
-		
+
 		if(camera)
 		{
 			if(!camera->viewer)
@@ -2046,13 +2045,13 @@ void ClientSpycam(edict_t *ent)
 		if((abs(client->ucmd.forwardmove) > 199) && (camera->groundentity))
 		{
 			// walk/run
-			
+
 			edict_t	*thing;
 			vec3_t	end;
 			float	dist;
 
 			thing  = camera->vehicle;
-			
+
 			VectorMA(camera->s.origin,8192,forward,end);
 			tr = gi.trace(camera->s.origin,camera->mins,camera->maxs,end,camera,MASK_SOLID);
 			if(client->ucmd.forwardmove < 0)
@@ -2117,7 +2116,7 @@ void ClientSpycam(edict_t *ent)
 				actor_stand(camera);
 			}
 		}
-		
+
 		if(client->ucmd.upmove)
 		{
 			if((client->ucmd.upmove > 0) && camera->groundentity && !camera->waterlevel)
@@ -2244,7 +2243,6 @@ void ClientSpycam(edict_t *ent)
 				}
 				else if(is_actor)
 				{
-					int	weapon = camera->actor_weapon[camera->actor_current_weapon];
 					if(!camera->enemy)
 					{
 						edict_t	*target;
@@ -2272,7 +2270,7 @@ void ClientSpycam(edict_t *ent)
 			}
 		}
 		if(client->zoomed) {
-			camera->touch_debounce_time = 
+			camera->touch_debounce_time =
 				max(camera->touch_debounce_time, level.time + 1.0);
 		}
 	}
@@ -2280,7 +2278,7 @@ void ClientSpycam(edict_t *ent)
 	VectorMA(camera->s.origin, camera->move_origin[0],forward,start);
 	VectorMA(start,           -camera->move_origin[1],left,   start);
 	VectorMA(start,            camera->move_origin[2],up,     start);
-	
+
 	tr = gi.trace(camera->s.origin, NULL, NULL, start, camera, MASK_SOLID);
 	if(tr.fraction < 1.0)
 	{
@@ -2291,16 +2289,16 @@ void ClientSpycam(edict_t *ent)
 	}
 	VectorCopy(start,ent->s.origin);
 	VectorCopy(camera->velocity,ent->velocity);
-	
+
 	client->resp.cmd_angles[0] = SHORT2ANGLE(client->ucmd.angles[0]);
 	client->resp.cmd_angles[1] = SHORT2ANGLE(client->ucmd.angles[1]);
 	client->resp.cmd_angles[2] = SHORT2ANGLE(client->ucmd.angles[2]);
-	
+
 	memset (&pm, 0, sizeof(pm));
 	pm.s = client->ps.pmove;
 	for (i=0 ; i<3 ; i++) {
 		pm.s.origin[i] = ent->s.origin[i]*8;
-		client->ps.pmove.delta_angles[i] = 
+		client->ps.pmove.delta_angles[i] =
 			ANGLE2SHORT(client->ps.viewangles[i] - client->resp.cmd_angles[i]);
 	}
 	if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
@@ -2308,15 +2306,15 @@ void ClientSpycam(edict_t *ent)
 	pm.cmd = client->ucmd;
 	pm.trace = PM_trace;	// adds default parms
 	pm.pointcontents = gi.pointcontents;
-	
+
 	gi.Pmove (&pm);
-	
+
 	gi.linkentity (ent);
 //	client->old_owner_angles[0] = client->ucmd.angles[0];
 //	client->old_owner_angles[1] = client->ucmd.angles[1];
-	
+
 	G_TouchTriggers (ent); // we'll only allow touching trigger_look with "Cam Owner" SF
-	
+
 }
 /*
 ==============
@@ -2503,7 +2501,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			camera_off(ent);
 		client->ps.pmove.pm_type = PM_FREEZE;
 		// can exit intermission after five seconds
-		if (level.time > level.intermissiontime + 5.0 
+		if (level.time > level.intermissiontime + 5.0
 			&& (ucmd->buttons & BUTTON_ANY) )
 			level.exitintermission = true;
 
@@ -2752,7 +2750,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			vec3_t	point;
 			vec3_t	end;
-			
+
 			vec3_t	deltapos, deltavel;
 			float	frac;
 
@@ -2774,7 +2772,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			{
 				trace_t	tr;
 				float	dist;
-				
+
 				VectorCopy(oldorigin,point);
 				point[2] += ent->maxs[2];
 				end[0] = point[0]; end[1] = point[1]; end[2] = oldorigin[2] + ent->mins[2];
