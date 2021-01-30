@@ -1,4 +1,3 @@
-	
 // q_shared.h -- included first by ALL program modules
 
 #ifdef _WIN32
@@ -80,7 +79,7 @@ typedef enum {false, true}	qboolean;
 
 #define	PRINT_ALL			0
 #define PRINT_DEVELOPER		1		// only print when "developer 1"
-#define PRINT_ALERT			2		
+#define PRINT_ALERT			2
 
 
 // destination class for gi.multicast()
@@ -456,7 +455,7 @@ typedef struct
 
 // pmove_state_t is the information necessary for client side movement
 // prediction
-typedef enum 
+typedef enum
 {
 	// can accelerate and turn
 	PM_NORMAL,
@@ -1211,7 +1210,7 @@ typedef struct
 	int			gunframe;
 
 	float		blend[4];		// rgba full screen effect
-	
+
 	float		fov;			// horizontal field of view
 
 	int			rdflags;		// refdef flags
@@ -1221,7 +1220,7 @@ typedef struct
 
 
 // ==================
-// PGM 
+// PGM
 #define VIDREF_GL		1
 #define VIDREF_SOFT		2
 #define VIDREF_OTHER	3
@@ -1250,7 +1249,7 @@ typedef struct
 	int		ofs_st;		// byte offset from start for stverts
 	int		ofs_tris;	// offset for dtriangles
 	int		ofs_frames;	// offset for first frame
-	int		ofs_glcmds;	
+	int		ofs_glcmds;
 	int		ofs_end;	// end of file
 
 } dmdl_t;

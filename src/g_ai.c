@@ -203,10 +203,10 @@ void ai_stand (edict_t *self, float dist)
 
 	if (FindTarget (self))
 		return;
-	
+
 	if (level.time > self->monsterinfo.pausetime)
 	{
-		// Lazarus: Solve problem of monsters pausing at path_corners, taking off in 
+		// Lazarus: Solve problem of monsters pausing at path_corners, taking off in
 		//          original direction
 		if(self->enemy && self->enemy->inuse)
 			VectorSubtract (self->enemy->s.origin, self->s.origin, v);
@@ -295,7 +295,7 @@ void ai_charge (edict_t *self, float dist)
 	vec3_t	v;
 
 	// Lazarus: Check for existence and validity of enemy.
-	// This is normally not necessary, but target_anger making 
+	// This is normally not necessary, but target_anger making
 	// monster mad at a static object (a pickup, for example)
 	// previously resulted in weirdness here
 	if (!self->enemy || !self->enemy->inuse)
@@ -324,7 +324,7 @@ void ai_turn (edict_t *self, float dist)
 
 	if (FindTarget (self))
 		return;
-	
+
 	M_ChangeYaw (self);
 }
 
@@ -478,12 +478,12 @@ qboolean infront (edict_t *self, edict_t *other)
 	vec3_t	vec;
 	float	dot;
 	vec3_t	forward;
-	
+
 	AngleVectors (self->s.angles, forward, NULL, NULL);
 	VectorSubtract (other->s.origin, self->s.origin, vec);
 	VectorNormalize (vec);
 	dot = DotProduct (vec, forward);
-	
+
 	if (dot > 0.3)
 		return true;
 	return false;
@@ -507,7 +507,7 @@ qboolean canReach (edict_t *self, edict_t *other)
 	VectorCopy (other->s.origin, spot2);
 	spot2[2] += other->viewheight;
 	trace = gi.trace (spot1, vec3_origin, vec3_origin, spot2, self, MASK_SHOT|MASK_WATER);
-	
+
 	if (trace.fraction == 1.0 || trace.ent == other)		// PGM
 		return true;
 	return false;
@@ -609,7 +609,7 @@ void FoundTarget (edict_t *self)
 
 	// clear the targetname, that point is ours!
 	// Lazarus: Why, why, why???? This doesn't remove the point_combat, only makes it inaccessible
-	// to other monsters. 
+	// to other monsters.
 	//self->movetarget->targetname = NULL;
 	self->monsterinfo.pausetime = 0;
 
@@ -806,7 +806,7 @@ qboolean FindTarget (edict_t *self)
 // this is where we would check invisibility
 
 		// is client in an spot too dark to be seen?
-		if (client->light_level <= 5) 
+		if (client->light_level <= 5)
 			return false;
 
 		if (!visible (self, client))
@@ -945,7 +945,7 @@ qboolean M_CheckAttack (edict_t *self)
 		if (tr.ent != self->enemy)
 			return false;
 	}
-	
+
 	// melee attack
 	if (enemy_range == RANGE_MELEE)
 	{
@@ -958,14 +958,14 @@ qboolean M_CheckAttack (edict_t *self)
 			self->monsterinfo.attack_state = AS_MISSILE;
 		return true;
 	}
-	
+
 // missile attack
 	if (!self->monsterinfo.attack)
 		return false;
-		
+
 	if (level.time < self->monsterinfo.attack_finished)
 		return false;
-		
+
 	if (enemy_range == RANGE_FAR)
 		return false;
 
@@ -1062,7 +1062,7 @@ Strafe sideways, but stay at aproximately the same range
 void ai_run_slide(edict_t *self, float distance)
 {
 	float	ofs;
-	
+
 	self->ideal_yaw = enemy_yaw;
 	M_ChangeYaw (self);
 
@@ -1070,10 +1070,10 @@ void ai_run_slide(edict_t *self, float distance)
 		ofs = 90;
 	else
 		ofs = -90;
-	
+
 	if (M_walkmove (self, self->ideal_yaw + ofs, distance))
 		return;
-		
+
 	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 	M_walkmove (self, self->ideal_yaw - ofs, distance);
 }
@@ -1103,10 +1103,13 @@ qboolean ai_checkattack (edict_t *self, float dist)
 			if ((level.time - self->enemy->teleport_time) > 5.0)
 			{
 				if (self->goalentity == self->enemy)
+				{
 					if (self->movetarget)
 						self->goalentity = self->movetarget;
 					else
 						self->goalentity = NULL;
+				}
+
 				self->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
 				if (self->monsterinfo.aiflags & AI_TEMP_STAND_GROUND)
 					self->monsterinfo.aiflags &= ~(AI_STAND_GROUND | AI_TEMP_STAND_GROUND);
@@ -1174,7 +1177,7 @@ qboolean ai_checkattack (edict_t *self, float dist)
 				{
 					float	R;
 
-					R = realrange(self,self->movetarget); 
+					R = realrange(self,self->movetarget);
 					if(R > ACTOR_FOLLOW_RUN_RANGE)
 						self->monsterinfo.run (self);
 					else if(R > ACTOR_FOLLOW_STAND_RANGE || !self->movetarget->client)
@@ -1390,7 +1393,7 @@ void ai_run (edict_t *self, float dist)
 			{
 				if(realrange(self,realEnemy) > MEDIC_MAX_HEAL_DISTANCE)
 				{
-					// Since we're on a hint_path trying to get in position to 
+					// Since we're on a hint_path trying to get in position to
 					// heal monster, rather than actually healing him,
 					// allow more time
 					self->timestamp = level.time + MEDIC_TRY_TIME;
@@ -1404,7 +1407,7 @@ void ai_run (edict_t *self, float dist)
 				gotcha = true;
 			}
 		}
-		
+
 		// if we see the player, stop following hintpaths.
 		if (gotcha)
 		{

@@ -23,20 +23,20 @@ float SV_CalcRoll (vec3_t angles, vec3_t velocity)
 	float	sign;
 	float	side;
 	float	value;
-	
+
 	side = DotProduct (velocity, right);
 	sign = side < 0 ? -1 : 1;
 	side = fabs(side);
-	
+
 	value = sv_rollangle->value;
 
 	if (side < sv_rollspeed->value)
 		side = side * value / sv_rollspeed->value;
 	else
 		side = value;
-	
+
 	return side*sign;
-	
+
 }
 
 
@@ -160,10 +160,10 @@ void P_DamageFeedback (edict_t *player)
 
 		VectorSubtract (client->damage_from, player->s.origin, v);
 		VectorNormalize (v);
-		
+
 		side = DotProduct (v, right);
 		client->v_dmg_roll = kick*side*0.3;
-		
+
 		side = -DotProduct (v, forward);
 		client->v_dmg_pitch = kick*side*0.3;
 
@@ -192,7 +192,7 @@ Auto pitching on slopes?
   fall from 256: 580 = 336400
   fall from 384: 720 = 518400
   fall from 512: 800 = 640000
-  fall from 640: 960 = 
+  fall from 640: 960 =
 
   damage = deltavelocity*deltavelocity  * 0.0001
 
@@ -253,12 +253,12 @@ void SV_CalcViewOffset (edict_t *ent)
 
 		delta = DotProduct (ent->velocity, forward);
 		angles[PITCH] += delta*run_pitch->value;
-		
+
 		delta = DotProduct (ent->velocity, right);
 		angles[ROLL] += delta*run_roll->value;
 
 		// add angles based on bob
-	
+
 		delta = bobfracsin * bob_pitch->value * xyspeed;
 		if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
 			delta *= 6;		// crouching
@@ -312,7 +312,7 @@ void SV_CalcViewOffset (edict_t *ent)
 		}
 	} else if(ent->client->spycam) {
 		VectorSet (v, 0, 0, 0);
-        VectorCopy (ent->client->spycam->s.angles, ent->client->ps.viewangles); 
+        VectorCopy (ent->client->spycam->s.angles, ent->client->ps.viewangles);
 		if(ent->client->spycam->svflags & SVF_MONSTER)
 			ent->client->ps.viewangles[PITCH] = ent->client->spycam->move_angles[PITCH];
 	} else {
@@ -417,7 +417,7 @@ void SV_CalcBlend (edict_t *ent)
 	vec3_t	vieworg;
 	int		remaining;
 
-	ent->client->ps.blend[0] = ent->client->ps.blend[1] = 
+	ent->client->ps.blend[0] = ent->client->ps.blend[1] =
 		ent->client->ps.blend[2] = ent->client->ps.blend[3] = 0;
 
 	// add for contents
@@ -855,7 +855,7 @@ void P_WorldEffects (void)
 		// if out of air, start drowning
 		if (current_player->air_finished < level.time)
 		{	// drown!
-			if (current_player->client->next_drown_time < level.time 
+			if (current_player->client->next_drown_time < level.time
 				&& current_player->health > 0)
 			{
 				current_player->client->next_drown_time = level.time + 1;
@@ -989,7 +989,7 @@ void G_SetClientEffects (edict_t *ent)
 		trace_t tr;
 
 		if(level.flashlight_cost > 0) {
-			if(!Q_stricmp(FLASHLIGHT_ITEM,"health") || 
+			if(!Q_stricmp(FLASHLIGHT_ITEM,"health") ||
 					(ent->client->pers.inventory[ITEM_INDEX(FindItem(FLASHLIGHT_ITEM))]>=level.flashlight_cost) ) {
 				// Player has items remaining
 				if(ent->client->flashlight_time <= level.time) {
@@ -1005,7 +1005,7 @@ void G_SetClientEffects (edict_t *ent)
 			AngleVectors (ent->s.angles, forward, right, up);
 			VectorSet(offset, 0, 0, ent->viewheight-8);
 			G_ProjectSource (ent->s.origin, offset, forward, right, start);
-			VectorMA(start,384,forward,end);	// was 128		
+			VectorMA(start,384,forward,end);	// was 128
 			tr = gi.trace (start,NULL,NULL, end, ent, CONTENTS_SOLID|CONTENTS_MONSTER|CONTENTS_DEADMONSTER);
 			if (tr.fraction != 1)
 				VectorMA(tr.endpos,-4,forward,end);
@@ -1071,7 +1071,7 @@ void G_SetClientEvent (edict_t *ent)
 					if(tr.fraction < 1.0)
 					{
 						int	r;
-						r = rand() & 1 + ent->client->leftfoot*2;
+						r = (rand() & 1) + ent->client->leftfoot*2;
 						ent->client->leftfoot = 1 - ent->client->leftfoot;
 #ifndef DISABLE_FMOD
 						if(qFMOD_Footsteps)
@@ -1283,7 +1283,7 @@ void ClientEndServerFrame (edict_t *ent)
 	// If the origin or velocity have changed since ClientThink(),
 	// update the pmove values.  This will happen when the client
 	// is pushed by a bmodel or kicked by an explosion.
-	// 
+	//
 	// If it wasn't updated here, the view position would lag a frame
 	// behind the body position when pushed -- "sinking into plats"
 	//
@@ -1343,7 +1343,7 @@ void ClientEndServerFrame (edict_t *ent)
 		else
 			bobmove = 0.0625;
 	}
-	
+
 	bobtime = (current_client->bobtime += bobmove);
 
 	if (current_client->ps.pmove.pm_flags & PMF_DUCKED)

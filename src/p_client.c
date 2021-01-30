@@ -2886,13 +2886,18 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			{
 				other = pm.touchents[i];
 				for (j=0 ; j<i ; j++)
+				{
 					if (pm.touchents[j] == other)
 						break;
+
 					if (j != i)
 						continue;	// duplicated
+
 					if (!other->touch)
 						continue;
+
 					other->touch (other, ent, NULL, NULL);
+				}
 			}
 		}
 	}
