@@ -13,7 +13,7 @@ typedef struct texthnd_s {
 	int	flags;
 	int	allocated;
 	float last_update;
-	byte *buffer;
+	char *buffer;
 } texthnd_t;
 
 typedef struct text_s {
