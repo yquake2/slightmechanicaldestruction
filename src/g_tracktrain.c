@@ -56,7 +56,7 @@ float UTIL_ApproachAngle( float target, float value, float speed )
 
 	target = UTIL_AngleMod( target );
 	value = UTIL_AngleMod( target );
-	
+
 	delta = target - value;
 
 	// Speed is assumed to be positive
@@ -72,7 +72,7 @@ float UTIL_ApproachAngle( float target, float value, float speed )
 		value += speed;
 	else if ( delta < -speed )
 		value -= speed;
-	else 
+	else
 		value = target;
 
 	return value;
@@ -358,7 +358,7 @@ void SP_func_trackchange (edict_t *self)
 
 
 /*=====================================================================================
-func_tracktrain 
+func_tracktrain
 
 target		first path_track stop
 dmg			damage applied to blocker
@@ -385,7 +385,7 @@ void tracktrain_drive (edict_t *train, edict_t *other )
 	VectorCopy(train->s.angles,angles);
 	VectorNegate(angles,angles);
 	AngleVectors(angles,f1,l1,u1);
-			
+
 	VectorSubtract(other->s.origin,train->s.origin,offset);
 	VectorScale(f1, offset[0],f1);
 	VectorScale(l1,-offset[1],l1);
@@ -706,7 +706,7 @@ void tracktrain_think (edict_t *self)
 				speed = self->moveinfo.current_speed - self->moveinfo.decel/10;
 				if(speed < self->moveinfo.next_speed) speed = self->moveinfo.next_speed;
 			}
-			
+
 			VectorSubtract(self->moveinfo.end_origin,self->s.origin,v);
 			distance = VectorLength(v);
 			if(speed != 0)
@@ -720,10 +720,10 @@ void tracktrain_think (edict_t *self)
 				time = 100000;
 			VectorNormalize(v);
 			VectorScale(v,fabs(speed),self->velocity);
-			
+
 			//		gi.dprintf("distance to %s=%g, time=%g\n",
 			//			self->target_ent->targetname,distance,time);
-			
+
 			gi.linkentity(self);
 		}
 
@@ -787,7 +787,7 @@ void tracktrain_think (edict_t *self)
 				speed = self->moveinfo.current_speed - self->moveinfo.decel/10;
 				if(speed < self->moveinfo.next_speed) speed = self->moveinfo.next_speed;
 			}
-			
+
 			if(speed != 0)
 			{
 				VectorSubtract(self->moveinfo.end_origin,self->s.origin,v);
@@ -880,7 +880,7 @@ void tracktrain_think (edict_t *self)
 			if(speed < self->moveinfo.next_speed) speed = self->moveinfo.next_speed;
 		}
 
-		if( speed != 0 ) 
+		if( speed != 0 )
 		{
 			VectorSubtract(self->moveinfo.end_origin,self->s.origin,v);
 			distance = VectorNormalize(v);
@@ -913,7 +913,7 @@ void tracktrain_think (edict_t *self)
 			VectorCopy(self->s.angles,angles);
 			VectorNegate(angles,angles);
 			AngleVectors(angles,f1,l1,u1);
-			
+
 			// find a player
 			for (i=1, ent=&g_edicts[1] ; i<=maxclients->value ; i++, ent++) {
 				if (!ent->inuse) continue;
@@ -1011,8 +1011,6 @@ void tracktrain_blocked (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1 (other);
 		}
@@ -1166,10 +1164,10 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 				if(DotProduct(forward,to_next) > 0)
 					next = NULL;
 			}
-			
+
 			if(!next)
 			{
-				// Find path_track whose target or target2 is set to 
+				// Find path_track whose target or target2 is set to
 				// the current path_track
 				edict_t	*e;
 				int		i;
@@ -1228,11 +1226,11 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 				{
 					edict_t	*next2;
 					float	dot2;
-					
+
 					next2 = G_PickTarget (path->target2);
 					if( next2 == path )
 						next2 = NULL;
-					
+
 					if(next2)
 					{
 						VectorSubtract(next2->s.origin,path->s.origin,to_next);
@@ -1246,7 +1244,7 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 							next2 = NULL;
 						}
 					}
-					
+
 					if((next && next2) && (dot2 < dot))
 						next = next2;
 				}
@@ -1360,12 +1358,11 @@ edict_t *NextPathTrack(edict_t *train, edict_t *path)
 
 void LookAhead( edict_t *train, vec3_t point, float dist )
 {
-	float originalDist = dist;
 	float length;
 	vec3_t	v;
 	edict_t	*path;
 	int		n=0;
-	
+
 	path = train->target_ent;
 	if(!path || dist < 0)
 		return;
@@ -1500,23 +1497,23 @@ void tracktrain_turn (edict_t *self)
 		{
 			Dist_1 = (idl_yaw - cur_yaw)*10;
 			Dist_2 = ((360 - idl_yaw) + cur_yaw)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				new_speed = yaw_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				new_speed = -yaw_vel;
 			}
 		}
@@ -1524,23 +1521,23 @@ void tracktrain_turn (edict_t *self)
 		{
 			Dist_1 = (cur_yaw - idl_yaw)*10;
 			Dist_2 = ((360 - cur_yaw) + idl_yaw)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				new_speed = -yaw_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				new_speed = yaw_vel;
 			}
 		}
@@ -1548,10 +1545,10 @@ void tracktrain_turn (edict_t *self)
 
 //		if(developer->value)
 //			gi.dprintf ("current yaw: %g ideal yaw: %g yaw speed: %g\n", cur_yaw, idl_yaw, self->enemy->avelocity[1]);
-		
+
 		if (train->s.angles[YAW] < 0)
 			train->s.angles[YAW] += 360;
-		
+
 		if (train->s.angles[YAW] >= 360)
 			train->s.angles[YAW] -= 360;
 	}
@@ -1584,23 +1581,23 @@ void tracktrain_turn (edict_t *self)
 		{
 			Dist_1 = (idl_pitch - cur_pitch)*10;
 			Dist_2 = ((360 - idl_pitch) + cur_pitch)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				new_speed = pitch_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				new_speed = -pitch_vel;
 			}
 		}
@@ -1608,31 +1605,31 @@ void tracktrain_turn (edict_t *self)
 		{
 			Dist_1 = (cur_pitch - idl_pitch)*10;
 			Dist_2 = ((360 - cur_pitch) + idl_pitch)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				new_speed = -pitch_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				new_speed = pitch_vel;
 			}
 		}
 		train->avelocity[PITCH] = new_speed;
-		
+
 		if (train->s.angles[PITCH] <  0)
 			train->s.angles[PITCH] += 360;
-		
+
 		if (train->s.angles[PITCH] >= 360)
 			train->s.angles[PITCH] -= 360;
 	}
@@ -1739,7 +1736,7 @@ void func_tracktrain_find (edict_t *self)
 		self->moveinfo.accel = self->moveinfo.decel = self->moveinfo.speed;
 		self->moveinfo.next_speed = self->moveinfo.state * self->moveinfo.speed/3;
 	}
-	
+
 	self->target_ent = ent;
 
 	// Get angles to next path_track

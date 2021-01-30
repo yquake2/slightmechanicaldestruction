@@ -10,7 +10,7 @@ edict_t		*blocker;
 
 pushmove objects do not obey gravity, and do not interact with each other or trigger fields, but block normal movement and push normal objects when they move.
 
-onground is set for toss objects when they come to a complete rest.  it is set for steping or walking objects 
+onground is set for toss objects when they come to a complete rest.  it is set for steping or walking objects
 
 doors, plats, etc are SOLID_BSP, and MOVETYPE_PUSH
 bonus items are SOLID_TRIGGER touch, and MOVETYPE_TOSS
@@ -32,7 +32,7 @@ solid_edge items only clip against bsp models.
 void other_FallingDamage (edict_t *ent)
 {
 	float	delta;
-	float   fall_time, fall_value;
+	float	fall_value;
 	int		damage;
 	vec3_t	dir;
 
@@ -68,8 +68,6 @@ void other_FallingDamage (edict_t *ent)
 
 	fall_value = delta * 0.5;
 	if (fall_value > 40) fall_value = 40;
-
-	fall_time = level.time + FALL_TIME;
 
 	if (delta > MAX_SAFE_FALLDIST)	//CW: reduced safe falling distance, and replaced hardcoded value
 	{
@@ -128,7 +126,7 @@ edict_t	*SV_TestEntityPosition (edict_t *ent)
 		else
 			return world;
 	}
-	
+
 	return NULL;
 }
 
@@ -180,7 +178,7 @@ qboolean SV_RunThink (edict_t *ent)
 		return true;
 	if (thinktime > level.time + 0.001)
 		return true;
-	
+
 	ent->nextthink = 0;
 	if (!ent->think)
 		gi.error ("NULL ent->think for %s",ent->classname);
@@ -205,7 +203,7 @@ void SV_Impact (edict_t *e1, trace_t *trace)
 
 	if (e1->touch && e1->solid != SOLID_NOT)
 		e1->touch (e1, e2, &trace->plane, trace->surface);
-	
+
 	if (e2->touch && e2->solid != SOLID_NOT)
 		e2->touch (e2, e1, NULL, NULL);
 }
@@ -226,13 +224,13 @@ int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
 	float	backoff;
 	float	change;
 	int		i, blocked;
-	
+
 	blocked = 0;
 	if (normal[2] > 0)
 		blocked |= 1;		// floor
 	if (!normal[2])
 		blocked |= 2;		// step
-	
+
 	backoff = DotProduct (in, normal) * overbounce;
 
 	for (i=0 ; i<3 ; i++)
@@ -276,12 +274,12 @@ int SV_FlyMove (edict_t *ent, float time, int mask)
 
 retry:
 	numbumps = 4;
-	
+
 	blocked = 0;
 	VectorCopy (ent->velocity, original_velocity);
 	VectorCopy (ent->velocity, primal_velocity);
 	numplanes = 0;
-	
+
 	time_left = time;
 
 	ent->groundentity = NULL;
@@ -371,9 +369,9 @@ retry:
 		if (!ent->inuse)
 			break;		// removed by the impact function
 
-		
+
 		time_left -= time_left * trace.fraction;
-		
+
 	// cliped to another plane
 		if (numplanes >= MAX_CLIP_PLANES)
 		{	// this shouldn't really happen
@@ -401,7 +399,7 @@ retry:
 			if (j == numplanes)
 				break;
 		}
-		
+
 		if (i != numplanes)
 		{	// go along this plane
 			VectorCopy (new_velocity, ent->velocity);
@@ -470,12 +468,12 @@ retry:
 
 	numbumps = 4;
 	ent->bounce_me = 0;
-	
+
 	blocked = 0;
 	VectorCopy (ent->velocity, original_velocity);
 	VectorCopy (ent->velocity, primal_velocity);
 	numplanes = 0;
-	
+
 	time_left = time;
 
 	VectorAdd(ent->s.origin,ent->origin_offset,origin);
@@ -622,7 +620,7 @@ retry:
 			if (j == numplanes)
 				break;
 		}
-		
+
 		if (i != numplanes)
 		{	// go along this plane
 			VectorCopy (new_velocity, ent->velocity);
@@ -706,7 +704,7 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push)
 
 retry:
 	trace = gi.trace (start, ent->mins, ent->maxs, end, ent, mask);
-	
+
 	VectorCopy (trace.endpos, ent->s.origin);
 	gi.linkentity (ent);
 
@@ -754,7 +752,7 @@ retry:
 		G_TouchTriggers (ent);
 
 	return trace;
-}					
+}
 
 
 typedef struct
@@ -888,7 +886,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 {
 	int			i, e;
 	edict_t		*check, *block;
-	vec3_t		mins, maxs;
 	pushed_t	*p;
 	vec3_t		org, org2, org_check, forward, right, up;
 	vec3_t		move2={0,0,0};
@@ -908,13 +905,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 		else
 			temp -= 0.5;
 		move[i] = 0.125 * (int)temp;
-	}
-
-	// find the bounding box
-	for (i=0 ; i<3 ; i++)
-	{
-		mins[i] = pusher->absmin[i] + move[i];
-		maxs[i] = pusher->absmax[i] + move[i];
 	}
 
 	// Lazarus: temp turn indicates whether riders
@@ -1018,7 +1008,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 			VectorCopy (check->s.angles, pushed_p->angles);
 			pushed_p++;
 
-			// try moving the contacted entity 
+			// try moving the contacted entity
 			VectorAdd (check->s.origin, move, check->s.origin);
 			// Lazarus: if turn_rider is set, do it. We don't do this by default
 			//          'cause it can be a fairly drastic change in gameplay
@@ -1040,7 +1030,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 						// PMF_NO_PREDICTION overrides .exe's client physics, which
 						// really doesn't like for us to change player angles. Note
 						// that this isn't strictly necessary, since Lazarus 1.7 and
-						// later automatically turn prediction off (in ClientThink) when 
+						// later automatically turn prediction off (in ClientThink) when
 						// player is riding a MOVETYPE_PUSH
 						check->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
 					}
@@ -1081,7 +1071,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 						tr = gi.trace(check->s.origin,vec3_origin,vec3_origin,org,check,MASK_SOLID);
 						if(!tr.startsolid && tr.fraction < 1)
 							check->s.origin[2] = tr.endpos[2] - check->mins[2] + fabs(tr.plane.normal[0])*check->size[0]/2 + fabs(tr.plane.normal[1])*check->size[1]/2;
-						
+
 						// Lazarus: func_tracktrain is a special case. Since we KNOW (if the map was
 						//          constructed properly) that "move_origin" is a safe position, we
 						//          can infer that there should be a safe (not embedded) position
@@ -1089,7 +1079,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 						if((pusher->flags & FL_TRACKTRAIN) && (check->client || (check->svflags & SVF_MONSTER)))
 						{
 							vec3_t	f,l,u;
-							
+
 							AngleVectors(pusher->s.angles, f, l, u);
 							VectorScale(f,pusher->move_origin[0],f);
 							VectorScale(l,-pusher->move_origin[1],l);
@@ -1111,7 +1101,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 					}
 				}
 			}
-			
+
 			// may have pushed them off an edge
 			if (check->groundentity != pusher)
 				check->groundentity = NULL;
@@ -1185,7 +1175,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 				continue;
 			}
 		}
-		
+
 		// save off the obstacle so we can call the block function
 		obstacle = check;
 
@@ -1353,7 +1343,7 @@ void SV_Physics_Noclip (edict_t *ent)
 // regular thinking
 	if (!SV_RunThink (ent))
 		return;
-	
+
 	VectorMA (ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
 	VectorMA (ent->s.origin, FRAMETIME, ent->velocity, ent->s.origin);
 
@@ -1478,7 +1468,7 @@ void SV_Physics_Toss (edict_t *ent)
 
 	// stop if on ground
 		if (trace.plane.normal[2] > 0.7)
-		{		
+		{
 //			if (ent->velocity[2] < 60 || ent->movetype != MOVETYPE_BOUNCE )
 			if (ent->velocity[2] < bounce_minv->value || (ent->movetype != MOVETYPE_BOUNCE) )
 			{
@@ -1646,7 +1636,7 @@ void SV_Physics_Step (edict_t *ent)
 
 			ent->bob      = min(2.0,300.0/ent->mass);
 			ent->duration = max(2.0,1.0 + ent->mass/100);
-			
+
 			// Figure out neutral bouyancy line for this entity
 			// This isn't entirely realistic, but helps gameplay:
 			// Arbitrary mass limit for func_pushable that can be pushed on
@@ -1684,14 +1674,14 @@ void SV_Physics_Step (edict_t *ent)
 			}
 		}
 	}
-	
+
 	ground = ent->groundentity;
 
 	SV_CheckVelocity (ent);
 
 	if (ground)
 		wasonground = true;
-		
+
 	if (ent->avelocity[0] || ent->avelocity[1] || ent->avelocity[2])
 		SV_AddRotationalFriction (ent);
 
@@ -1721,7 +1711,7 @@ void SV_Physics_Step (edict_t *ent)
 
 	// friction for swimming monsters that have been given vertical velocity
 	if (ent->movetype != MOVETYPE_PUSHABLE) {
-		// Lazarus: This is id's swag at drag. It works mostly, but for submerged 
+		// Lazarus: This is id's swag at drag. It works mostly, but for submerged
 		//          crates we can do better.
 		if ((ent->flags & FL_SWIM) && (ent->velocity[2] != 0)) {
 			speed = fabs(ent->velocity[2]);
@@ -1871,14 +1861,14 @@ void SV_Physics_Step (edict_t *ent)
 					speed = sqrt(vel[0]*vel[0] +vel[1]*vel[1]);
 					if (speed) {
 						friction = sv_friction;
-	
+
 						control = speed < sv_stopspeed ? sv_stopspeed : speed;
 						newspeed = speed - FRAMETIME*control*friction;
-	
+
 						if (newspeed < 0)
 							newspeed = 0;
 						newspeed /= speed;
-	
+
 						vel[0] *= newspeed;
 						vel[1] *= newspeed;
 					}
@@ -2006,12 +1996,12 @@ int SV_VehicleMove (edict_t *ent, float time, int mask)
 	vec3_t      origin;
 
 	numbumps = 4;
-	
+
 	blocked = 0;
 	VectorCopy (ent->velocity, original_velocity);
 	VectorCopy (ent->velocity, primal_velocity);
 	numplanes = 0;
-	
+
 	VectorCopy(ent->velocity,xy_velocity);
 	xy_velocity[2] = 0;
 	xy_speed = VectorLength(xy_velocity);
@@ -2045,7 +2035,7 @@ retry:
 
 		if (trace.allsolid)
 		{
-			// entity is trapped in another solid 
+			// entity is trapped in another solid
 			if(trace.ent && (trace.ent->svflags & SVF_MONSTER)) {
 				// Monster stuck in vehicle. No matter how screwed up this is,
 				// we've gotta get him out of there.
@@ -2068,7 +2058,7 @@ retry:
 			}
 			else if(trace.ent->client && xy_speed > 0 )
 			{
-				// If player is relatively close to the vehicle move_origin, AND the 
+				// If player is relatively close to the vehicle move_origin, AND the
 				// vehicle is still moving, then most likely the player just disengaged
 				// the vehicle and isn't really trapped. Move player along with
 				// vehicle
@@ -2372,7 +2362,7 @@ trace_t SV_DebrisEntity (edict_t *ent, vec3_t push)
 			if(speed1 <= 0) return trace;
 			scale = (float)ent->mass/200.*speed1;
 			VectorMA(trace.ent->velocity,scale,v1,trace.ent->velocity);
-			// Take a swag at it... 
+			// Take a swag at it...
 
 			if(speed1 > 100) {
 				damage = (int)(ent->mass * speed1 / 5000.);
@@ -2391,7 +2381,7 @@ trace_t SV_DebrisEntity (edict_t *ent, vec3_t push)
 		}
 	}
 	return trace;
-}					
+}
 
 /*
 =============
@@ -2443,10 +2433,10 @@ void SV_Physics_Debris (edict_t *ent)
 		ClipVelocity (ent->velocity, trace.plane.normal, ent->velocity, backoff);
 
 	// stop if on ground
-//		if (trace.plane.normal[2] > 0.7) Lazarus: This is too strict... rocks get hung 
+//		if (trace.plane.normal[2] > 0.7) Lazarus: This is too strict... rocks get hung
 //                                                up on sides of cliffs and spin in place
 		if (trace.plane.normal[2] > 0.3)
-		{		
+		{
 			if (ent->velocity[2] < 60)
 			{
 				ent->groundentity = trace.ent;
@@ -2456,7 +2446,7 @@ void SV_Physics_Debris (edict_t *ent)
 			}
 		}
 	}
-	
+
 // check for water transition
 	wasinwater = (ent->watertype & MASK_WATER);
 	ent->watertype = gi.pointcontents (ent->s.origin);
@@ -2585,6 +2575,6 @@ void G_RunEntity (edict_t *ent)
 		SV_Physics_Conveyor(ent);
 		break;
 	default:
-		gi.error ("SV_Physics: bad movetype %i", (int)ent->movetype);			
+		gi.error ("SV_Physics: bad movetype %i", (int)ent->movetype);
 	}
 }
