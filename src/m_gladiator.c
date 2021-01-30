@@ -45,13 +45,13 @@ void gladiator_cleaver_swing (edict_t *self)
 
 mframe_t gladiator_frames_stand [] =
 {
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL}
 };
 mmove_t gladiator_move_stand = {FRAME_stand1, FRAME_stand7, gladiator_frames_stand, NULL};
 
@@ -63,22 +63,22 @@ void gladiator_stand (edict_t *self)
 
 mframe_t gladiator_frames_walk [] =
 {
-	ai_walk, 15, NULL,
-	ai_walk, 7,  NULL,
-	ai_walk, 6,  NULL,
-	ai_walk, 5,  NULL,
-	ai_walk, 2,  NULL,
-	ai_walk, 0,  NULL,
-	ai_walk, 2,  NULL,
-	ai_walk, 8,  NULL,
-	ai_walk, 12, NULL,
-	ai_walk, 8,  NULL,
-	ai_walk, 5,  NULL,
-	ai_walk, 5,  NULL,
-	ai_walk, 2,  NULL,
-	ai_walk, 2,  NULL,
-	ai_walk, 1,  NULL,
-	ai_walk, 8,  NULL
+	{ai_walk, 15, NULL},
+	{ai_walk, 7,  NULL},
+	{ai_walk, 6,  NULL},
+	{ai_walk, 5,  NULL},
+	{ai_walk, 2,  NULL},
+	{ai_walk, 0,  NULL},
+	{ai_walk, 2,  NULL},
+	{ai_walk, 8,  NULL},
+	{ai_walk, 12, NULL},
+	{ai_walk, 8,  NULL},
+	{ai_walk, 5,  NULL},
+	{ai_walk, 5,  NULL},
+	{ai_walk, 2,  NULL},
+	{ai_walk, 2,  NULL},
+	{ai_walk, 1,  NULL},
+	{ai_walk, 8,  NULL}
 };
 mmove_t gladiator_move_walk = {FRAME_walk1, FRAME_walk16, gladiator_frames_walk, NULL};
 
@@ -90,12 +90,12 @@ void gladiator_walk (edict_t *self)
 
 mframe_t gladiator_frames_run [] =
 {
-	ai_run, 23,	NULL,
-	ai_run, 14,	NULL,
-	ai_run, 14,	NULL,
-	ai_run, 21,	NULL,
-	ai_run, 12,	NULL,
-	ai_run, 13,	NULL
+	{ai_run, 23,	NULL},
+	{ai_run, 14,	NULL},
+	{ai_run, 14,	NULL},
+	{ai_run, 21,	NULL},
+	{ai_run, 12,	NULL},
+	{ai_run, 13,	NULL}
 };
 mmove_t gladiator_move_run = {FRAME_run1, FRAME_run6, gladiator_frames_run, NULL};
 
@@ -121,23 +121,23 @@ void GaldiatorMelee (edict_t *self)
 
 mframe_t gladiator_frames_attack_melee [] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, gladiator_cleaver_swing,
-	ai_charge, 0, NULL,
-	ai_charge, 0, GaldiatorMelee,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, gladiator_cleaver_swing,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, GaldiatorMelee,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, gladiator_cleaver_swing},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, GaldiatorMelee},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, gladiator_cleaver_swing},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, GaldiatorMelee},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL}
 };
 mmove_t gladiator_move_attack_melee = {FRAME_melee1, FRAME_melee17, gladiator_frames_attack_melee, gladiator_run};
 
@@ -200,15 +200,15 @@ void GladiatorGun_3(edict_t *self)
 
 mframe_t gladiator_frames_attack_gun [] =
 {
-	ai_charge, 0, GladiatorGun_3,		//CW: Fire sooner at higher skill levels...
-	ai_charge, 0, GladiatorGun_2,
-	ai_charge, 0, GladiatorGun_1,
-	ai_charge, 0, GladiatorGun_0,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	{ai_charge, 0, GladiatorGun_3},		//CW: Fire sooner at higher skill levels...
+	{ai_charge, 0, GladiatorGun_2},
+	{ai_charge, 0, GladiatorGun_1},
+	{ai_charge, 0, GladiatorGun_0},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL}
 };
 mmove_t gladiator_move_attack_gun = {FRAME_attack1, FRAME_attack9, gladiator_frames_attack_gun, gladiator_run};
 
@@ -239,24 +239,24 @@ void gladiator_attack(edict_t *self)
 
 mframe_t gladiator_frames_pain [] =
 {
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL}
 };
 mmove_t gladiator_move_pain = {FRAME_pain1, FRAME_pain6, gladiator_frames_pain, gladiator_run};
 
 mframe_t gladiator_frames_pain_air [] =
 {
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL}
 };
 mmove_t gladiator_move_pain_air = {FRAME_painup1, FRAME_painup7, gladiator_frames_pain_air, gladiator_run};
 
@@ -288,7 +288,7 @@ void gladiator_pain (edict_t *self, edict_t *other, float kick, int damage)
 		self->monsterinfo.currentmove = &gladiator_move_pain_air;
 	else
 		self->monsterinfo.currentmove = &gladiator_move_pain;
-	
+
 }
 
 
@@ -312,28 +312,28 @@ void gladiator_dead (edict_t *self)
 
 mframe_t gladiator_frames_death [] =
 {
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL},
+	{ai_move, 0, NULL}
 };
 mmove_t gladiator_move_death = {FRAME_death1, FRAME_death22, gladiator_frames_death, gladiator_dead};
 
@@ -391,9 +391,9 @@ void SP_monster_gladiator (edict_t *self)
 		return;
 	}
 
-	sound_pain1 = gi.soundindex ("gladiator/pain.wav");	
-	sound_pain2 = gi.soundindex ("gladiator/gldpain2.wav");	
-	sound_die = gi.soundindex ("gladiator/glddeth2.wav");	
+	sound_pain1 = gi.soundindex ("gladiator/pain.wav");
+	sound_pain2 = gi.soundindex ("gladiator/gldpain2.wav");
+	sound_die = gi.soundindex ("gladiator/glddeth2.wav");
 	sound_gun = gi.soundindex ("gladiator/railgun.wav");
 	sound_cleaver_swing = gi.soundindex ("gladiator/melee1.wav");
 	sound_cleaver_hit = gi.soundindex ("gladiator/melee2.wav");
@@ -411,7 +411,7 @@ void SP_monster_gladiator (edict_t *self)
 		PatchMonsterModel("models/monsters/gladiatr/tris.md2");
 		self->s.skinnum = self->style * 2;
 	}
-	
+
 	self->s.modelindex = gi.modelindex ("models/monsters/gladiatr/tris.md2");
 	VectorSet (self->mins, -32, -32, -24);
 	// Lazarus: Why so tall?

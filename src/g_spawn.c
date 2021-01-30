@@ -446,7 +446,7 @@ void ED_CallSpawn (edict_t *ent)
 		return;
 	}
 
-	// Lazarus: Preserve original angles for movewith stuff 
+	// Lazarus: Preserve original angles for movewith stuff
 	//          before G_SetMoveDir wipes 'em out
 	VectorCopy(ent->s.angles, ent->org_angles);
 
@@ -484,7 +484,7 @@ char *ED_NewString (char *string)
 {
 	char	*newb, *new_p;
 	int		i,l;
-	
+
 	l = strlen(string) + 1;
 
 	newb = gi.TagMalloc (l, TAG_LEVEL);
@@ -504,7 +504,7 @@ char *ED_NewString (char *string)
 		else
 			*new_p++ = string[i];
 	}
-	
+
 	return newb;
 }
 
@@ -586,7 +586,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 
 // go through all the dictionary pairs
 	while (1)
-	{	
+	{
 	// parse key
 		com_token = COM_Parse (&data);
 		if (com_token[0] == '}')
@@ -595,8 +595,8 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 			gi.error ("ED_ParseEntity: EOF without closing brace");
 
 		strncpy (keyname, com_token, sizeof(keyname)-1);
-		
-	// parse value	
+
+	// parse value
 		com_token = COM_Parse (&data);
 		if (!data)
 			gi.error ("ED_ParseEntity: EOF without closing brace");
@@ -604,7 +604,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (com_token[0] == '}')
 			gi.error ("ED_ParseEntity: closing brace without data");
 
-		init = true;	
+		init = true;
 
 	// keynames with a leading underscore are used for utility comments,
 	// and are immediately discarded by quake
@@ -695,7 +695,7 @@ void LoadTransitionEnts()
 		vec3_t		v_spawn;
 		edict_t		*ent;
 		edict_t		*spawn;
-		
+
 		VectorClear(v_spawn);
 		if(strlen(game.spawnpoint))
 		{
@@ -746,7 +746,7 @@ void LoadTransitionEnts()
 					}
 					else
 					{
-						// We KNOW owners precede owned ents in the 
+						// We KNOW owners precede owned ents in the
 						// list because of the way it was constructed
 						ent->owner = NULL;
 						for(j=game.maxclients+1; j<globals.num_edicts && !ent->owner; j++)
@@ -820,7 +820,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 // parse ents
 	while (1)
 	{
-		// parse the opening brace	
+		// parse the opening brace
 		com_token = COM_Parse (&entities);
 		if (!entities)
 			break;
@@ -844,7 +844,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			{
 				if (ent->spawnflags & SPAWNFLAG_NOT_DEATHMATCH)
 				{
-					G_FreeEdict(ent);	
+					G_FreeEdict(ent);
 					inhibit++;
 					continue;
 				}
@@ -855,7 +855,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 					((skill->value == 1) && (ent->spawnflags & SPAWNFLAG_NOT_MEDIUM)) ||
 					(((skill->value == 2) || (skill->value == 3)) && (ent->spawnflags & SPAWNFLAG_NOT_HARD)))
 					{
-						G_FreeEdict(ent);	
+						G_FreeEdict(ent);
 						inhibit++;
 						continue;
 					}
@@ -866,7 +866,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 		ED_CallSpawn (ent);
 		ent->s.renderfx |= RF_IR_VISIBLE;		//PGM
-	}	
+	}
 
 	gi.dprintf ("%i entities inhibited\n", inhibit);
 
@@ -966,7 +966,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 #endif
 
-extern char *single_statusbar =  //CW: made it external for [target_monitor] in g_target.c
+char *single_statusbar =  //CW: made it external for [target_monitor] in g_target.c
 "yb	-24 "
 
 // health
@@ -1017,7 +1017,7 @@ extern char *single_statusbar =  //CW: made it external for [target_monitor] in 
 "	pic	9 "
 "endif "
 
-//  help / weapon icon 
+//  help / weapon icon
 "if 11 "
 "	xv	148 "
 "	pic	11 "
@@ -1098,7 +1098,7 @@ char *dm_statusbar =
 "	pic	9 "
 "endif "
 
-//  help / weapon icon 
+//  help / weapon icon
 "if 11 "
 "	xv	148 "
 "	pic	11 "
@@ -1226,9 +1226,9 @@ void SP_worldspawn (edict_t *ent)
 	gi.soundindex ("*death3.wav");
 	gi.soundindex ("*death4.wav");
 	gi.soundindex ("*fall1.wav");
-	gi.soundindex ("*fall2.wav");	
+	gi.soundindex ("*fall2.wav");
 	gi.soundindex ("*gurp1.wav");		// drowning damage
-	gi.soundindex ("*gurp2.wav");	
+	gi.soundindex ("*gurp2.wav");
 	gi.soundindex ("*jump1.wav");		// player jump
 	gi.soundindex ("*pain25_1.wav");
 	gi.soundindex ("*pain25_2.wav");
@@ -1263,7 +1263,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.soundindex ("player/watr_out.wav");	// feet leaving water
 
 	gi.soundindex ("player/watr_un.wav");	// head going underwater
-	
+
 	gi.soundindex ("player/u_breath1.wav");
 	gi.soundindex ("player/u_breath2.wav");
 
@@ -1335,7 +1335,7 @@ void SP_worldspawn (edict_t *ent)
 		FMOD_Init();
 	}
 	else
-		qFMOD_Footsteps = false; 
+		qFMOD_Footsteps = false;
 #endif
 }
 
