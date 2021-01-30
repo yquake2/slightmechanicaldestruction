@@ -400,7 +400,7 @@ void GlideFog()
 //	gi.dprintf("Name=%s, Model=%d, Near=%g, Far=%g, Density=%g, Color=%g,%g,%g\n",
 //			pfog->ent->targetname, pfog->Model,pfog->Near, pfog->Far, pfog->Density,
 //			pfog->GlideColor[0],pfog->GlideColor[1],pfog->GlideColor[2]);
-	
+
 	Glide_grFogTable( fogtable );
 	color = COLOR(pfog->GlideColor[0],pfog->GlideColor[1],pfog->GlideColor[2]);
 	Glide_grBufferClear( color, (FxU8)0, (FxU16)0);
@@ -528,7 +528,7 @@ void Fog(vec3_t viewpoint)
 	if(deathmatch->value || coop->value)
 		return;
 
-	if(stricmp(vid_ref->string,"gl"))
+	if(Q_stricmp(vid_ref->string,"gl"))
 	{
 		last_software_frame = level.framenum;
 		level.active_fog = 0;
@@ -587,14 +587,14 @@ void Fog(vec3_t viewpoint)
 			}
 		}
 	}
-	
+
 	if(!level.active_fog) {
 		if(level.last_active_fog)
 			Fog_Off();
 		level.last_active_fog = 0;
 		return;
 	}
-	
+
 	pfog = &level.fog;
 	if(level.last_active_fog != level.active_fog)
 		fogtable_generated = false;
@@ -954,7 +954,7 @@ void SetChromakey()
 	if(!gl_driver || !vid_ref)
 		return;
 
-	if(stricmp(vid_ref->string,"gl"))
+	if(Q_stricmp(vid_ref->string,"gl"))
 		return;
 
 	if(!strcmp(gl_driver->string,"3dfxgl"))

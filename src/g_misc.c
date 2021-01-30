@@ -2583,7 +2583,7 @@ void SP_func_clock_screen(edict_t *self)
 ================================================================== */
 void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t *destination)
 {
-	extern entlist_t DoNotMove;
+	extern entlist_t DoNotMove[];
 	int			i, j;
 	int			total=0;
 	qboolean	nogo=false;
@@ -2613,7 +2613,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (ent->solid == SOLID_BSP) continue;
 		if ((ent->solid == SOLID_TRIGGER) && !FindItemByClassname(ent->classname)) continue;
 		// Do not under any circumstances move these entities:
-		for(p=&DoNotMove, nogo=false; p->name && !nogo; p++)
+		for(p=DoNotMove, nogo=false; p->name && !nogo; p++)
 			if (!Q_stricmp(ent->classname,p->name))
 				nogo = true;
 		if (nogo) continue;
@@ -2660,7 +2660,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (ent->solid == SOLID_BSP) continue;
 		if ((ent->solid == SOLID_TRIGGER) && !FindItemByClassname(ent->classname)) continue;
 		// Do not under any circumstances move these entities:
-		for(p=&DoNotMove, nogo=false; p->name && !nogo; p++)
+		for(p=DoNotMove, nogo=false; p->name && !nogo; p++)
 			if (!Q_stricmp(ent->classname,p->name))
 				nogo = true;
 		if (nogo) continue;
@@ -3778,7 +3778,8 @@ int PatchDeadSoldier ()
 		return 0;	// we're in baseq2
 
 	sprintf (outfilename, "%s/%s", gamedir->string,DEADSOLDIER_MODEL);
-	if (outfile = fopen (outfilename, "rb"))
+	outfile = fopen (outfilename, "rb");
+	if (outfile)
 	{
 		// output file already exists, move along
 		fclose (outfile);
@@ -3840,7 +3841,7 @@ int PatchDeadSoldier ()
 		for(k=0; k<numitems && !data; k++)
 		{
 			fread(&pakitem,1,sizeof(pak_item_t),fpak);
-			if (!stricmp(pakitem.name,DEADSOLDIER_MODEL))
+			if (!Q_stricmp(pakitem.name,DEADSOLDIER_MODEL))
 			{
 				fseek(fpak,pakitem.start,SEEK_SET);
 				fread(&model, sizeof(dmdl_t), 1, fpak);

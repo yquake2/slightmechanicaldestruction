@@ -923,6 +923,8 @@ void Cmd_Score_f (edict_t *ent);
 void Use_Flashlight(edict_t *ent,gitem_t *item);
 void SetSensitivities(edict_t *ent,qboolean reset);
 void ShiftItem(edict_t *ent, int direction);
+void SetLazarusCrosshair (edict_t *ent);
+
 //
 // g_crane.c
 //

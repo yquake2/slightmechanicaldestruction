@@ -1,5 +1,5 @@
 // Argh!
-// 
+//
 // Add function declaration to g_local.h:
 //   void PatchPlayerModels (edict_t *ent);
 //
@@ -15,8 +15,8 @@
 #define MAX_MD2SKINS	32
 #define MAX_SKINNAME	64
 
-// Argh! - loads id baseq2/player models, "patches" their skin links 
-//         for misc_actor (all id skins, and slots for 10 custom 
+// Argh! - loads id baseq2/player models, "patches" their skin links
+//         for misc_actor (all id skins, and slots for 10 custom
 //         skins), and saves them to the current moddir location
 //
 int PatchPlayerModels (char *modelname)
@@ -42,7 +42,8 @@ int PatchPlayerModels (char *modelname)
 		return 0;	// we're in baseq2
 
 	sprintf (outfilename, "%s/players/%s/tris.md2", game->string, modelname);
-	if (outfile = fopen (outfilename, "rb"))
+	outfile = fopen (outfilename, "rb");
+	if (outfile)
 	{
 		// output file already exists, move along
 		fclose (outfile);
@@ -107,9 +108,9 @@ int PatchPlayerModels (char *modelname)
 	sprintf (infilename, "baseq2/players/%s/tris.md2", modelname);
 	if ( !(infile = fopen (infilename, "rb")) )
 		return 0;	// no player model (this shouldn't happen)
-	
+
 	fread (&model, sizeof (dmdl_t), 1, infile);
-	
+
 	datasize = model.ofs_end - model.ofs_skins;
 	if ( !(data = malloc (datasize)) )	// make sure freed locally
 	{
@@ -117,26 +118,26 @@ int PatchPlayerModels (char *modelname)
 		return 0;
 	}
 	fread (data, sizeof (byte), datasize, infile);
-	
+
 	fclose (infile);
-	
+
 	// update model info
 	model.num_skins = numskins;
-	
+
 	newoffset = numskins * MAX_SKINNAME;
 	model.ofs_st     += newoffset;
 	model.ofs_tris   += newoffset;
 	model.ofs_frames += newoffset;
 	model.ofs_glcmds += newoffset;
 	model.ofs_end    += newoffset;
-	
+
 	// save new player model
 	sprintf (outfilename, "%s/players", game->string);	// make some dirs if needed
 	_mkdir (outfilename);
 	sprintf (outfilename, "%s/players/%s", game->string, modelname);
 	_mkdir (outfilename);
 	sprintf (outfilename, "%s/players/%s/tris.md2", game->string, modelname);
-	
+
 	if ( !(outfile = fopen (outfilename, "wb")) )
 	{
 		// file couldn't be created for some other reason
@@ -144,11 +145,11 @@ int PatchPlayerModels (char *modelname)
 		free (data);
 		return 0;
 	}
-	
+
 	fwrite (&model, sizeof (dmdl_t), 1, outfile);
 	fwrite (skins, sizeof (char), newoffset, outfile);
 	fwrite (data, sizeof (byte), datasize, outfile);
-	
+
 	fclose (outfile);
 	gi.dprintf ("PatchPlayerModels: Saved %s\n", outfilename);
 	free (data);
