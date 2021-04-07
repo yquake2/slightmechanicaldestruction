@@ -98,12 +98,9 @@ restart:
 		if (self->turn_rider) {
 			// Match angular velocities
 			if (!Q_stricmp(e->classname,"func_rotating")) {
-				float	cr, sr;
 				float	cy, sy;
 				cy = cos((e->s.angles[1]-delta_angles[1])*M_PI/180);
 				sy = sin((e->s.angles[1]-delta_angles[1])*M_PI/180);
-				cr = cos((e->s.angles[2]-delta_angles[2])*M_PI/180);
-				sr = sin((e->s.angles[2]-delta_angles[2])*M_PI/180);
 				if (e->movedir[0] > 0) {
 					e->s.angles[1] = delta_angles[1];
 				} else if (e->movedir[1] > 0) {
@@ -229,7 +226,7 @@ restart:
 			}
 		}
 
-		// FMOD 
+		// FMOD
 		if (!Q_stricmp(e->classname,"target_playback"))
 			FMOD_UpdateSpeakerPos(e);
 
@@ -320,7 +317,7 @@ void train_spline (edict_t *self)
 		return;
 	if ( (train->from != train->to) && !train->moveinfo.is_blocked && (train->spawnflags & TRAIN_START_ON))
 	{
-		spline_calc (train, train->from->s.origin, train->to->s.origin, 
+		spline_calc (train, train->from->s.origin, train->to->s.origin,
 		                    train->from->s.angles, train->to->s.angles,
 		 				    train->moveinfo.ratio, p, a);
 		VectorSubtract(p,train->mins,p);
@@ -598,10 +595,10 @@ void AngleMove_Begin (edict_t *ent)
 		VectorSubtract (ent->moveinfo.end_angles, ent->s.angles, destdelta);
 	else
 		VectorSubtract (ent->moveinfo.start_angles, ent->s.angles, destdelta);
-	
+
 	// calculate length of vector
 	len = VectorLength (destdelta);
-	
+
 	// divide by speed to get time to reach dest
 	traveltime = len / ent->moveinfo.speed;
 
@@ -833,8 +830,6 @@ void plat_blocked (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Lazarus: Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1 (other);
 		}
@@ -851,7 +846,7 @@ void plat_blocked (edict_t *self, edict_t *other)
 
 
 void Use_Plat (edict_t *ent, edict_t *other, edict_t *activator)
-{ 
+{
 	if (ent->think)
 		return;		// already down
 	plat_go_down (ent);
@@ -862,7 +857,7 @@ void Touch_Plat_Center (edict_t *ent, edict_t *other, cplane_t *plane, csurface_
 {
 	if (!other->client)
 		return;
-		
+
 	if (other->health <= 0)
 		return;
 
@@ -880,13 +875,13 @@ void plat_spawn_inside_trigger (edict_t *ent)
 
 //
 // middle trigger
-//	
+//
 	trigger = G_Spawn();
 	trigger->touch = Touch_Plat_Center;
 	trigger->movetype = MOVETYPE_NONE;
 	trigger->solid = SOLID_TRIGGER;
 	trigger->enemy = ent;
-	
+
 	tmin[0] = ent->mins[0] + 25;
 	tmin[1] = ent->mins[1] + 25;
 	tmin[2] = ent->mins[2];
@@ -899,7 +894,7 @@ void plat_spawn_inside_trigger (edict_t *ent)
 
 	if (ent->spawnflags & PLAT_LOW_TRIGGER)
 		tmax[2] = tmin[2] + 8;
-	
+
 	if (tmax[0] - tmin[0] <= 0)
 	{
 		tmin[0] = (ent->mins[0] + ent->maxs[0]) *0.5;
@@ -910,7 +905,7 @@ void plat_spawn_inside_trigger (edict_t *ent)
 		tmin[1] = (ent->mins[1] + ent->maxs[1]) *0.5;
 		tmax[1] = tmin[1] + 1;
 	}
-	
+
 	VectorCopy (tmin, trigger->mins);
 	VectorCopy (tmax, trigger->maxs);
 
@@ -942,7 +937,7 @@ Set "sounds" to one of the following:
 void SP_func_plat (edict_t *ent)
 {
 	char	soundname[64];	//CW
-	
+
 	VectorClear (ent->s.angles);
 	ent->solid = SOLID_BSP;
 	ent->movetype = MOVETYPE_PUSH;
@@ -981,7 +976,7 @@ void SP_func_plat (edict_t *ent)
 		ent->pos2[2] -= (ent->maxs[2] - ent->mins[2]) - st.lip;
 
 	ent->use = Use_Plat;
-	plat_spawn_inside_trigger (ent);	// the "start moving" trigger	
+	plat_spawn_inside_trigger (ent);	// the "start moving" trigger
 
 	if (ent->targetname)
 	{
@@ -1074,7 +1069,7 @@ void rotating_blocked (edict_t *self, edict_t *other)
 {
 /*	// Lazarus: This was added to do damage to pickup items, but may break
 	// existing maps.
-	
+
 	if (!(other->svflags & SVF_MONSTER) && (!other->client) ) {
 		// give it a chance to go away on it's own terms (like gibs)
 		T_Damage (other, self, self, vec3_origin, other->s.origin, vec3_origin, 100000, 1, 0, MOD_CRUSH);
@@ -1377,7 +1372,7 @@ void SP_func_button (edict_t *ent)
 
 	if (ent->sounds != 1)
 		ent->moveinfo.sound_start = gi.soundindex ("switches/butn2.wav");
-	
+
 	if (!ent->speed)
 		ent->speed = 40;
 	if (!ent->accel)
@@ -1427,7 +1422,7 @@ void SP_func_button (edict_t *ent)
 //====================================================================
 //
 // SP_func_trainbutton is a button linked to a func_train with the
-// "movewith" key. The button itself does NOT move relative to the 
+// "movewith" key. The button itself does NOT move relative to the
 // train, but the effect can be simulated with animations and sounds
 //
 // Spawnflags 1 = can be activated by looking at it and pressing +attack
@@ -1714,7 +1709,7 @@ void door_go_down (edict_t *self)
 		self->takedamage = DAMAGE_YES;
 		self->health = self->max_health;
 	}
-	
+
 	if (strcmp(self->classname, "func_door") == 0) {
 		if (self->movewith)
 			movewith_update(self);
@@ -1745,7 +1740,7 @@ void door_go_up (edict_t *self, edict_t *activator)
 	if ((self->flags & FL_REVERSIBLE) && activator)
 		check_reverse_rotation(self,activator->s.origin);
 
-	if (!(self->flags & FL_TEAMSLAVE)) 
+	if (!(self->flags & FL_TEAMSLAVE))
 	{
 		if (self->moveinfo.sound_start)
 			gi.sound (self, CHAN_NO_PHS_ADD+CHAN_VOICE, self->moveinfo.sound_start, 1, ATTN_STATIC, 0);
@@ -1800,7 +1795,7 @@ void door_use (edict_t *self, edict_t *other, edict_t *activator)
 			return;
 		}
 	}
-	
+
 	// trigger all paired doors
 	for (ent = self ; ent ; ent = ent->teamchain)
 	{
@@ -1939,8 +1934,6 @@ void door_blocked (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Lazarus: Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1(other);
 		}
@@ -2034,7 +2027,7 @@ void SP_func_door (edict_t *ent)
 {
 	vec3_t	abs_movedir;
 	char	soundname[64];	//CW
-	
+
 //CW++ Setup customisable sounds.
 	if (ent->sounds > 0)
 	{
@@ -2054,7 +2047,7 @@ void SP_func_door (edict_t *ent)
 
 	ent->blocked = door_blocked;
 	ent->use = door_use;
-	
+
 	if (!ent->speed)
 		ent->speed = 100;
 	if (deathmatch->value)
@@ -2110,7 +2103,7 @@ void SP_func_door (edict_t *ent)
 		gi.soundindex ("misc/talk.wav");
 		ent->touch = door_touch;
 	}
-	
+
 	ent->moveinfo.speed = ent->speed;
 	ent->moveinfo.accel = ent->accel;
 	ent->moveinfo.decel = ent->decel;
@@ -2281,7 +2274,7 @@ void SP_func_door_rotating (edict_t *ent)
 			ent->die = door_killed;
 		ent->max_health = ent->health;
 	}
-	
+
 	if (ent->targetname && ent->message)
 	{
 		gi.soundindex ("misc/talk.wav");
@@ -2485,8 +2478,6 @@ void train_blocked (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Lazarus: Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1 (other);
 		}
@@ -2566,7 +2557,7 @@ void train_wait (edict_t *self)
 		{
 			train_next (self);
 			self->spawnflags &= ~TRAIN_START_ON;
-			VectorClear (self->velocity);			
+			VectorClear (self->velocity);
 			// Lazarus: turn off animation for stationary trains
 			self->s.effects &= ~(EF_ANIM_ALL | EF_ANIM_ALLFAST);
 			self->nextthink = 0;
@@ -2583,7 +2574,7 @@ void train_wait (edict_t *self)
 	{
 		train_next (self);
 	}
-	
+
 }
 
 // Rroff's rotating train stuff, with quite a few changes
@@ -2655,30 +2646,30 @@ void train_yaw (edict_t *self)
 		if (self->enemy->movewith_next && (self->enemy->movewith_next->movewith_ent == self->enemy))
 			set_child_movement(self->enemy);
 		return;
-	} 
+	}
 
 	if (cur_yaw != idl_yaw) {
 		if (cur_yaw < idl_yaw)
 		{
 			Dist_1 = (idl_yaw - cur_yaw)*10;
 			Dist_2 = ((360 - idl_yaw) + cur_yaw)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				self->enemy->avelocity[YAW] = yaw_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				self->enemy->avelocity[YAW] = -yaw_vel;
 			}
 		}
@@ -2686,32 +2677,32 @@ void train_yaw (edict_t *self)
 		{
 			Dist_1 = (cur_yaw - idl_yaw)*10;
 			Dist_2 = ((360 - cur_yaw) + idl_yaw)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				self->enemy->avelocity[YAW] = -yaw_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < yaw_vel)
 					yaw_vel = Distance;
-				
+
 				self->enemy->avelocity[YAW] = yaw_vel;
 			}
 		}
-		
+
 		//	gi.dprintf ("train cy: %g iy: %g ys: %g\n", cur_yaw, idl_yaw, self->enemy->avelocity[1]);
-		
+
 		if (self->enemy->s.angles[YAW] < 0)
 			self->enemy->s.angles[YAW] += 360;
-		
+
 		if (self->enemy->s.angles[YAW] >= 360)
 			self->enemy->s.angles[YAW] -= 360;
 	}
@@ -2722,23 +2713,23 @@ void train_yaw (edict_t *self)
 		{
 			Dist_1 = (idl_pitch - cur_pitch)*10;
 			Dist_2 = ((360 - idl_pitch) + cur_pitch)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				self->enemy->avelocity[PITCH] = pitch_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				self->enemy->avelocity[PITCH] = -pitch_vel;
 			}
 		}
@@ -2746,30 +2737,30 @@ void train_yaw (edict_t *self)
 		{
 			Dist_1 = (cur_pitch - idl_pitch)*10;
 			Dist_2 = ((360 - cur_pitch) + idl_pitch)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				self->enemy->avelocity[PITCH] = -pitch_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < pitch_vel)
 					pitch_vel = Distance;
-				
+
 				self->enemy->avelocity[PITCH] = pitch_vel;
 			}
 		}
-		
+
 		if (self->enemy->s.angles[PITCH] <  0)
 			self->enemy->s.angles[PITCH] += 360;
-		
+
 		if (self->enemy->s.angles[PITCH] >= 360)
 			self->enemy->s.angles[PITCH] -= 360;
 	}
@@ -2779,23 +2770,23 @@ void train_yaw (edict_t *self)
 		{
 			Dist_1 = (idl_roll - cur_roll)*10;
 			Dist_2 = ((360 - idl_roll) + cur_roll)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < roll_vel)
 					roll_vel = Distance;
-				
+
 				self->enemy->avelocity[ROLL] = roll_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < roll_vel)
 					roll_vel = Distance;
-				
+
 				self->enemy->avelocity[ROLL] = -roll_vel;
 			}
 		}
@@ -2803,30 +2794,30 @@ void train_yaw (edict_t *self)
 		{
 			Dist_1 = (cur_roll - idl_roll)*10;
 			Dist_2 = ((360 - cur_roll) + idl_roll)*10;
-			
+
 			if (Dist_1 < Dist_2)
 			{
 				Distance = Dist_1;
-				
+
 				if (Distance < roll_vel)
 					roll_vel = Distance;
-				
+
 				self->enemy->avelocity[ROLL] = -roll_vel;
 			}
 			else
 			{
 				Distance = Dist_2;
-				
+
 				if (Distance < roll_vel)
 					roll_vel = Distance;
-				
+
 				self->enemy->avelocity[ROLL] = roll_vel;
 			}
 		}
-		
+
 		if (self->enemy->s.angles[ROLL] < 0)
 			self->enemy->s.angles[ROLL] += 360;
-		
+
 		if (self->enemy->s.angles[ROLL] >= 360)
 			self->enemy->s.angles[ROLL] -= 360;
 	}
@@ -3484,8 +3475,6 @@ void door_secret_blocked  (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Lazarus: Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1 (other);
 		}
@@ -3566,7 +3555,7 @@ void SP_func_door_secret (edict_t *ent)
 		gi.soundindex ("misc/talk.wav");
 		ent->touch = door_touch;
 	}
-	
+
 	ent->classname = "func_door";
 
 	gi.linkentity (ent);
@@ -3605,7 +3594,7 @@ void SP_func_killbox (edict_t *ent)
 // 2) Can be pushed off a ledge and damaged by falling
 // 3) Default dmg = 0 (no fireball) and health = 0 (indestructible)
 // 4) Plays a sound when moving
-// 
+//
 // targetname - If triggered, pushable object self-destructs, throwing
 //              debris chunks and (if dmg>0) exploding
 // health     - Damage sustained by object before it "dies". On death,
@@ -3625,7 +3614,7 @@ void SP_func_killbox (edict_t *ent)
 //              1 = tank/thud.wav
 //              2 = weapons/rg_hum.wav
 //              3 = weapons/rockfly.wav
-//             
+//
 // SF=1       - Trigger spawn. Func_pushable is invisible and non-solid until triggered.
 //    2       - No knockback. Not moved by weapon fire (invulnerable func_pushables aren't
 //              affected by weapon fire in either case)
@@ -3639,15 +3628,14 @@ void SP_func_killbox (edict_t *ent)
 //
 qboolean box_movestep (edict_t *ent, vec3_t move, qboolean relink)
 {
-	vec3_t		oldorg, neworg, end;
+	vec3_t		neworg, end;
 	trace_t		trace;
 	float		stepsize;
 
 	vec3_t		maxs, mins, origin;
 
-// try the move	
+// try the move
 	VectorAdd (ent->s.origin, ent->origin_offset, origin);
-	VectorCopy (origin, oldorg);
 	VectorAdd (origin, move, neworg);
 	VectorCopy (ent->size, maxs);
 	VectorScale (maxs, 0.5, maxs);
@@ -3735,12 +3723,12 @@ void box_use (edict_t *self, edict_t *other, edict_t *activator)
 qboolean box_walkmove (edict_t *ent, float yaw, float dist)
 {
 	vec3_t	move;
-	
+
 	if (!ent->groundentity && !(ent->flags & (FL_FLY|FL_SWIM)))
 		return false;
 
 	yaw = yaw*M_PI*2 / 360;
-	
+
 	move[0] = cos(yaw)*dist;
 	move[1] = sin(yaw)*dist;
 	move[2] = 0;
@@ -3787,7 +3775,6 @@ void box_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf
 	float	v11, v12, v21, v22;
 	int     axis;
 	vec3_t	v1, v2, v;
-	vec3_t	origin;
 	edict_t *bottom, *top;
 
 	// if other is another func_pushable, AND self is in
@@ -3818,13 +3805,13 @@ void box_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf
 		}
 		if (self->waterlevel==0) return;
 
-		// 06/03/00 change: If either func_pushable is currently being moved 
+		// 06/03/00 change: If either func_pushable is currently being moved
 		// by crane, bail out.
 		if (self->crane_control) return;
 		if (other->crane_control) return;
 
 		// Since func_pushables have a bounding box, impact will ALWAYS be on one of the
-		// planes of the bounding box. The "plane" argument isn't always used, but since 
+		// planes of the bounding box. The "plane" argument isn't always used, but since
 		// all entities involved use a parallelepiped bounding box we can rely on offsets
 		// to centers to figure out which side the impact is on.
 		VectorAdd (self->absmax,self->absmin,v1);
@@ -3846,8 +3833,8 @@ void box_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf
 		self->velocity[axis] = v12;
 		other->velocity[axis] = v22;
 
-		// Assuming frictionless surfaces, momentum of crate is conserved in 
-		// other two directions (so velocity doesn't change)... BUT we want 
+		// Assuming frictionless surfaces, momentum of crate is conserved in
+		// other two directions (so velocity doesn't change)... BUT we want
 		// to get the bottom crate out from underneath the other one,
 		// so we're gonna be a little "creative"
 		if (axis==2) {
@@ -3891,7 +3878,6 @@ void box_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf
 	}
 	// if other is a monster or a player and box is on other's head and moving down,
 	// do impact damage
-	VectorAdd(self->s.origin,self->origin_offset,origin);
 	if ( other->client || (other->svflags & SVF_MONSTER) )
 	{
 		VectorAdd (self->absmax,self->absmin,v1);
@@ -3986,7 +3972,7 @@ void box_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf
 	// Give object a little nudge to give us some clearance
 	VectorSubtract (v1, other->s.origin, v);
 	box_walkmove (self, vectoyaw(v), 4);
-	// Now get the offset from the player to the object, 
+	// Now get the offset from the player to the object,
 	//   and preserve that offset in ClientThink by shifting
 	//   object as needed.
 	VectorSubtract(other->s.origin,self->s.origin,self->offset);
@@ -4460,7 +4446,7 @@ void SP_func_force_wall(edict_t *ent)
 	if (!ent->speed)
 		ent->speed = FRAMETIME;
 //CW---
-	
+
 //	if (!ent->style)			//CW: commented out to allow black particles
 //		ent->style = 208;
 
@@ -4519,7 +4505,7 @@ void swinging_door_killed (edict_t *self, edict_t *inflictor, edict_t *attacker,
 			return;
 		}
 	}
-	
+
 	// trigger all paired doors
 	for (ent = master ; ent ; ent = ent->teamchain)
 	{
@@ -4638,7 +4624,7 @@ void func_air_on(edict_t *self, edict_t *other, edict_t *activator)
 }
 
 /*QUAKED func_air (0 .5 .8) ? StartOn
-Allows player to breathe when inside the trigger field, despite 
+Allows player to breathe when inside the trigger field, despite
 the environment they're currently in (eg. water).
 If there is no targetname set, the trigger field is always active.
 

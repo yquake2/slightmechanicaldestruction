@@ -6,7 +6,7 @@
 #include "m_actor.h"
 #include "pak.h"
 
-static char wavname[NUM_ACTOR_SOUNDS][32] = 
+static char wavname[NUM_ACTOR_SOUNDS][32] =
 { "jump1.wav",
   "pain25_1.wav",
   "pain25_2.wav",
@@ -37,49 +37,49 @@ static char wavname[NUM_ACTOR_SOUNDS][32] =
 
 mframe_t actor_frames_stand [] =
 {
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL}
 };
 mmove_t actor_move_stand = {FRAME_stand01, FRAME_stand40, actor_frames_stand, NULL};
 
@@ -98,30 +98,30 @@ void actor_stand (edict_t *self)
 
 mframe_t actor_frames_walk [] =
 {
-/*	ai_walk, 4,  NULL,
-	ai_walk, 15, NULL,
-	ai_walk, 15, NULL,
-	ai_walk, 8,  NULL,
-	ai_walk, 20, NULL,
-	ai_walk, 15, NULL,
-	ai_walk, 8,  NULL,
-	ai_walk, 17, NULL,
-	ai_walk, 12, NULL,
-	ai_walk, -2, NULL,
-	ai_walk, -2, NULL,
-	ai_walk, -1, NULL */
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL
+/*	{ai_walk, 4,  NULL},
+	{ai_walk, 15, NULL},
+	{ai_walk, 15, NULL},
+	{ai_walk, 8,  NULL},
+	{ai_walk, 20, NULL},
+	{ai_walk, 15, NULL},
+	{ai_walk, 8,  NULL},
+	{ai_walk, 17, NULL},
+	{ai_walk, 12, NULL},
+	{ai_walk, -2, NULL},
+	{ai_walk, -2, NULL},
+	{ai_walk, -1, NULL} */
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL}
 };
 mmove_t actor_move_walk = {FRAME_run1, FRAME_run6, actor_frames_walk, NULL};
 
@@ -181,29 +181,29 @@ void actor_walk (edict_t *self)
 
 mframe_t actor_frames_walk_back [] =
 {
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL}
 };
 mmove_t actor_move_walk_back = {FRAME_run1, FRAME_run6, actor_frames_walk_back, NULL};
 
 mframe_t actor_frames_crouchwalk_back [] =
 {
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL,
-	ai_walk, -10, NULL
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL},
+	{ai_walk, -10, NULL}
 };
 mmove_t actor_move_crouchwalk_back = {FRAME_crwalk1, FRAME_crwalk6, actor_frames_crouchwalk_back, NULL};
 
@@ -250,36 +250,36 @@ void actor_walk_back (edict_t *self)
 }
 mframe_t actor_frames_crouch [] =
 {
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL}
 };
 mmove_t actor_move_crouch = {FRAME_crstnd01, FRAME_crstnd19, actor_frames_crouch, NULL};
 
 mframe_t actor_frames_crouchwalk [] =
 {
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL,
-	ai_walk, 10, NULL
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL},
+	{ai_walk, 10, NULL}
 };
 mmove_t actor_move_crouchwalk = {FRAME_crwalk1, FRAME_crwalk6, actor_frames_crouchwalk, NULL};
 
@@ -287,23 +287,23 @@ mmove_t actor_move_crouchwalk = {FRAME_crwalk1, FRAME_crwalk6, actor_frames_crou
 //      misc_actor and 2/3 that for "bad guys". Also eliminated excess frames.
 mframe_t actor_frames_run [] =
 {
-	ai_run, 40, NULL,
-	ai_run, 40, NULL,
-	ai_run, 40, NULL,
-	ai_run, 40, NULL,
-	ai_run, 40, NULL,
-	ai_run, 40, NULL
+	{ai_run, 40, NULL},
+	{ai_run, 40, NULL},
+	{ai_run, 40, NULL},
+	{ai_run, 40, NULL},
+	{ai_run, 40, NULL},
+	{ai_run, 40, NULL}
 };
 mmove_t actor_move_run = {FRAME_run1, FRAME_run6, actor_frames_run, NULL};
 
 mframe_t actor_frames_run_bad [] =
 {
-	ai_run, 30, NULL,
-	ai_run, 30, NULL,
-	ai_run, 30, NULL,
-	ai_run, 30, NULL,
-	ai_run, 30, NULL,
-	ai_run, 30, NULL
+	{ai_run, 30, NULL},
+	{ai_run, 30, NULL},
+	{ai_run, 30, NULL},
+	{ai_run, 30, NULL},
+	{ai_run, 30, NULL},
+	{ai_run, 30, NULL}
 };
 
 mmove_t actor_move_run_bad = {FRAME_run1, FRAME_run6, actor_frames_run_bad, NULL};
@@ -350,12 +350,12 @@ void actor_run (edict_t *self)
 
 mframe_t actor_frames_run_back [] =
 {
-	ai_run, -40, NULL,
-	ai_run, -40, NULL,
-	ai_run, -40, NULL,
-	ai_run, -40, NULL,
-	ai_run, -40, NULL,
-	ai_run, -40, NULL
+	{ai_run, -40, NULL},
+	{ai_run, -40, NULL},
+	{ai_run, -40, NULL},
+	{ai_run, -40, NULL},
+	{ai_run, -40, NULL},
+	{ai_run, -40, NULL}
 };
 mmove_t actor_move_run_back = {FRAME_run1, FRAME_run6, actor_frames_run_back, NULL};
 
@@ -394,67 +394,67 @@ void actor_run_back (edict_t *self)
 }
 mframe_t actor_frames_pain1 [] =
 {
-	ai_move, -5, NULL,
-	ai_move, 4,  NULL,
-	ai_move, 1,  NULL,
-	ai_move, 1,  NULL
+	{ai_move, -5, NULL},
+	{ai_move, 4,  NULL},
+	{ai_move, 1,  NULL},
+	{ai_move, 1,  NULL}
 };
 mmove_t actor_move_pain1 = {FRAME_pain101, FRAME_pain104, actor_frames_pain1, actor_run};
 
 mframe_t actor_frames_pain2 [] =
 {
-	ai_move, -4, NULL,
-	ai_move, 4,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL
+	{ai_move, -4, NULL},
+	{ai_move, 4,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL}
 };
 mmove_t actor_move_pain2 = {FRAME_pain201, FRAME_pain204, actor_frames_pain2, actor_run};
 
 mframe_t actor_frames_pain3 [] =
 {
-	ai_move, -1, NULL,
-	ai_move, 1,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 1,  NULL
+	{ai_move, -1, NULL},
+	{ai_move, 1,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 1,  NULL}
 };
 mmove_t actor_move_pain3 = {FRAME_pain301, FRAME_pain304, actor_frames_pain3, actor_run};
 
 mframe_t actor_frames_flipoff [] =
 {
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL}
 };
 mmove_t actor_move_flipoff = {FRAME_flip01, FRAME_flip12, actor_frames_flipoff, actor_run};
 
 mframe_t actor_frames_taunt [] =
 {
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL,
-	ai_turn, 0,  NULL
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL},
+	{ai_turn, 0,  NULL}
 };
 mmove_t actor_move_taunt = {FRAME_taunt01, FRAME_taunt17, actor_frames_taunt, actor_run};
 
@@ -512,9 +512,9 @@ void actor_switch (edict_t *self)
 }
 mframe_t actor_frames_switch [] =
 {
-	ai_run, 0, actor_switch,
-	ai_run, 0, NULL,
-	ai_run, 0, NULL
+	{ai_run, 0, actor_switch},
+	{ai_run, 0, NULL},
+	{ai_run, 0, NULL}
 };
 mmove_t actor_move_switch = {FRAME_jump4, FRAME_jump6, actor_frames_switch, actor_attack};
 
@@ -602,23 +602,23 @@ void actor_dead (edict_t *self)
 
 mframe_t actor_frames_death1 [] =
 {
-	ai_move, 0,   NULL,
-	ai_move, 0,   NULL,
-	ai_move, -13, NULL,
-	ai_move, 14,  NULL,
-	ai_move, 3,   NULL,
-	ai_move, -2,  NULL
+	{ai_move, 0,   NULL},
+	{ai_move, 0,   NULL},
+	{ai_move, -13, NULL},
+	{ai_move, 14,  NULL},
+	{ai_move, 3,   NULL},
+	{ai_move, -2,  NULL}
 };
 mmove_t actor_move_death1 = {FRAME_death101, FRAME_death106, actor_frames_death1, actor_dead};
 
 mframe_t actor_frames_death2 [] =
 {
-	ai_move, 0,   NULL,
-	ai_move, 7,   NULL,
-	ai_move, -6,  NULL,
-	ai_move, -5,  NULL,
-	ai_move, 1,   NULL,
-	ai_move, 0,   NULL
+	{ai_move, 0,   NULL},
+	{ai_move, 7,   NULL},
+	{ai_move, -6,  NULL},
+	{ai_move, -5,  NULL},
+	{ai_move, 1,   NULL},
+	{ai_move, 0,   NULL}
 };
 mmove_t actor_move_death2 = {FRAME_death201, FRAME_death206, actor_frames_death2, actor_dead};
 
@@ -647,7 +647,7 @@ void actor_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		return;
 
 // regular death
-	gi.sound (self, CHAN_VOICE, 
+	gi.sound (self, CHAN_VOICE,
 		self->actor_sound_index[ACTOR_SOUND_DEATH1 + (rand()%4)], 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
@@ -847,28 +847,28 @@ void actor_seekcover (edict_t *self)
 
 mframe_t actor_frames_attack [] =
 {
-	ai_charge, 0,  actor_fire,
-	ai_charge, 0,  actor_no_weapon_sound,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL
+	{ai_charge, 0,  actor_fire},
+	{ai_charge, 0,  actor_no_weapon_sound},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL}
 };
 mmove_t actor_move_attack = {FRAME_attack1, FRAME_attack8, actor_frames_attack, actor_seekcover};
 
 mframe_t actor_frames_crattack [] =
 {
-	ai_charge, 0,  actor_fire,
-	ai_charge, 0,  actor_no_weapon_sound,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL
+	{ai_charge, 0,  actor_fire},
+	{ai_charge, 0,  actor_no_weapon_sound},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL}
 };
 mmove_t actor_move_crattack = {FRAME_crattak1, FRAME_crattak9, actor_frames_crattack, actor_run};
 
@@ -1053,14 +1053,14 @@ qboolean actor_checkattack (edict_t *self)
 		self->monsterinfo.attack_state = AS_MISSILE;
 		return true;
 	}
-	
+
 // missile attack
 	if (!self->monsterinfo.attack)
 		return false;
-		
+
 	if (level.time < self->monsterinfo.attack_finished)
 		return false;
-		
+
 	if (range > self->monsterinfo.max_range)
 		return false;
 
@@ -1160,12 +1160,12 @@ void actor_end_jump (edict_t *self)
 
 mframe_t actor_frames_jump [] =
 {
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, actor_end_jump
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, actor_end_jump}
 };
 
 mmove_t actor_move_jump = {FRAME_jump1, FRAME_jump6, actor_frames_jump, actor_jump};
@@ -1191,17 +1191,17 @@ qboolean actor_blocked (edict_t *self, float dist)
 
 mframe_t actor_frames_salute [] =
 {
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL,
-	ai_turn, 0, NULL
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL},
+	{ai_turn, 0, NULL}
 };
 mmove_t actor_move_salute = {FRAME_salute01, FRAME_salute11, actor_frames_salute, actor_run};
 
@@ -1226,7 +1226,7 @@ void actor_salute (edict_t *self)
 #define ACTOR_ZUMLIN     12
 
 #define NUM_ACTORPAK_ACTORS 12
-char ActorNames[NUM_ACTORPAK_ACTORS][32] = 
+char ActorNames[NUM_ACTORPAK_ACTORS][32] =
 { "alien",      "hunter",     "paranoid","ratamahatta",
   "rhino",      "sas",        "slith",   "terran",
   "walker",     "waste",      "xenoid",  "zumlin" };
@@ -1566,7 +1566,7 @@ void SP_misc_actor (edict_t *self)
 /*QUAKED target_actor (.5 .3 0) (-8 -8 -8) (8 8 8) JUMP SHOOT ATTACK x HOLD BRUTAL
 JUMP			jump in set direction upon reaching this target
 SHOOT			take a single shot at the pathtarget
-ATTACK		    attack pathtarget until it or actor is dead 
+ATTACK		    attack pathtarget until it or actor is dead
 
 "target"		next target_actor
 "pathtarget"	target of any action to be taken at this point
@@ -1583,7 +1583,7 @@ void target_actor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 
 	if (other->movetarget != self)
 		return;
-	
+
 	if (other->enemy)
 		return;
 
@@ -1593,7 +1593,7 @@ void target_actor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 	{
 		other->velocity[0] = self->movedir[0] * self->speed;
 		other->velocity[1] = self->movedir[1] * self->speed;
-		
+
 		if (other->groundentity)
 		{
 			other->groundentity = NULL;
@@ -1619,7 +1619,7 @@ void target_actor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 					actor_stand (other);
 				} else
 					actor_attack(other);
-			} 
+			}
 			else
 				other->enemy = NULL;
 		} else {
@@ -1679,7 +1679,7 @@ void target_actor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 	}
 	else
 	{
-		
+
 		if (!other->movetarget && !other->enemy)
 		{
 			other->monsterinfo.pausetime = level.time + 100000000;
@@ -1742,7 +1742,7 @@ qboolean InPak(char *basedir, char *gamedir, char *filename)
 	pak_header_t	pakheader;
 	pak_item_t		pakitem;
 	qboolean		found = false;
-	
+
 	// Search paks in game folder
 	for(k=9; k>=0 && !found; k--)
 	{
@@ -1853,13 +1853,13 @@ void actor_files ()
 			// search for sounds on hard disk and in paks
 			actors[num_actors].index  = i;
 			num_actors++;
-			
+
 			if(!Q_stricmp(e->usermodel,"male") || !Q_stricmp(e->usermodel,"female")) {
 				sprintf(path, "player/%s/",e->usermodel);
 			} else {
 				sprintf(path, "../players/%s/",e->usermodel);
 			}
-			
+
 			for(j=0; j<NUM_ACTOR_SOUNDS; j++) {
 
 				if(e->actor_sound_index[j])
@@ -1877,7 +1877,7 @@ void actor_files ()
 						e->actor_sound_index[j] = gi.soundindex(filename);
 						continue;
 					}
-					
+
 					// Search paks in game folder
 					sprintf(filename,"sound/%s%s",path,wavname[j]);
 					if (InPak(basedir->string,gamedir->string,filename)) {
@@ -1887,7 +1887,7 @@ void actor_files ()
 						continue;
 					}
 				}
-				
+
 				// Search in baseq2 for external file
 				sprintf(filename,"%s/baseq2/sound/%s%s",basedir->string,path,wavname[j]);
 				f = fopen(filename,"r");
@@ -1898,7 +1898,7 @@ void actor_files ()
 					e->actor_sound_index[j] = gi.soundindex(filename);
 					continue;
 				}
-				
+
 				// Search paks in baseq2
 				sprintf(filename,"sound/%s%s",path,wavname[j]);
 				if (InPak(basedir->string,"baseq2",filename)) {
@@ -1919,7 +1919,7 @@ void actor_files ()
 						e->actor_sound_index[j] = gi.soundindex(filename);
 						continue;
 					}
-					
+
 					// Search paks in baseq2
 					sprintf(filename,"sound/%s%s",path,wavname[j]);
 					if (InPak(cddir->string,"baseq2",filename)) {
@@ -1981,14 +1981,14 @@ void actor_files ()
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
-				
+
 				// Search pak files in gamedir
 				if (InPak(basedir->string,gamedir->string,filename)) {
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
 			}
-				
+
 			// Search in baseq2 for external file
 			sprintf(path,"%s/baseq2/%s",basedir->string,filename);
 			f = fopen(path,"r");
@@ -1997,7 +1997,7 @@ void actor_files ()
 				e->actor_model_index[k] = gi.modelindex(filename);
 				continue;
 			}
-			
+
 			// Search paks in baseq2
 			if (InPak(basedir->string,"baseq2",filename)) {
 				e->actor_model_index[k] = gi.modelindex(filename);
@@ -2013,7 +2013,7 @@ void actor_files ()
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
-				
+
 				// Search paks in baseq2
 				if (InPak(cddir->string,"baseq2",filename)) {
 					e->actor_model_index[k] = gi.modelindex(filename);
@@ -2034,14 +2034,14 @@ void actor_files ()
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
-				
+
 				// Search pak files in gamedir
 				if (InPak(basedir->string,gamedir->string,filename)) {
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
 			}
-				
+
 			// Search in baseq2 for external file
 			sprintf(path,"%s/baseq2/%s",basedir->string,filename);
 			f = fopen(path,"r");
@@ -2050,7 +2050,7 @@ void actor_files ()
 				e->actor_model_index[k] = gi.modelindex(filename);
 				continue;
 			}
-			
+
 			// Search paks in baseq2
 			if (InPak(basedir->string,"baseq2",filename)) {
 				e->actor_model_index[k] = gi.modelindex(filename);
@@ -2066,7 +2066,7 @@ void actor_files ()
 					e->actor_model_index[k] = gi.modelindex(filename);
 					continue;
 				}
-				
+
 				// Search paks in baseq2
 				if (InPak(cddir->string,"baseq2",filename)) {
 					e->actor_model_index[k] = gi.modelindex(filename);
@@ -2074,7 +2074,7 @@ void actor_files ()
 				}
 			}
 
-			// And if it's STILL not found, use 
+			// And if it's STILL not found, use
 			sprintf(filename,"players/male/weapon.md2");
 			e->actor_model_index[k] = gi.modelindex(filename);
 		}

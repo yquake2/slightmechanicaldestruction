@@ -172,7 +172,7 @@ void turret_breach_fire (edict_t *self)
 
 //CW++
 	if (self->moreflags & FL_TURRET_DOUBLE)
-	{ 
+	{
 		AngleVectors(self->s.angles, forward2, right2, up2);
 		VectorMA(self->s.origin, self->muzzle2[0], forward2, start2);
 		VectorMA(start2, self->muzzle2[1], right2, start2);
@@ -269,7 +269,7 @@ void turret_breach_fire (edict_t *self)
 					fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
 
 				gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
-				
+
 				self->delay = level.time + self->wait;
 
 				break;
@@ -468,9 +468,9 @@ void turret_breach_fire (edict_t *self)
 				else
 //CW--
 					fire_rocket(owner, start, forward, damage, speed, 150, damage, NULL);
-		
+
 				gi.positioned_sound (start, self, CHAN_WEAPON, gi.soundindex("weapons/rocklf1a.wav"), 1, ATTN_NORM, 0);
-				
+
 				self->delay = level.time + self->wait;
 
 				break;
@@ -487,33 +487,33 @@ void turret_disengage (edict_t *self)
 
 	// level the gun
 	self->move_angles[0] = 0;
-				
+
 	ent = self->owner;
-				
+
 	//ed - to keep remove tracking of the entity
 	ent->turret = NULL;
-				
+
 	// throw them back from turret
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	VectorScale(forward, -300, forward);
 	forward[2] = forward[2] + 150;
 	if (forward[2] < 80)
 		forward[2] = 80;
-				
+
 	for (i=0; i<3; i++)
 		ent->velocity[i] = forward[i];
-		
+
 	ent->s.origin[2] = ent->s.origin[2] + 1;
 	ent->movetype = MOVETYPE_WALK;
 	ent->gravity = 1;
-				
+
 	ent->flags &= ~FL_TURRET_OWNER;
-				
+
 	// turn ON client side prediction for this player
 	ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-				
+
 	gi.linkentity (ent);
-				
+
 	self->owner = NULL;
 }
 void turret_turn (edict_t *self)
@@ -542,7 +542,7 @@ void turret_turn (edict_t *self)
 			{
 				float	delta_angle;
 				float	fastest = self->speed * FRAMETIME;
-				
+
 				delta_angle = SHORT2ANGLE(client->ucmd.angles[0]-client->old_owner_angles[0]);
 				if(delta_angle < -180)
 					delta_angle += 360;
@@ -553,7 +553,7 @@ void turret_turn (edict_t *self)
 				if(delta_angle < -fastest)
 					delta_angle = -fastest;
 				self->move_angles[0] += delta_angle;
-				
+
 				delta_angle = SHORT2ANGLE(client->ucmd.angles[1]-client->old_owner_angles[1]);
 				if(delta_angle < -180)
 					delta_angle += 360;
@@ -571,8 +571,8 @@ void turret_turn (edict_t *self)
 			self->touch_debounce_time = level.time + 5.0;
 		}
 	}
-	
-//=======	
+
+//=======
 	AnglesNormalize(self->move_angles);
 
 	// clamp angles to mins & maxs
@@ -721,29 +721,29 @@ void turret_breach_think (edict_t *self)
 			float	diff;
 			float	target_z;
 			vec3_t	dir;
-			
+
 			// angular is easy, just copy ours
 			self->owner->avelocity[0] = self->avelocity[0];
 			self->owner->avelocity[1] = self->avelocity[1];
-			
+
 			// x & y
 			angle = self->s.angles[1] + self->owner->move_origin[1];
 			angle *= (M_PI*2 / 360);
 			target[0] = SnapToEights(self->s.origin[0] + cos(angle) * self->owner->move_origin[0]);
 			target[1] = SnapToEights(self->s.origin[1] + sin(angle) * self->owner->move_origin[0]);
 			target[2] = self->owner->s.origin[2];
-			
+
 			VectorSubtract (target, self->owner->s.origin, dir);
 			self->owner->velocity[0] = dir[0] * 1.0 / FRAMETIME;
 			self->owner->velocity[1] = dir[1] * 1.0 / FRAMETIME;
-			
+
 			// z
 			angle = self->s.angles[PITCH] * (M_PI*2 / 360);
 			target_z = SnapToEights(self->s.origin[2] + self->owner->move_origin[0] * tan(angle) + self->owner->move_origin[2]);
-			
+
 			diff = target_z - self->owner->s.origin[2];
 			self->owner->velocity[2] = diff * 1.0 / FRAMETIME;
-			
+
 			if (self->spawnflags & 65536)
 			{
 				turret_breach_fire (self);
@@ -769,7 +769,7 @@ void turret_breach_think (edict_t *self)
 
 			gi.linkentity(self->owner);
 
-			if (self->owner->client->ps.pmove.velocity[2] > 15) 
+			if (self->owner->client->ps.pmove.velocity[2] > 15)
 				turret_disengage(self);
 		}
 	}
@@ -816,7 +816,7 @@ void turret_breach_think (edict_t *self)
 
 				gi.linkentity(ent);
 
-				//ed - set the flag on the client so that when they shoot the 
+				//ed - set the flag on the client so that when they shoot the
 				//     turret shoots instead of "using" it
 				ent->flags |= FL_TURRET_OWNER;
 			}
@@ -889,7 +889,7 @@ void turret_breach_think (edict_t *self)
 			if((self->enemy->client) || (self->enemy->monsterinfo.aiflags & AI_GOOD_GUY))
 				best_dist = 8192;
 		}
-			
+
 		// hunt for monster
 		if(!remote_monster) {
 			for(i=maxclients->value+1; i<globals.num_edicts; i++) {
@@ -990,7 +990,7 @@ good_enemy:
 			{
 				VectorMA(target,FRAMETIME,self->enemy->velocity,target);
 
-/* May add some variant of this for skill 3 later. For now, the following is virtually 
+/* May add some variant of this for skill 3 later. For now, the following is virtually
    indistinguishable from skill 2 for most normal setups. Trouble is, it is sometimes
    EASIER than skill 2.
 
@@ -1043,7 +1043,7 @@ good_enemy:
 			}
 			if(victim && self->sounds >= 0 && DotProduct(forward,dir) > 0.99)
 			{
-				// never automatically fire a turret remotely controlled by 
+				// never automatically fire a turret remotely controlled by
 				// a player
 				if(!self->viewer || (self->viewer && !self->viewer->client))
 				{
@@ -1315,7 +1315,7 @@ void use_turret_breach (edict_t *self, edict_t *other, edict_t *activator)
 }
 void turret_breach_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	// This added for Lazarus to help prevent player from becoming stuck when 
+	// This added for Lazarus to help prevent player from becoming stuck when
 	// jumping onto a TRACK turret.
 
 	// We only care about TRACK turrets. For monster controlled turrets the angles
@@ -1335,7 +1335,7 @@ void turret_breach_touch(edict_t *self, edict_t *other, cplane_t *plane, csurfac
 			self->move_angles[PITCH] = self->pos2[PITCH];
 		else
 			self->move_angles[PITCH] = self->pos1[PITCH];
-		
+
 		if( fabs(self->s.angles[YAW] - self->pos1[YAW]) <
 			fabs(self->s.angles[YAW] - self->pos2[YAW])  )
 			self->move_angles[YAW] = self->pos2[YAW];
@@ -1515,7 +1515,7 @@ Must NOT be on the team with the rest of the turret parts.
 Instead it must target the turret_breach.
 */
 
-void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage);
+void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point ) ;
 void infantry_stand (edict_t *self);
 void monster_use (edict_t *self, edict_t *other, edict_t *activator);
 
@@ -1527,7 +1527,7 @@ void turret_driver_die (edict_t *self, edict_t *inflictor, edict_t *attacker, in
 
 		// level the gun
 		self->target_ent->move_angles[0] = 0;
-		
+
 		if(self->spawnflags & SF_TURRETDRIVER_REMOTE_DRIVER)
 			// "remote" driver... turn off TRACK for turret
 			self->target_ent->spawnflags &= ~SF_TURRET_TRACKING;
@@ -1542,7 +1542,7 @@ void turret_driver_die (edict_t *self, edict_t *inflictor, edict_t *attacker, in
 		}
 		self->target_ent->owner = NULL;
 	}
-	infantry_die (self, inflictor, attacker, damage);
+	infantry_die (self, inflictor, attacker, damage, point);
 }
 
 void turret_driver_think (edict_t *self)

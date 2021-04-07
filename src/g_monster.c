@@ -130,7 +130,7 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	gi.WriteShort (self - g_edicts);
 	gi.WriteByte (flashtype);
 	gi.multicast (start, MULTICAST_PVS);
-}	
+}
 
 void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
 {
@@ -231,7 +231,7 @@ void M_CheckGround (edict_t *ent)
 
 	// Lazarus: The following 2 lines were in the original code and commented out
 	//          by id. However, the effect of this is that a player walking over
-	//          a dead monster who is laying on a brush model will cause the 
+	//          a dead monster who is laying on a brush model will cause the
 	//          dead monster to drop through the brush model. This change *may*
 	//          have other consequences, though, so watch out for this.
 
@@ -261,7 +261,7 @@ void M_CatagorizePosition (edict_t *ent)
 // Lazarus... more broken code because of origin being screwed up
 //	point[0] = ent->s.origin[0];
 //	point[1] = ent->s.origin[1];
-//	point[2] = ent->s.origin[2] + ent->mins[2] + 1;	
+//	point[2] = ent->s.origin[2] + ent->mins[2] + 1;
 	point[0] = (ent->absmax[0] + ent->absmin[0])/2;
 	point[1] = (ent->absmax[1] + ent->absmin[1])/2;
 	point[2] = ent->absmin[2] + 2;
@@ -333,11 +333,11 @@ void M_WorldEffects (edict_t *ent)
 			}
 		}
 	}
-	
+
 	if (ent->waterlevel == 0)
 	{
 		if (ent->flags & FL_INWATER)
-		{	
+		{
 			if (ent->watertype & CONTENTS_MUD)
 				gi.sound (ent, CHAN_BODY, gi.soundindex("mud/mud_out1.wav"), 1, ATTN_NORM, 0);
 			else
@@ -363,9 +363,9 @@ void M_WorldEffects (edict_t *ent)
 			T_Damage (ent, world, world, vec3_origin, ent->s.origin, vec3_origin, 4*ent->waterlevel, 0, 0, MOD_SLIME);
 		}
 	}
-	
+
 	if ( !(ent->flags & FL_INWATER) )
-	{	
+	{
 		if (!(ent->svflags & SVF_DEADMONSTER))
 		{
 			if (ent->watertype & CONTENTS_LAVA)
@@ -396,7 +396,7 @@ void M_droptofloor (edict_t *ent)
 	ent->s.origin[2] += 1;
 	VectorCopy (ent->s.origin, end);
 	end[2] -= 256;
-	
+
 	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
 
 	if (trace.fraction == 1 || trace.allsolid)
@@ -492,10 +492,12 @@ void M_MoveFrame (edict_t *self)
 
 	index = self->s.frame - move->firstframe;
 	if (move->frame[index].aifunc)
+	{
 		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
 			move->frame[index].aifunc (self, move->frame[index].dist * self->monsterinfo.scale);
 		else
 			move->frame[index].aifunc (self, 0);
+	}
 
 	if (move->frame[index].thinkfunc)
 		move->frame[index].thinkfunc (self);
@@ -873,7 +875,7 @@ void walkmonster_start_go (edict_t *self)
 			if (!M_walkmove (self, 0, 0))
 				gi.dprintf ("%s in solid at %s\n", self->classname, vtos(self->s.origin));
 	}
-	
+
 	if (!self->yaw_speed)
 		self->yaw_speed = 20;
 	self->viewheight = 25;
@@ -997,7 +999,7 @@ void stationarymonster_start_go (edict_t *self)
 
 //	if (!M_walkmove (self, 0, 0))
 //		gi.dprintf ("%s in solid at %s\n", self->classname, vtos(self->s.origin));
-	
+
 	if (!self->yaw_speed)
 		self->yaw_speed = 20;
 //	self->viewheight = 25;
@@ -1024,7 +1026,7 @@ void InitiallyDead (edict_t *self)
 		return;
 
 //	gi.dprintf("InitiallyDead on %s at %s\n",self->classname,vtos(self->s.origin));
-	
+
 	// initially dead bad guys shouldn't count against totals
 	if ((self->max_health <= 0) && !(self->monsterinfo.aiflags & AI_GOOD_GUY))
 	{
@@ -1079,7 +1081,8 @@ int PatchMonsterModel (char *modelname)
 		return 0;	// we're in baseq2
 
 	sprintf (outfilename, "%s/%s", gamedir->string, modelname);
-	if (outfile = fopen (outfilename, "rb"))
+	outfile = fopen (outfilename, "rb");
+	if (outfile)
 	{
 		// output file already exists, move along
 		fclose (outfile);
@@ -1230,7 +1233,7 @@ int PatchMonsterModel (char *modelname)
 	sprintf (infilename, "baseq2/%s", modelname);
 	if ( !(infile = fopen (infilename, "rb")) )
 	{
-		// If file doesn't exist on user's hard disk, it must be in 
+		// If file doesn't exist on user's hard disk, it must be in
 		// pak0.pak
 
 		pak_header_t	pakheader;
@@ -1260,7 +1263,7 @@ int PatchMonsterModel (char *modelname)
 		for(k=0; k<numitems && !data; k++)
 		{
 			fread(&pakitem,1,sizeof(pak_item_t),fpak);
-			if (!stricmp(pakitem.name,modelname))
+			if (!Q_stricmp(pakitem.name,modelname))
 			{
 				fseek(fpak,pakitem.start,SEEK_SET);
 				fread(&model, sizeof(dmdl_t), 1, fpak);
@@ -1284,7 +1287,7 @@ int PatchMonsterModel (char *modelname)
 	else
 	{
 		fread (&model, sizeof (dmdl_t), 1, infile);
-	
+
 		datasize = model.ofs_end - model.ofs_skins;
 		if ( !(data = malloc (datasize)) )	// make sure freed locally
 		{
@@ -1292,20 +1295,20 @@ int PatchMonsterModel (char *modelname)
 			return 0;
 		}
 		fread (data, sizeof (byte), datasize, infile);
-	
+
 		fclose (infile);
 	}
-	
+
 	// update model info
 	model.num_skins = numskins;
-	
+
 	newoffset = numskins * MAX_SKINNAME;
 	model.ofs_st     += newoffset;
 	model.ofs_tris   += newoffset;
 	model.ofs_frames += newoffset;
 	model.ofs_glcmds += newoffset;
 	model.ofs_end    += newoffset;
-	
+
 	// save new model
 	sprintf (outfilename, "%s/models", gamedir->string);	// make some dirs if needed
 	_mkdir (outfilename);
@@ -1317,7 +1320,7 @@ int PatchMonsterModel (char *modelname)
 	_mkdir (outfilename);
 
 	sprintf (outfilename, "%s/%s", gamedir->string, modelname);
-	
+
 	if ( !(outfile = fopen (outfilename, "wb")) )
 	{
 		// file couldn't be created for some other reason
@@ -1325,11 +1328,11 @@ int PatchMonsterModel (char *modelname)
 		free (data);
 		return 0;
 	}
-	
+
 	fwrite (&model, sizeof (dmdl_t), 1, outfile);
 	fwrite (skins, sizeof (char), newoffset, outfile);
 	fwrite (data, sizeof (byte), datasize, outfile);
-	
+
 	fclose (outfile);
 	gi.dprintf ("PatchMonsterModel: Saved %s\n", outfilename);
 	free (data);

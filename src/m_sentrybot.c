@@ -35,49 +35,49 @@ void sentrybot_sound_stand(edict_t *self)
 
 mframe_t sentrybot_frames_stand [] =
 {
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, sentrybot_sound_stand,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, sentrybot_sound_stand},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, sentrybot_sound_stand,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, sentrybot_sound_stand},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
 
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL,
-	ai_stand, 0, NULL
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL},
+	{ai_stand, 0, NULL}
 };
 mmove_t sentrybot_move_stand = {FRAME_stand01, FRAME_stand40, sentrybot_frames_stand, NULL};
 
@@ -117,12 +117,12 @@ void sentrybot_sound_move(edict_t *self)
 
 mframe_t sentrybot_frames_walk [] =
 {
-	ai_walk, 11, NULL,
-	ai_walk, 11, NULL,
-	ai_walk, 11, NULL,
-	ai_walk, 11, NULL,
-	ai_walk, 11, NULL,
-	ai_walk, 11, sentrybot_sound_move,
+	{ai_walk, 11, NULL},
+	{ai_walk, 11, NULL},
+	{ai_walk, 11, NULL},
+	{ai_walk, 11, NULL},
+	{ai_walk, 11, NULL},
+	{ai_walk, 11, sentrybot_sound_move},
 };
 mmove_t sentrybot_move_walk = {FRAME_run1, FRAME_run6, sentrybot_frames_walk, NULL};
 
@@ -135,12 +135,12 @@ void sentrybot_walk(edict_t *self)
 
 mframe_t sentrybot_frames_run [] =
 {
-	ai_run, 21, NULL,
-	ai_run, 21, NULL,
-	ai_run, 21, NULL,
-	ai_run, 21, NULL,
-	ai_run, 21, NULL,
-	ai_run, 21, sentrybot_sound_move
+	{ai_run, 21, NULL},
+	{ai_run, 21, NULL},
+	{ai_run, 21, NULL},
+	{ai_run, 21, NULL},
+	{ai_run, 21, NULL},
+	{ai_run, 21, sentrybot_sound_move}
 };
 mmove_t sentrybot_move_run = {FRAME_run1, FRAME_run6, sentrybot_frames_run, NULL};
 
@@ -156,12 +156,12 @@ void sentrybot_run(edict_t *self)
 
 mframe_t sentrybot_frames_jump [] =
 {
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL,
-	ai_move,  0, NULL
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL},
+	{ai_move,  0, NULL}
 };
 mmove_t sentrybot_move_jump = {FRAME_jump1, FRAME_jump6, sentrybot_frames_jump, sentrybot_run};
 
@@ -175,19 +175,19 @@ void sentrybot_jump(edict_t *self)
 
 mframe_t sentrybot_frames_pain1 [] =
 {
-	ai_move, -4, NULL,
-	ai_move, 4,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL
+	{ai_move, -4, NULL},
+	{ai_move, 4,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL}
 };
 mmove_t sentrybot_move_pain1 = {FRAME_pain201, FRAME_pain204, sentrybot_frames_pain1, sentrybot_run};
 
 mframe_t sentrybot_frames_pain2 [] =
 {
-	ai_move, -1, NULL,
-	ai_move, 1,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 1,  NULL
+	{ai_move, -1, NULL},
+	{ai_move, 1,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 1,  NULL}
 };
 mmove_t sentrybot_move_pain2 = {FRAME_pain301, FRAME_pain304, sentrybot_frames_pain2, sentrybot_run};
 
@@ -199,7 +199,7 @@ void sentrybot_pain(edict_t *self, edict_t *other, float kick, int damage)
 		return;
 
 	self->pain_debounce_time = level.time + 3.0;
-	
+
 	if (skill->value > 2)
 		return;
 
@@ -210,7 +210,7 @@ void sentrybot_pain(edict_t *self, edict_t *other, float kick, int damage)
 		self->monsterinfo.currentmove = &sentrybot_move_pain1;
 	else
 		self->monsterinfo.currentmove = &sentrybot_move_pain2;
-	
+
 	gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
 }
 
@@ -380,14 +380,14 @@ void sentrybot_fire(edict_t *self)
 
 mframe_t sentrybot_frames_attack [] =
 {
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  sentrybot_fire,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL,
-	ai_charge, 0,  NULL
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  sentrybot_fire},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL},
+	{ai_charge, 0,  NULL}
 };
 mmove_t sentrybot_move_attack = {FRAME_attack1, FRAME_attack8, sentrybot_frames_attack, sentrybot_run};
 
@@ -433,14 +433,14 @@ void SP_monster_sentrybot (edict_t *self)
 	self->monsterinfo.melee = NULL;
 	self->monsterinfo.sight = sentrybot_sight;
 	self->monsterinfo.idle = sentrybot_idle;
-	
+
 	if (monsterjump->value)
 	{
 		self->monsterinfo.jump = sentrybot_jump;
 		self->monsterinfo.jumpup = 48;
 		self->monsterinfo.jumpdn = 160;
 	}
-	
+
 //	Pre-cache sounds.
 
 	sound_pain1 = gi.soundindex("sentrybot/sbpain1.wav");

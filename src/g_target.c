@@ -5,7 +5,7 @@
 #define ANIM_MASK	(EF_ANIM01|EF_ANIM23|EF_ANIM_ALL|EF_ANIM_ALLFAST)		//CW
 
 static float fCrosshair;	//CW: store crosshair value for [target_monitor] use
-char *single_statusbar;		//CW: reference external definition in g_spawn.c
+extern char *single_statusbar;		//CW: reference external definition in g_spawn.c
 
 ///CW++ Holographic "repair catalogue" of monsters.
 #define	HOLO_SIZE	12
@@ -362,7 +362,7 @@ Changes level to "map" when fired
 
 Lazarus spawnflags:
  1 CLEAR_INVENTORY: Removes all pickups other than weapons, restore health to 100
- 2 LANDMARK:        If set, player position when spawning in the next map will be at the 
+ 2 LANDMARK:        If set, player position when spawning in the next map will be at the
                     same offset from the info_player_start as his current position relative
                     to the target_changelevel. Velocity, angles, and crouch state will be
                     preserved across maps.
@@ -463,7 +463,7 @@ void use_target_changelevel (edict_t *self, edict_t *other, edict_t *activator)
 				activator->client->pers.spawn_angles[YAW] += angles[YAW];
 				activator->client->pers.spawn_viewangles[YAW] += angles[YAW];
 			}
-		}		
+		}
 		else
 		{
 			activator->client->pers.spawn_landmark = false;
@@ -770,7 +770,7 @@ void target_blaster_think (edict_t *self)
 				self->enemy = NULL;
 		}
 
-		// We have a live not-notarget player as target. If IF_VISIBLE is 
+		// We have a live not-notarget player as target. If IF_VISIBLE is
 		// set, see if we can see him
 		if (self->enemy && (self->spawnflags & IF_VISIBLE) ) {
 			VectorMA(self->enemy->absmin,0.5,self->enemy->size,target);
@@ -786,7 +786,7 @@ void target_blaster_think (edict_t *self)
 				self->nextthink = level.time + self->wait;
 			return;
 		}
-	
+
 		// Find a player - note that we search the entire entity list so we'll
 		// also hit on func_monitor-viewing fake players
 		for(i=1, player=g_edicts+1; i<globals.num_edicts && !self->enemy; i++, player++) {
@@ -836,7 +836,7 @@ void target_blaster_think (edict_t *self)
 			self->enemy = NULL;
 			ent = G_Find (NULL, FOFS(targetname), self->target);
 			while(ent && !self->enemy) {
-				// if the target isn't a monster, we don't care whether 
+				// if the target isn't a monster, we don't care whether
 				// it can be seen or not.
 				if ( !(ent->svflags & SVF_MONSTER) ) {
 					self->enemy = ent;
@@ -1439,7 +1439,7 @@ void target_lightramp_think (edict_t *self)
 			self->nextthink = level.time + FRAMETIME;
 		} else if (self->spawnflags & LIGHTRAMP_TOGGLE) {
 			char	temp;
-			
+
 			temp = self->movedir[0];
 			self->movedir[0] = self->movedir[1];
 			self->movedir[1] = temp;
@@ -1584,7 +1584,7 @@ void target_earthquake_think (edict_t *self)
 			continue;
 		if (!e->groundentity)
 			continue;
-		// Lazarus: special case for tracktrain riders - 
+		// Lazarus: special case for tracktrain riders -
 		// earthquakes hurt 'em too bad, so don't shake 'em
 		if ((e->groundentity->flags & FL_TRACKTRAIN) && (e->groundentity->moveinfo.state))
 			continue;
@@ -1686,7 +1686,7 @@ void target_locator_init(edict_t *self)
 		}
 	}
 	if (!num_points) num_points=1;
-	
+
 	nummoves = 1;
 	while(move)
 	{
@@ -1907,7 +1907,7 @@ void SP_target_anger(edict_t *self)
 	self->use = use_target_anger;
 }
 
-// target_monsterbattle serves the same purpose as target_anger, but 
+// target_monsterbattle serves the same purpose as target_anger, but
 // ends up turning a dmgteam group of monsters against another dmgteam
 
 void use_target_monsterbattle(edict_t *self, edict_t *other, edict_t *activator)
@@ -2327,10 +2327,10 @@ Broadcasts to all in Potentially Visible Set from vector (origin)
   TE_GREENBLOOD       26 Spurt of green (actually kinda yellow) blood
   TE_BLUEHYPERBLASTER 27 NOT IMPLEMENTED
   TE_BLASTER2         30 Green/white sparks with a yellow/white flash
-  TE_MOREBLOOD        42 
+  TE_MOREBLOOD        42
   TE_HEATBEAM_SPARKS  43
   TE_HEATBEAM_STEAM   44
-  TE_CHAINFIST_SMOKE  45 
+  TE_CHAINFIST_SMOKE  45
   TE_ELECTRIC_SPARKS  46
   TE_FLECHETTE        55
 */
@@ -2345,7 +2345,7 @@ void target_effect_sparks (edict_t *self, edict_t *activator)
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(self->style);
 	gi.WritePosition(self->s.origin);
-	if (self->style != TE_CHAINFIST_SMOKE) 
+	if (self->style != TE_CHAINFIST_SMOKE)
 		gi.WriteDir(self->movedir);
 	gi.multicast(self->s.origin, MULTICAST_PVS);
 
@@ -2366,13 +2366,13 @@ Potentially Hearable set from vector (origin)
   TE_GRENADE_EXPLOSION_WATER 18 underwater grenade explosion
   TE_BFG_EXPLOSION           20 BFG explosion sprite
   TE_BFG_BIGEXPLOSION        21 BFG particle explosion
-  TE_BOSSTPORT               22 
+  TE_BOSSTPORT               22
   TE_PLASMA_EXPLOSION        28
   TE_PLAIN_EXPLOSION         35
   TE_TRACKER_EXPLOSION       47
   TE_TELEPORT_EFFECT	     48
   TE_DBALL_GOAL              49 Identical to TE_TELEPORT_EFFECT?
-  TE_NUKEBLAST               51 
+  TE_NUKEBLAST               51
   TE_WIDOWSPLASH             52
   TE_EXPLOSION1_BIG          53  Works, but requires Rogue models/objects/r_explode2
   TE_EXPLOSION1_NP           54
@@ -2395,7 +2395,7 @@ void target_effect_explosion (edict_t *self, edict_t *activator)
 
 */ }
 //===============================================================================
-/*  TE_TUNNEL_SPARKS    29 
+/*  TE_TUNNEL_SPARKS    29
     Similar to other splash effects, but Xatrix does some funky things with
 	the origin so we'll do the same */
 
@@ -2603,7 +2603,7 @@ void SP_target_effect (edict_t *self)
  TARGET_ATTRACTOR - pulls target entity towards its origin
  target     - Targetname of entity to attract. Ignored if PLAYER spawnflag is set
  pathtarget - Entity or entities to "use" when distance criteria is met.
- speed      - Minimum speed to pull target with. Must use a value > sv_gravity/10 
+ speed      - Minimum speed to pull target with. Must use a value > sv_gravity/10
               to overcome gravity when pulling up.
  distance   - When target is within "distance" units of target_attractor, attraction
               is shut off. Use a value < 0 to hold target in place. 0 will be reset
@@ -2613,7 +2613,7 @@ void SP_target_effect (edict_t *self)
       0 = none
       1 = medic cable
       2 = green laser
-              
+
  Spawnflags:   1 - START_ON
                2 - PLAYER (attract player, ignore "target"
                4 - NO_GRAVITY - turns off gravity for target. W/O this flag you'll
@@ -2641,7 +2641,7 @@ void target_attractor_think_single(edict_t *self)
 	vec3_t	forward, right;
 	int		i;
 	int		num_targets = 0;
-	
+
 	if (!self->spawnflags & ATTRACTOR_ON) return;
 
 	previous_target = self->target_ent;
@@ -2772,7 +2772,7 @@ void target_attractor_think_single(edict_t *self)
 			AngleVectors (target->client->v_angle, forward, right, NULL);
 			for (i=0 ; i<3 ; i++)
 				target->velocity[i] += scale * forward[i] * target->client->ucmd.forwardmove +
-				scale * right[i]   * target->client->ucmd.sidemove; 
+				scale * right[i]   * target->client->ucmd.sidemove;
 			target->velocity[2] += scale * target->client->ucmd.upmove;
 		}
 	}
@@ -2790,7 +2790,7 @@ void target_attractor_think_single(edict_t *self)
 			VectorCopy(target->s.origin,new_origin);
 		else
 			VectorMA(targ_org,FRAMETIME,target->velocity,new_origin);
-		
+
 		switch(self->sounds) {
 		case 1:
 			gi.WriteByte(svc_temp_entity);
@@ -2809,11 +2809,11 @@ void target_attractor_think_single(edict_t *self)
 		}
 	}
 
-	
+
 	if (self->spawnflags & ATTRACTOR_NO_GRAVITY)
 		target->gravity_debounce_time = level.time + 2*FRAMETIME;
 	gi.linkentity(target);
-	
+
 	if (!num_targets) {
 		// shut 'er down
 		self->spawnflags &= ~ATTRACTOR_ON;
@@ -2869,7 +2869,7 @@ void target_attractor_think(edict_t *self)
 		if (!target->inuse) continue;
 		if ( ((target->client) || (target->svflags & SVF_MONSTER)) && (target->health <= 0)) continue;
 		num_targets++;
-		
+
 		VectorAdd(target->s.origin,target->origin_offset,targ_org);
 		VectorSubtract(self->s.origin,targ_org,dir);
 		dist = VectorLength(dir);
@@ -2882,7 +2882,7 @@ void target_attractor_think(edict_t *self)
 		if (readout->value) gi.dprintf("distance=%g, pull speed=%g\n",dist,self->moveinfo.speed);
 		if (dist > self->moveinfo.distance)
 			continue;
-		
+
 		if ((self->pathtarget) && (self->spawnflags & ATTRACTOR_PATHTARGET))
 		{
 			if (dist == 0) {
@@ -2929,7 +2929,7 @@ void target_attractor_think(edict_t *self)
 				AngleVectors (target->client->v_angle, forward, right, NULL);
 				for (i=0 ; i<3 ; i++)
 					target->velocity[i] += scale * forward[i] * target->client->ucmd.forwardmove +
-					                       scale * right[i]   * target->client->ucmd.sidemove; 
+					                       scale * right[i]   * target->client->ucmd.sidemove;
 				target->velocity[2] += scale * target->client->ucmd.upmove;
 			}
 		}
@@ -3065,7 +3065,7 @@ void SP_target_CD (edict_t *self)
 }
 /*===================================================================
  TARGET_MONITOR
- Move the player's viewpoint to the target_monitor origin, 
+ Move the player's viewpoint to the target_monitor origin,
  gives the target_monitor angles to the player, and freezes him
  for "wait" seconds (default=3). If wait < 0, target_monitor
  must be targeted a second time to free the player.
@@ -3091,19 +3091,19 @@ void target_monitor_off (edict_t *self)
 	}
 	faker = player->client->camplayer;
 	VectorCopy(faker->s.origin,player->s.origin);
-	free(faker->client); 
-	G_FreeEdict (faker); 
+	free(faker->client);
+	G_FreeEdict (faker);
 	player->client->ps.pmove.origin[0] = player->s.origin[0]*8;
 	player->client->ps.pmove.origin[1] = player->s.origin[1]*8;
 	player->client->ps.pmove.origin[2] = player->s.origin[2]*8;
 	for (i=0 ; i<3 ; i++)
-		player->client->ps.pmove.delta_angles[i] = 
+		player->client->ps.pmove.delta_angles[i] =
 			ANGLE2SHORT(player->client->org_viewangles[i] - player->client->resp.cmd_angles[i]);
 	VectorCopy(player->client->org_viewangles, player->client->resp.cmd_angles);
 	VectorCopy(player->client->org_viewangles, player->s.angles);
 	VectorCopy(player->client->org_viewangles, player->client->ps.viewangles);
 	VectorCopy(player->client->org_viewangles, player->client->v_angle);
-	
+
 	player->client->ps.gunindex        = gi.modelindex(player->client->pers.weapon->view_model);
 	player->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 	player->client->ps.pmove.pm_type   = PM_NORMAL;
@@ -3237,10 +3237,10 @@ void use_target_monitor (edict_t *self, edict_t *other, edict_t *activator)
 
 	// create a fake player to stand in real player's position
 	faker = activator->client->camplayer = G_Spawn();
-	faker->s.frame = activator->s.frame; 
-	VectorCopy (activator->s.origin, faker->s.origin); 
-	VectorCopy (activator->velocity, faker->velocity); 
-	VectorCopy (activator->s.angles, faker->s.angles); 
+	faker->s.frame = activator->s.frame;
+	VectorCopy (activator->s.origin, faker->s.origin);
+	VectorCopy (activator->velocity, faker->velocity);
+	VectorCopy (activator->s.angles, faker->s.angles);
 	faker->s = activator->s;
 	faker->takedamage   = DAMAGE_NO;					// so monsters won't attack
 	faker->flags       |= FL_NOTARGET;					// ... just to make sure
@@ -3261,10 +3261,10 @@ void use_target_monitor (edict_t *self, edict_t *other, edict_t *activator)
 	VectorCopy(activator->mins,faker->mins);
 	VectorCopy(activator->maxs,faker->maxs);
     // create a client so you can pick up items/be shot/etc while in camera
-	cl = (gclient_t *) malloc(sizeof(gclient_t)); 
-	faker->client = cl; 
+	cl = (gclient_t *) malloc(sizeof(gclient_t));
+	faker->client = cl;
 	faker->target_ent = activator;
-	gi.linkentity (faker); 
+	gi.linkentity (faker);
 
 	if (self->target_ent && self->target_ent->inuse)
 	{
@@ -3297,7 +3297,7 @@ void use_target_monitor (edict_t *self, edict_t *other, edict_t *activator)
 		activator->client->pers.chasetoggle = 0;
 	activator->clipmask = 0;
 	VectorClear(activator->velocity);
-	activator->client->ps.gunindex = 0; 
+	activator->client->ps.gunindex = 0;
 	activator->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
 	gi.linkentity(activator);
 
@@ -3416,7 +3416,7 @@ void SP_target_monitor (edict_t *self)
  ACTIVATOR = 1 - target_animation acts on it's activator rather than
                  it's target
 
- "message" - specifies allowable classname to animate. This prevents 
+ "message" - specifies allowable classname to animate. This prevents
              animating entities with inapplicable frame numbers
 =====================================================================================*/
 void target_animate (edict_t *ent)
@@ -3431,7 +3431,7 @@ void target_animate (edict_t *ent)
 		}
 		else if (ent->svflags & SVF_MONSTER)
 		{
-			// Hopefully we don't get here, but if we DO then we definitely 
+			// Hopefully we don't get here, but if we DO then we definitely
 			// need for monsters/actors to turn their brains back on.
 			ent->think     = monster_think;
 			ent->nextthink = level.time + FRAMETIME;
@@ -3801,13 +3801,13 @@ void movewith_detach (edict_t *child)
 	edict_t	*e;
 	edict_t	*parent=NULL;
 	int		i;
-				
+
 	for(i=1; i<globals.num_edicts && !parent; i++) {
 		e = g_edicts + i;
 		if (e->movewith_next == child) parent=e;
 	}
 	if (parent) parent->movewith_next = child->movewith_next;
-		
+
 	child->movewith_next = NULL;
 	child->movewith = NULL;
 	child->movetype = child->org_movetype;
@@ -3851,7 +3851,7 @@ void use_target_movewith (edict_t *self, edict_t *other, edict_t *activator)
 			{
 				if (target->movewith_ent)
 					movewith_detach(target);
-		
+
 				target->movewith_ent = parent;
 				VectorCopy(parent->s.angles,target->parent_attach_angles);
 				if (target->org_movetype < 0)
@@ -3906,7 +3906,7 @@ void SP_target_movewith (edict_t *self)
  1 = NOT
  2 = XOR (toggle)
 ======================================================================================*/
- 
+
 void use_target_set_effect (edict_t *self, edict_t *other, edict_t *activator)
 {
 	edict_t *target;
@@ -4127,7 +4127,7 @@ void clone (edict_t *self, edict_t *other, edict_t *activator)
 			{
 				child->mins[0] = child->mins[1];
 				child->mins[1] = -child->maxs[0];
-				child->maxs[0] = child->maxs[1]; 
+				child->maxs[0] = child->maxs[1];
 				child->maxs[1] = -temp;
 			}
 		}
@@ -4312,7 +4312,7 @@ void SP_target_skill (edict_t *self)
  "count" = initial model number to be displayed (see the declaration
  of holo_list).
 =============================================================================*/
-void target_holo_think(edict_t *self) 
+void target_holo_think(edict_t *self)
 {
 	self->s.frame++;
 	if (self->s.frame >= self->framenumbers)
@@ -4383,7 +4383,7 @@ sprites will be taken from the file "sprites/s_bubble.sp2" by default.
 "usermodel" SP2 file
 "startframe" PCX frame number
 "speed" vertical velocity (default = 40)
-"random" random +/- amount to vary vertical velocity by 
+"random" random +/- amount to vary vertical velocity by
 "height" height above parent entity at which to vanish (default = 128)
 "mass" number of sprite groups spawned per second (default = 5; max = 10)
 "mass2" number of sprites per group (default = 1)
@@ -4416,7 +4416,7 @@ void target_bubbles_think(edict_t *self)
 
 		VectorSet(offset, crandom()*self->radius, crandom()*self->radius, 0);
 		VectorAdd(self->s.origin, offset, bubble->s.origin);
-		
+
 		VectorSet(bubble->movedir, 0, 0, 1);
 		v_speed = self->speed + (crandom() * self->random);
 		VectorSet(bubble->velocity, 0, 0, v_speed);
@@ -4465,7 +4465,7 @@ void SP_target_bubbles(edict_t *self)
 		self->pos2[2] = st.height;
 
 	if (!self->speed)
-		self->speed = 40; 
+		self->speed = 40;
 
 	if (!self->mass)
 		self->mass = 5;

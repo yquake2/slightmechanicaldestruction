@@ -77,7 +77,7 @@ void VelocityForDamage (int damage, vec3_t v)
 
 	if (damage < 50)
 		VectorScale (v, 0.7, v);
-	else 
+	else
 		VectorScale (v, 1.2, v);
 }
 
@@ -528,7 +528,7 @@ void path_corner_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 
 	if (other->movetarget != self)
 		return;
-	
+
 	if (other->enemy)
 		return;
 
@@ -572,7 +572,7 @@ void path_corner_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 	}
 	else
 	{
-		
+
 		if (!other->movetarget)
 		{
 			other->monsterinfo.pausetime = level.time + 100000000;
@@ -672,7 +672,7 @@ void point_combat_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		else
 		{
 			char *savetarget;
-			
+
 			savetarget = self->target;
 			self->target = self->pathtarget;
 			if (other->enemy && other->enemy->client)
@@ -1025,7 +1025,7 @@ void func_explosive_explode (edict_t *self)
 	if (!mass)
 		mass = 75;
 
-	// Lazarus: Use traditional debris for gib_type=0, but non-zero gib_type gives equal 
+	// Lazarus: Use traditional debris for gib_type=0, but non-zero gib_type gives equal
 	// weight to all models.
 
 	if ( (self->gib_type > 0) && (self->gib_type < 10))
@@ -1079,7 +1079,7 @@ void func_explosive_explode (edict_t *self)
 				ThrowDebris (self, "models/objects/debris1/tris.md2", 1, chunkorigin, 0, 0);
 			}
 		}
-		
+
 		// small chunks
 		count = mass / 25;
 		if (count > 16)
@@ -1248,7 +1248,6 @@ void barrel_explode (edict_t *self)
 {
 	vec3_t	org;
 	float	spd;
-	vec3_t	save;
 	vec3_t	size;
 
 	if (self->gib_type == GIB_BARREL)
@@ -1256,7 +1255,6 @@ void barrel_explode (edict_t *self)
 		func_explosive_explode(self);
 		return;
 	}
-	VectorCopy (self->s.origin, save);
 	VectorMA (self->absmin, 0.5, self->size, self->s.origin);
 
 	T_RadiusDamage (self, self->activator, self->dmg, NULL, self->dmg+40, MOD_BARREL, -0.5);
@@ -1439,7 +1437,7 @@ void misc_blackhole_think (edict_t *self)
 	if (++self->s.frame < 19)
 		self->nextthink = level.time + FRAMETIME;
 	else
-	{		
+	{
 		self->s.frame = 0;
 		self->nextthink = level.time + FRAMETIME;
 	}
@@ -1461,7 +1459,7 @@ void SP_misc_blackhole (edict_t *ent)
 	VectorSet (ent->maxs, 64, 64, 8);
 	ent->s.modelindex = gi.modelindex ("models/objects/black/tris.md2");
 //	ent->s.renderfx = RF_TRANSLUCENT;     // Lazarus: For some oddball reason if this is set
-	                                      //          here, blackhole generator will be 
+	                                      //          here, blackhole generator will be
 	                                      //          invisible. Rogue MP has the same problem.
 	ent->use = misc_blackhole_use;
 	ent->think = misc_blackhole_think;
@@ -1478,7 +1476,7 @@ void misc_eastertank_think (edict_t *self)
 	if (++self->s.frame < 293)
 		self->nextthink = level.time + FRAMETIME;
 	else
-	{		
+	{
 		self->s.frame = 254;
 		self->nextthink = level.time + FRAMETIME;
 	}
@@ -1512,7 +1510,7 @@ void misc_easterchick_think (edict_t *self)
 	if (++self->s.frame < 247)
 		self->nextthink = level.time + FRAMETIME;
 	else
-	{		
+	{
 		self->s.frame = 208;
 		self->nextthink = level.time + FRAMETIME;
 	}
@@ -1546,7 +1544,7 @@ void misc_easterchick2_think (edict_t *self)
 	if (++self->s.frame < 287)
 		self->nextthink = level.time + FRAMETIME;
 	else
-	{		
+	{
 		self->s.frame = 248;
 		self->nextthink = level.time + FRAMETIME;
 	}
@@ -1836,7 +1834,7 @@ void SP_misc_viper (edict_t *ent)
 }
 
 
-/*QUAKED misc_bigviper (1 .5 0) (-176 -120 -24) (176 120 72) 
+/*QUAKED misc_bigviper (1 .5 0) (-176 -120 -24) (176 120 72)
 This is a large stationary viper as seen in Paul's intro
 */
 void SP_misc_bigviper (edict_t *ent)
@@ -1875,7 +1873,7 @@ void misc_viper_bomb_touch (edict_t *self, edict_t *other, cplane_t *plane, csur
 
 		if (level.num_reflectors)
 			ReflectExplosion (TE_EXPLOSION2, self->s.origin);
-		
+
 		self->svflags   |= SVF_NOCLIENT;
 		self->solid      = SOLID_NOT;
 		self->use        = misc_viper_bomb_use;
@@ -2577,15 +2575,15 @@ void SP_func_clock_screen(edict_t *self)
                  base or splash effect
  LANDMARK  (=64) If set, player angles and speed are preserved
 
- misc_teleporter selects a random pick from up to 8 targets for a 
+ misc_teleporter selects a random pick from up to 8 targets for a
  destination
 
- trigger_transition with same name as teleporter can be used to 
+ trigger_transition with same name as teleporter can be used to
  teleport multiple non-player entities
 ================================================================== */
 void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t *destination)
 {
-	extern entlist_t DoNotMove;
+	extern entlist_t DoNotMove[];
 	int			i, j;
 	int			total=0;
 	qboolean	nogo=false;
@@ -2615,7 +2613,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (ent->solid == SOLID_BSP) continue;
 		if ((ent->solid == SOLID_TRIGGER) && !FindItemByClassname(ent->classname)) continue;
 		// Do not under any circumstances move these entities:
-		for(p=&DoNotMove, nogo=false; p->name && !nogo; p++)
+		for(p=DoNotMove, nogo=false; p->name && !nogo; p++)
 			if (!Q_stricmp(ent->classname,p->name))
 				nogo = true;
 		if (nogo) continue;
@@ -2635,7 +2633,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (angles[YAW])
 		{
 			vec3_t	spawn_offset;
-		
+
 			VectorSubtract(ent->s.origin,start,spawn_offset);
 			VectorCopy(spawn_offset,v);
 			G_ProjectSource (vec3_origin, v, forward, right, spawn_offset);
@@ -2662,7 +2660,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (ent->solid == SOLID_BSP) continue;
 		if ((ent->solid == SOLID_TRIGGER) && !FindItemByClassname(ent->classname)) continue;
 		// Do not under any circumstances move these entities:
-		for(p=&DoNotMove, nogo=false; p->name && !nogo; p++)
+		for(p=DoNotMove, nogo=false; p->name && !nogo; p++)
 			if (!Q_stricmp(ent->classname,p->name))
 				nogo = true;
 		if (nogo) continue;
@@ -2685,7 +2683,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 		if (angles[YAW])
 		{
 			vec3_t	spawn_offset;
-		
+
 			VectorSubtract(ent->s.origin,start,spawn_offset);
 			VectorCopy(spawn_offset,v);
 			G_ProjectSource (vec3_origin, v, forward, right, spawn_offset);
@@ -2703,7 +2701,7 @@ void teleport_transition_ents (edict_t *transition, edict_t *teleporter, edict_t
 	}
 }
 
-// G_PickDestination is identical to G_PickTarget, but w/o the 
+// G_PickDestination is identical to G_PickTarget, but w/o the
 // obnoxious error message.
 
 #define MAXCHOICES 8
@@ -2954,7 +2952,7 @@ void SP_misc_teleporter (edict_t *ent)
 	VectorSet (trig->mins, -8, -8, 8);
 	VectorSet (trig->maxs, 8, 8, 24);
 	gi.linkentity (trig);
-	
+
 }
 
 void trigger_teleporter_use (edict_t *self, edict_t *other, edict_t *activator)
@@ -3124,7 +3122,7 @@ void fountain_animate(edict_t *self)
 	if (self->s.frame >= self->framenumbers)
 		self->s.frame = self->startframe;
 
-//	Check if it's time to fade yet (self->wait would have been set in 
+//	Check if it's time to fade yet (self->wait would have been set in
 //	spawn_precipitation or drop_touch if so).
 
 	if (self->wait && (level.time >= self->wait))
@@ -3162,7 +3160,7 @@ void leaf_fade2(edict_t *self)
 		if (level.time >= self->wait)
 			self->wait = 0;		//reset for next use with leaf_fade2 (remember, self->count is 1)
 	}
-//CW---	
+//CW---
 }
 
 void leaf_fade(edict_t *self)
@@ -3191,8 +3189,8 @@ void leaf_fade(edict_t *self)
 		else
 			self->think = leaf_fade;	//reset from fountain_animate
 	}
-//CW---	
-	
+//CW---
+
 	gi.linkentity(self);
 }
 
@@ -3364,7 +3362,7 @@ void target_precipitation_think (edict_t *self)
 
 	self->nextthink = level.time + FRAMETIME;
 
-	// Don't start raining until player is in the game. The following 
+	// Don't start raining until player is in the game. The following
 	// takes care of both initial map load conditions and restored saved games.
 	// This is a gross abuse of groundentity_linkcount. Sue me.
 	if (g_edicts[1].linkcount == self->groundentity_linkcount)
@@ -3405,9 +3403,9 @@ void target_precipitation_think (edict_t *self)
 		u = crandom() * (self->tright[0] - self->bleft[0])/2;
 		v = crandom() * (self->tright[1] - self->bleft[1])/2;
 		z = crandom() * (self->tright[2] - self->bleft[2])/2;
-		
+
 		VectorCopy(center, org);
-		
+
 		org[0] += u;
 		org[1] += v;
 		org[2] += z;
@@ -3508,7 +3506,7 @@ void SP_target_precipitation (edict_t *ent)
 		ent->spawnflags &= ~SF_WEATHER_SPLASH;
 
 	ent->use = target_precipitation_use;
-	
+
 	if (!ent->count)
 		ent->count = 1;
 
@@ -3568,7 +3566,7 @@ void target_fountain_think (edict_t *self)
 	if (!(self->spawnflags & SF_WEATHER_FIRE_ONCE))
 		self->nextthink = level.time + FRAMETIME;
 
-	// Don't start raining until player is in the game. The following 
+	// Don't start raining until player is in the game. The following
 	// takes care of both initial map load conditions and restored saved games.
 	// This is a gross abuse of groundentity_linkcount. Sue me.
 	if (g_edicts[1].linkcount == self->groundentity_linkcount)
@@ -3611,9 +3609,9 @@ void target_fountain_think (edict_t *self)
 		u = crandom() * (self->tright[0] - self->bleft[0])/2;
 		v = crandom() * (self->tright[1] - self->bleft[1])/2;
 		z = crandom() * (self->tright[2] - self->bleft[2])/2;
-		
+
 		VectorCopy(center, org);
-		
+
 		org[0] += u;
 		org[1] += v;
 		org[2] += z;
@@ -3718,7 +3716,7 @@ void SP_target_fountain (edict_t *ent)
 //CW---
 
 	ent->use = target_fountain_use;
-	
+
 	if (!ent->count)
 		ent->count = 1;
 
@@ -3780,7 +3778,8 @@ int PatchDeadSoldier ()
 		return 0;	// we're in baseq2
 
 	sprintf (outfilename, "%s/%s", gamedir->string,DEADSOLDIER_MODEL);
-	if (outfile = fopen (outfilename, "rb"))
+	outfile = fopen (outfilename, "rb");
+	if (outfile)
 	{
 		// output file already exists, move along
 		fclose (outfile);
@@ -3812,7 +3811,7 @@ int PatchDeadSoldier ()
 	sprintf (infilename, "baseq2/%s", DEADSOLDIER_MODEL);
 	if ( !(infile = fopen (infilename, "rb")) )
 	{
-		// If file doesn't exist on user's hard disk, it must be in 
+		// If file doesn't exist on user's hard disk, it must be in
 		// pak0.pak
 
 		pak_header_t	pakheader;
@@ -3842,7 +3841,7 @@ int PatchDeadSoldier ()
 		for(k=0; k<numitems && !data; k++)
 		{
 			fread(&pakitem,1,sizeof(pak_item_t),fpak);
-			if (!stricmp(pakitem.name,DEADSOLDIER_MODEL))
+			if (!Q_stricmp(pakitem.name,DEADSOLDIER_MODEL))
 			{
 				fseek(fpak,pakitem.start,SEEK_SET);
 				fread(&model, sizeof(dmdl_t), 1, fpak);
@@ -3866,7 +3865,7 @@ int PatchDeadSoldier ()
 	else
 	{
 		fread (&model, sizeof (dmdl_t), 1, infile);
-	
+
 		datasize = model.ofs_end - model.ofs_skins;
 		if ( !(data = malloc (datasize)) )	// make sure freed locally
 		{
@@ -3874,13 +3873,13 @@ int PatchDeadSoldier ()
 			return 0;
 		}
 		fread (data, sizeof (byte), datasize, infile);
-	
+
 		fclose (infile);
 	}
-	
+
 	// update model info
 	model.num_skins = NUM_SKINS;
-	
+
 	// Already had 1 skin, so new offset doesn't include that one
 	newoffset = (model.num_skins-1) * MAX_SKINNAME;
 	model.ofs_st     += newoffset;
@@ -3888,7 +3887,7 @@ int PatchDeadSoldier ()
 	model.ofs_frames += newoffset;
 	model.ofs_glcmds += newoffset;
 	model.ofs_end    += newoffset;
-	
+
 	// save new model
 	sprintf (outfilename, "%s/models", gamedir->string);	// make some dirs if needed
 	_mkdir (outfilename);
@@ -3902,7 +3901,7 @@ int PatchDeadSoldier ()
 	_mkdir (outfilename);
 
 	sprintf (outfilename, "%s/%s", gamedir->string, DEADSOLDIER_MODEL);
-	
+
 	if ( !(outfile = fopen (outfilename, "wb")) )
 	{
 		// file couldn't be created for some other reason
@@ -3910,12 +3909,12 @@ int PatchDeadSoldier ()
 		free (data);
 		return 0;
 	}
-	
+
 	fwrite (&model, sizeof (dmdl_t), 1, outfile);
 	fwrite (skins, sizeof (char), model.num_skins*MAX_SKINNAME, outfile);
 	data += MAX_SKINNAME;
 	fwrite (data, sizeof (byte), datasize, outfile);
-	
+
 	fclose (outfile);
 	gi.dprintf ("PatchDeadSoldier: Saved %s\n", outfilename);
 	free (data);

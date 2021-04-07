@@ -73,7 +73,7 @@ void multi_trigger (edict_t *ent)
 	}
 //CW---
 
-	if (ent->wait > 0)	
+	if (ent->wait > 0)
 	{
 		ent->think = multi_wait;
 		ent->nextthink = level.time + ent->wait;
@@ -177,7 +177,7 @@ void SP_trigger_multiple (edict_t *ent)
 			ent->noise_index = -1;
 	}
 //CW---
-	
+
 	if (!ent->wait)
 		ent->wait = 0.2;
 	ent->touch = Touch_Multi;
@@ -321,7 +321,7 @@ void SP_trigger_relay (edict_t *self)
 			self->noise_index = -1;
 	}
 //CW---
-	
+
 	if(!self->count) self->count = -1;
 // end DWH
 
@@ -490,7 +490,7 @@ void trigger_counter_use(edict_t *self, edict_t *other, edict_t *activator)
 		G_FreeEdict(self);  // DWH
 		return;
 	}
-	
+
 	self->count--;
 
 	if (self->count)
@@ -502,7 +502,7 @@ void trigger_counter_use(edict_t *self, edict_t *other, edict_t *activator)
 		}
 		return;
 	}
-	
+
 	if (! (self->spawnflags & 1))
 	{
 		gi.centerprintf(activator, "Sequence completed!");
@@ -569,7 +569,7 @@ void trigger_push_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 	else if (other->movetype == MOVETYPE_PUSHABLE)
 	{
 		vec3_t v;
-		VectorScale (self->movedir, self->speed * 2000 / (float)(other->mass), v); 
+		VectorScale (self->movedir, self->speed * 2000 / (float)(other->mass), v);
 		VectorAdd(other->velocity,v,other->velocity);
 	}
 	else if (other->health > 0)
@@ -660,7 +660,7 @@ void medibot_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 		gi.sound (other, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
 		self->message = NULL;
 	}
-	
+
 	if (self->target)
 	{
 		G_UseTargets(self, other);
@@ -702,12 +702,12 @@ void SP_trigger_medibot(edict_t *self)
 	self->touch = medibot_touch;
 	self->noise_index = gi.soundindex("items/s_health.wav");
 	if (!self->health) self->health = 1;
-	
+
 	if (!self->count) self->count = 50;
 
 	if (self->spawnflags & SF_MEDI_START_OFF)
 	{
-		if (self->targetname == NULL) 
+		if (self->targetname == NULL)
 		{
 			gi.dprintf("trigger_medibot at %s flagged to start off but has no targetname (will start on)\n", vtos(self->s.origin));
 			self->solid = SOLID_TRIGGER;
@@ -822,7 +822,7 @@ void hurt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *sur
 	{
 		// DWH - Original code would fail to play a sound for
 		//       SF=16 unless player just HAPPENED to hit
-		//       trigger_hurt at framenum = an integral number of 
+		//       trigger_hurt at framenum = an integral number of
 		//       full seconds.
 		if ( ((level.framenum % 10) == 0 ) || (self->spawnflags & SF_HURT_SLOW) )
 			gi.sound (other, CHAN_AUTO, self->noise_index, 1, ATTN_NORM, 0);
@@ -949,10 +949,10 @@ void trigger_monsterjump_touch (edict_t *self, edict_t *other, cplane_t *plane, 
 // set XY even if not on ground, so the jump will clear lips
 	other->velocity[0] = self->movedir[0] * self->speed;
 	other->velocity[1] = self->movedir[1] * self->speed;
-	
+
 	if (!other->groundentity)
 		return;
-	
+
 	other->groundentity = NULL;
 	other->velocity[2] = self->movedir[2];
 }
@@ -1021,7 +1021,7 @@ void SP_tremor_trigger_multiple (edict_t *ent)
 // DWH - should be silent
 //		ent->noise_index = gi.soundindex ("misc/trigger1.wav");
 		ent->noise_index = -1;
-	
+
 	if (!ent->wait)
 		ent->wait = 0.2;
 	ent->touch = Touch_Multi;
@@ -1116,7 +1116,7 @@ void trigger_inside_think (edict_t *self)
 		if (hit->absmax[1] > self->absmax[1]) continue;
 		if (hit->absmax[2] > self->absmax[2]) continue;
 		G_UseTargets (self, hit);
-		if (self->wait > 0)	
+		if (self->wait > 0)
 			self->nextthink = level.time + self->wait;
 		else
 		{
@@ -1244,7 +1244,7 @@ void SP_trigger_scales (edict_t *self)
 }
 //======================================================================================
 // TRIGGER_BBOX - Exactly like a tremor_trigger_multiple, but uses bleft, tright fields
-//                to define extents of trigger field rather than a brush model. This 
+//                to define extents of trigger field rather than a brush model. This
 //                helps lower the total brush model count, which in turn helps head off
 //                Index Overflow errors.
 //======================================================================================
@@ -1346,7 +1346,7 @@ void SP_trigger_bbox (edict_t *ent)
 		ent->noise_index = gi.soundindex ("misc/talk.wav");
 	else if (ent->sounds == 3)
 		ent->noise_index = -1;
-	
+
 	if (!ent->wait)
 		ent->wait = 0.2;
 
@@ -1399,7 +1399,6 @@ void SP_trigger_bbox (edict_t *ent)
 
 void trigger_look_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	trace_t	tr;
 	vec_t	dist;
 	vec3_t	dir, forward, left, up, end, start;
 
@@ -1420,13 +1419,10 @@ void trigger_look_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		// Then trigger only fires if looking at TARGET, not trigger bbox
 		edict_t	*target;
 		int		num_triggered=0;
-		edict_t	*what;
-		vec3_t	endpos;
 
 		target = G_Find(NULL,FOFS(targetname),self->target);
 		while(target && !num_triggered)
 		{
-			what = LookingAt(other,0,endpos,NULL);
 			if(target->inuse && (LookingAt(other,0,NULL,NULL) == target))
 			{
 				num_triggered++;
@@ -1462,14 +1458,12 @@ void trigger_look_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		VectorSubtract(self->s.origin,start,dir);
 		dist = VectorLength(dir);
 		VectorMA(start,dist,forward,end);
-		
-		tr = gi.trace(start,vec3_origin,vec3_origin,end,other,MASK_OPAQUE);
-		
+
 		// See if we're looking at origin, within bleft, tright
 		// FIXME: The following is more or less accurate if the
 		// bleft-tright box is roughly a cube. If it's considerably
 		// longer in one direction we'll get false misses.
-		
+
 		if(end[0] < self->s.origin[0] + self->bleft[0])
 			return;
 		if(end[1] < self->s.origin[1] + self->bleft[1])
@@ -1482,12 +1476,12 @@ void trigger_look_touch (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 			return;
 		if(end[2] > self->s.origin[2] + self->tright[2])
 			return;
-		
+
 		self->activator = other;
 		G_UseTargets (self, other);
 	}
 
-	if (self->wait > 0)	
+	if (self->wait > 0)
 	{
 		self->think = multi_wait;
 		self->nextthink = level.time + self->wait;
@@ -1533,7 +1527,7 @@ void SP_trigger_look (edict_t *self)
 		self->noise_index = gi.soundindex ("misc/talk.wav");
 	else if (self->sounds == 3)
 		self->noise_index = -1;
-	
+
 	if (!self->wait)
 		self->wait = 0.2;
 
@@ -1683,7 +1677,7 @@ void WriteTransitionEdict (FILE *f, edict_t *changelevel, edict_t *ent)
 		vec3_t	angles;
 		vec3_t	forward, right, v;
 		vec3_t	spawn_offset;
-		
+
 		VectorSubtract(e.s.origin,changelevel->s.origin,spawn_offset);
 		angles[PITCH] = angles[ROLL] = 0.;
 		angles[YAW] = changelevel->s.angles[YAW];

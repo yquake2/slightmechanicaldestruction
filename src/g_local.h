@@ -66,7 +66,7 @@
 #define FL_BOB                  0x00002000  // Lazarus: Used for bobbing water
 #define	FL_TURRET_OWNER			0x00004000  // Lazarus: player on turret and controlling it
 
-#define FL_TRACKTRAIN			0x00008000	
+#define FL_TRACKTRAIN			0x00008000
 #define FL_DISGUISED			0x00020000	// entity is in disguise, monsters will not recognize.
 #define	FL_NOGIB				0x00040000	// player has been vaporized by a nuke, drop no gibs
 
@@ -96,9 +96,9 @@ typedef enum
 	DAMAGE_AIM			// auto targeting recognizes this
 } damage_t;
 
-typedef enum 
+typedef enum
 {
-	WEAPON_READY, 
+	WEAPON_READY,
 	WEAPON_ACTIVATING,
 	WEAPON_DROPPING,
 	WEAPON_FIRING
@@ -152,7 +152,7 @@ typedef enum
 //ROGUE (Lazarus: Eliminate many inapplicable Rogue AI flags to make room for more)
 #define AI_TARGET_ANGER			0x00008000
 #define AI_HINT_PATH			0x00010000
-#define	AI_BLOCKED				0x00020000	// used by blocked_checkattack: set to say I'm attacking while blocked 
+#define	AI_BLOCKED				0x00020000	// used by blocked_checkattack: set to say I'm attacking while blocked
 											// (prevents run-attacks)
 //ROGUE
 // Lazarus:
@@ -266,15 +266,15 @@ typedef struct
 #define IT_INDESTRUCTABLE	64		//CW++
 
 // gitem_t->weapmodel for weapons indicates model index
-#define WEAP_BLASTER			1 
-#define WEAP_SHOTGUN			2 
-#define WEAP_SUPERSHOTGUN		3 
-#define WEAP_MACHINEGUN			4 
-#define WEAP_CHAINGUN			5 
-#define WEAP_GRENADES			6 
-#define WEAP_GRENADELAUNCHER	7 
-#define WEAP_ROCKETLAUNCHER		8 
-#define WEAP_HYPERBLASTER		9 
+#define WEAP_BLASTER			1
+#define WEAP_SHOTGUN			2
+#define WEAP_SUPERSHOTGUN		3
+#define WEAP_MACHINEGUN			4
+#define WEAP_CHAINGUN			5
+#define WEAP_GRENADES			6
+#define WEAP_GRENADELAUNCHER	7
+#define WEAP_ROCKETLAUNCHER		8
+#define WEAP_HYPERBLASTER		9
 #define WEAP_RAILGUN			10
 #define WEAP_BFG				11
 #define WEAP_NONE               12
@@ -674,13 +674,13 @@ extern	int	meansOfDeath;
 
 extern	edict_t			*g_edicts;
 
-#define	FOFS(x) (int)&(((edict_t *)0)->x)
-#define	STOFS(x) (int)&(((spawn_temp_t *)0)->x)
-#define	LLOFS(x) (int)&(((level_locals_t *)0)->x)
-#define	CLOFS(x) (int)&(((gclient_t *)0)->x)
+#define FOFS(x) (size_t)&(((edict_t *)NULL)->x)
+#define STOFS(x) (size_t)&(((spawn_temp_t *)NULL)->x)
+#define LLOFS(x) (size_t)&(((level_locals_t *)NULL)->x)
+#define CLOFS(x) (size_t)&(((gclient_t *)NULL)->x)
 
-#define random()	((rand () & 0x7fff) / ((float)0x7fff))
-#define crandom()	(2.0 * (random() - 0.5))
+#define random() ((rand() & 0x7fff) / ((float)0x7fff))
+#define crandom() (2.0 * (random() - 0.5))
 
 extern	cvar_t	*maxentities;
 extern	cvar_t	*deathmatch;
@@ -808,7 +808,7 @@ extern	int		max_soundindex;
 #define FFL_NOSPAWN			2
 
 typedef enum {
-	F_INT, 
+	F_INT,
 	F_FLOAT,
 	F_LSTRING,			// string on disk, pointer in memory, TAG_LEVEL
 	F_GSTRING,			// string on disk, pointer in memory, TAG_GAME
@@ -923,6 +923,8 @@ void Cmd_Score_f (edict_t *ent);
 void Use_Flashlight(edict_t *ent,gitem_t *item);
 void SetSensitivities(edict_t *ent,qboolean reset);
 void ShiftItem(edict_t *ent, int direction);
+void SetLazarusCrosshair (edict_t *ent);
+
 //
 // g_crane.c
 //
@@ -1192,15 +1194,15 @@ void actor_salute (edict_t *actor);
 void actor_stand (edict_t *actor);
 void actor_walk (edict_t *actor);
 void actor_walk_back (edict_t *actor);
-mmove_t actor_move_crouch;
-mmove_t actor_move_crouchwalk;
-mmove_t actor_move_crouchwalk_back;
-mmove_t	actor_move_run;
-mmove_t	actor_move_run_back;
-mmove_t	actor_move_run_bad;
-mmove_t actor_move_stand;
-mmove_t actor_move_walk;
-mmove_t	actor_move_walk_back;
+extern mmove_t	actor_move_crouch;
+extern mmove_t	actor_move_crouchwalk;
+extern mmove_t	actor_move_crouchwalk_back;
+extern mmove_t	actor_move_run;
+extern mmove_t	actor_move_run_back;
+extern mmove_t	actor_move_run_bad;
+extern mmove_t	actor_move_stand;
+extern mmove_t	actor_move_walk;
+extern mmove_t	actor_move_walk_back;
 //
 // m_medic.c
 //
@@ -1583,7 +1585,7 @@ struct edict_s
 
 	// FIXME: move these fields to a server private sv_entity_t
 	link_t		area;				// linked to a division node or leaf
-	
+
 	int			num_clusters;		// if -1, use headnode instead
 	int			clusternums[MAX_ENT_CLUSTERS];
 	int			headnode;			// unused if num_clusters != -1
@@ -1608,7 +1610,7 @@ struct edict_s
 
 	char		*model;
 	float		freetime;			// sv.time when the object was freed
-	
+
 	//
 	// only used locally in game, not by server
 	//
@@ -1741,7 +1743,7 @@ struct edict_s
 	monsterinfo_t	monsterinfo;
 
 	float		goal_frame;
-	
+
 	// various Lazarus additions follow:
 
 	edict_t		*turret;		// player-controlled turret
@@ -1842,7 +1844,7 @@ struct edict_s
 	// MOVETYPE_PUSH rider angles
 	int			turn_rider;
 
-	// selected brush models will move their origin to 
+	// selected brush models will move their origin to
 	// the origin of this entity:
 	char		*move_to;
 

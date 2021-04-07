@@ -217,7 +217,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 	char		*p1, *p2, *p3;
 	char		sound[64];
 	texthnd_t	*hnd;
-	byte		*temp_buffer;
+	char		*temp_buffer;
 	int			line_length;
 	int			new_line_length;
 	qboolean	alt, centered, right_justified;
@@ -236,7 +236,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		FILE			*f;
 		pak_header_t	pakheader;
 		pak_item_t		pakitem;
-		
+
 		basedir = gi.cvar("basedir", "", 0);
 		gamedir = gi.cvar("gamedir", "", 0);
 		strcpy(filename,basedir->string);
@@ -335,7 +335,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		memset(hnd->buffer,0,hnd->allocated);
 		memcpy(hnd->buffer,message,L);
 	}
-	
+
 	hnd->size = strlen(hnd->buffer) + 1;
 	// Eliminate all <CR>'s so lines are delineated with <LF>'s only
 	p1 = hnd->buffer;
@@ -402,7 +402,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 		{
 			if(*p1 == 32)
 			{
-				// We're at a space... good deal, just replace space with 
+				// We're at a space... good deal, just replace space with
 				// a line-break 0 and move on
 				*p1 = 0;
 				hnd->nlines++;
@@ -553,7 +553,7 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 			}
 		}
 		// If we're at a 0, check to see if subsequent words will fit on this line
-		if((!linebreak) && (*p1 == 0) && (p1 < hnd->buffer+hnd->size-1) && 
+		if((!linebreak) && (*p1 == 0) && (p1 < hnd->buffer+hnd->size-1) &&
 			(line_length < MAX_LINE_LENGTH) )
 		{
 			// Don't do this if 2 consecutive 0's are found (end of paragraph)
@@ -617,17 +617,17 @@ void Do_Text_Display(edict_t *activator, int flags, char *message)
 	hnd->lines  = text;
 	activator->client->textdisplay = hnd;
 	Text_Open(activator);
-	
+
 }
 
 void Use_Target_Text(edict_t *self, edict_t *other, edict_t *activator)
 {
-	
+
 	if(!activator || !activator->client) return;
 	activator->client->showinventory = false;
 	activator->client->showscores = false;
 	activator->client->showhelp = false;
-	
+
 	Text_Close(activator);
 
 	Do_Text_Display(activator, self->spawnflags, self->message);

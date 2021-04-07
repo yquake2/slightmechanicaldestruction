@@ -10,7 +10,7 @@
 		gi.WriteByte (TE_DEBUGTRAIL);
 		gi.WritePosition (pt1);
 		gi.WritePosition (pt2);
-		gi.multicast (pt1, MULTICAST_PVS);	
+		gi.multicast (pt1, MULTICAST_PVS);
 
 		self->nextthink = level.time + 10;
 */
@@ -33,8 +33,6 @@ qboolean parasite_drain_attack_ok (vec3_t start, vec3_t end);
 //	shotchance: 0-1, chance they'll take the shot if it's clear.
 qboolean blocked_checkshot (edict_t *self, float shotChance)
 {
-	qboolean	playerVisible;
-
 	if(!self->enemy)
 		return false;
 
@@ -73,16 +71,15 @@ qboolean blocked_checkshot (edict_t *self, float shotChance)
 		if (tr.ent != self->enemy)
 		{
 			self->monsterinfo.aiflags |= AI_BLOCKED;
-			
+
 			if(self->monsterinfo.attack)
 				self->monsterinfo.attack(self);
-			
+
 			self->monsterinfo.aiflags &= ~AI_BLOCKED;
 			return true;
 		}
 	}
 
-	playerVisible = visible (self, self->enemy);
 	return false;
 }
 
@@ -149,7 +146,7 @@ qboolean blocked_checkplat (edict_t *self, float dist)
 //				if(g_showlogic && g_showlogic->value)
 //					gi.dprintf("player above, and plat will raise. using!\n");
 				plat->use (plat, self, self);
-				return true;			
+				return true;
 			}
 		}
 		else if(playerPosition == -1)
@@ -478,8 +475,7 @@ qboolean monsterlost_checkhint (edict_t *self)
 	edict_t		*closest;
 	float		closest_range = 1000000;
 	edict_t		*start, *destination;
-	int			field;
-	int			count1=0, count2=0, count3=0, count4=0, count5=0;
+	int			count1=0, count2=0, count4=0, count5=0;
 	float		r;
 	int			i;
 	qboolean	hint_path_represented[MAX_HINT_CHAINS];
@@ -498,13 +494,11 @@ qboolean monsterlost_checkhint (edict_t *self)
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		return false;
-	
+
 	if (!strcmp(self->classname, "monster_turret"))
 		return false;
 
 	monster_pathchain = NULL;
-
-	field = FOFS(classname);
 
 	// find all the hint_paths.
 	// FIXME - can we not do this every time?
@@ -529,7 +523,7 @@ qboolean monsterlost_checkhint (edict_t *self)
 			e = e->hint_chain;
 		}
 	}
-	
+
 	// filter them by distance and visibility to the monster
 	e = monster_pathchain;
 	checkpoint = NULL;
@@ -617,7 +611,6 @@ qboolean monsterlost_checkhint (edict_t *self)
 
 	count1 = 0;
 	count2 = 0;
-	count3 = 0;
 	count4 = 0;
 	count5 = 0;
 
@@ -705,14 +698,14 @@ qboolean monsterlost_checkhint (edict_t *self)
 		checkpoint = e;
 		e = e->target_hint_chain;
 	}
-	
+
 	// at this point we should have:
 	// monster_pathchain - a list of "monster valid" hint_path nodes linked together by monster_hint_chain
 	// target_pathcain - a list of "target valid" hint_path nodes linked together by target_hint_chain.  these
 	//                   are filtered such that only nodes which are on the same chain as "monster valid" nodes
 	//
 	// Now, we figure out which "monster valid" node we want to use
-	// 
+	//
 	// To do this, we first off make sure we have some target nodes.  If we don't, there are no valid hint_path nodes
 	// for us to take
 	//
@@ -738,8 +731,8 @@ qboolean monsterlost_checkhint (edict_t *self)
 		hint_path_represented[e->hint_chain_id] = true;
 		e = e->target_hint_chain;
 	}
-	
-	// traverse the monster_pathchain - if the hint_node isn't represented in the "target valid" chain list, 
+
+	// traverse the monster_pathchain - if the hint_node isn't represented in the "target valid" chain list,
 	// remove it
 	// if it is on the list, check it for range from the monster.  If the range is the closest, keep it
 	//
@@ -788,7 +781,7 @@ qboolean monsterlost_checkhint (edict_t *self)
 
 	if (!closest)
 		return false;
-	
+
 	destination = closest;
 
 	self->monsterinfo.goal_hint = destination;
@@ -810,7 +803,7 @@ void hint_path_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 //	int			chain;			 // direction - (-1) = upstream, (1) = downstream, (0) = done
 	qboolean	goalFound = false;
 
-	if(other->monsterinfo.aiflags & AI_MEDIC_PATROL) 
+	if(other->monsterinfo.aiflags & AI_MEDIC_PATROL)
 	{
 		if(other->movetarget == self)
 			medic_NextPatrolPoint(other,self);
@@ -828,7 +821,7 @@ void hint_path_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	if(other->movetarget == self)
 	{
 		goal = other->monsterinfo.goal_hint;
-		
+
 		// if the monster is where he wants to be
 		if (goal == self)
 		{
@@ -925,10 +918,9 @@ void InitHintPaths (void)
 {
 	edict_t		*e, *current;
 	int			field, i, count2;
-	qboolean	errors = false;
 
 	hint_paths_present = 0;
-	
+
 	// check all the hint_paths.
 	field = FOFS(classname);
 	e = G_Find(NULL, field, "hint_path");
@@ -949,7 +941,6 @@ void InitHintPaths (void)
 				{
 					gi.dprintf ("Hint path at %s marked as endpoint with both target (%s) and targetname (%s)\n",
 						vtos (e->s.origin), e->target, e->targetname);
-					errors = true;
 				}
 				else
 				{
@@ -974,22 +965,20 @@ void InitHintPaths (void)
 		e = G_Find(NULL, field, current->target);
 		if (G_Find(e, field, current->target))
 		{
-			gi.dprintf ("\nForked hint path at %s detected for chain %d, target %s\n", 
+			gi.dprintf ("\nForked hint path at %s detected for chain %d, target %s\n",
 				vtos (current->s.origin), num_hint_paths, current->target);
 			hint_path_start[i]->hint_chain = NULL;
 			count2 = 0;
-			errors = true;
 			continue;
 		}
 		while (e)
 		{
 			if (e->hint_chain)
 			{
-				gi.dprintf ("\nCircular hint path at %s detected for chain %d, targetname %s\n", 
+				gi.dprintf ("\nCircular hint path at %s detected for chain %d, targetname %s\n",
 					vtos (e->s.origin), num_hint_paths, e->targetname);
 				hint_path_start[i]->hint_chain = NULL;
 				count2 = 0;
-				errors = true;
 				break;
 			}
 			count2++;
@@ -1001,7 +990,7 @@ void InitHintPaths (void)
 			e = G_Find(NULL, field, current->target);
 			if (G_Find(e, field, current->target))
 			{
-				gi.dprintf ("\nForked hint path at %s detected for chain %d, target %s\n", 
+				gi.dprintf ("\nForked hint path at %s detected for chain %d, target %s\n",
 					vtos (current->s.origin), num_hint_paths, current->target);
 				hint_path_start[i]->hint_chain = NULL;
 				count2 = 0;
@@ -1024,12 +1013,12 @@ qboolean inback (edict_t *self, edict_t *other)
 	vec3_t	vec;
 	float	dot;
 	vec3_t	forward;
-	
+
 	AngleVectors (self->s.angles, forward, NULL, NULL);
 	VectorSubtract (other->s.origin, self->s.origin, vec);
 	VectorNormalize (vec);
 	dot = DotProduct (vec, forward);
-	
+
 	if (dot < -0.3)
 		return true;
 	return false;
@@ -1038,7 +1027,7 @@ qboolean inback (edict_t *self, edict_t *other)
 float realrange (edict_t *self, edict_t *other)
 {
 	vec3_t dir;
-	
+
 	VectorSubtract (self->s.origin, other->s.origin, dir);
 	return VectorLength(dir);
 }
@@ -1069,7 +1058,7 @@ qboolean face_wall (edict_t *self)
 
 //
 // Monster "Bad" Areas
-// 
+//
 
 void badarea_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
@@ -1080,7 +1069,7 @@ edict_t *SpawnBadArea(vec3_t mins, vec3_t maxs, float lifespan, edict_t *owner)
 {
 	edict_t *badarea;
 	vec3_t	origin;
-	
+
 	VectorAdd(mins, maxs, origin);
 	VectorScale(origin, 0.5, origin);
 
@@ -1139,7 +1128,7 @@ edict_t *CheckForBadArea(edict_t *ent)
 			return hit;
 		}
 	}
-	
+
 	return NULL;
 }
 
@@ -1179,7 +1168,7 @@ void PredictAim (edict_t *target, vec3_t start, float bolt_speed, qboolean eye_h
 		VectorSubtract (vec, start, aimdir);
 		VectorNormalize (aimdir);
 	}
-	
+
 	if (aimpoint)
 	{
 		VectorCopy (vec, aimpoint);
@@ -1192,12 +1181,12 @@ qboolean below (edict_t *self, edict_t *other)
 	vec3_t	vec;
 	float	dot;
 	vec3_t	down;
-	
+
 	VectorSubtract (other->s.origin, self->s.origin, vec);
 	VectorNormalize (vec);
 	VectorSet (down, 0, 0, -1);
 	dot = DotProduct (vec, down);
-	
+
 	if (dot > 0.95)  // 18 degree arc below
 		return true;
 	return false;
@@ -1235,7 +1224,7 @@ void drawbbox (edict_t *self)
 			}
 		}
 	}
-	
+
 	for (i=0; i<= 3; i++)
 	{
 		for (j=0; j<= 2; j++)
@@ -1244,7 +1233,7 @@ void drawbbox (edict_t *self)
 			gi.WriteByte (TE_DEBUGTRAIL);
 			gi.WritePosition (pt[starts[i]]);
 			gi.WritePosition (pt[lines[i][j]]);
-			gi.multicast (pt[starts[i]], MULTICAST_ALL);	
+			gi.multicast (pt[starts[i]], MULTICAST_ALL);
 		}
 	}
 
@@ -1256,7 +1245,7 @@ void drawbbox (edict_t *self)
 	gi.WriteByte (TE_DEBUGTRAIL);
 	gi.WritePosition (self->s.origin);
 	gi.WritePosition (newbox);
-	gi.multicast (self->s.origin, MULTICAST_PVS);	
+	gi.multicast (self->s.origin, MULTICAST_PVS);
 	VectorClear (newbox);
 
 	VectorMA (self->s.origin, 50, r, newbox);
@@ -1264,7 +1253,7 @@ void drawbbox (edict_t *self)
 	gi.WriteByte (TE_DEBUGTRAIL);
 	gi.WritePosition (self->s.origin);
 	gi.WritePosition (newbox);
-	gi.multicast (self->s.origin, MULTICAST_PVS);	
+	gi.multicast (self->s.origin, MULTICAST_PVS);
 	VectorClear (newbox);
 
 	VectorMA (self->s.origin, 50, u, newbox);
@@ -1272,7 +1261,7 @@ void drawbbox (edict_t *self)
 	gi.WriteByte (TE_DEBUGTRAIL);
 	gi.WritePosition (self->s.origin);
 	gi.WritePosition (newbox);
-	gi.multicast (self->s.origin, MULTICAST_PVS);	
+	gi.multicast (self->s.origin, MULTICAST_PVS);
 	VectorClear (newbox);
 }
 
@@ -1333,7 +1322,7 @@ edict_t * PickCoopTarget (edict_t *self)
 
 	// get a number from 0 to (num_targets-1)
 	targetID = (random() * (float)num_targets);
-	
+
 	// just in case we got a 1.0 from random
 	if (targetID == num_targets)
 		targetID--;

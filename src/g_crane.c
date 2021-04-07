@@ -115,9 +115,6 @@ void Cargo_Stop (edict_t *ent)
 
 void cargo_blocked (edict_t *cargo, edict_t *obstacle )
 {
-	vec3_t	origin;
-
-	VectorAdd(obstacle->s.origin,obstacle->origin_offset,origin);
 	cargo->gravity  = 1.0;
 	cargo->movetype = MOVETYPE_PUSHABLE;
 	cargo->velocity[2] = 0;
@@ -377,8 +374,6 @@ void Crane_blocked (edict_t *self, edict_t *other)
 		if (other)
 		{
 			// Lazarus: Some of our ents don't have origin near the model
-			vec3_t save;
-			VectorCopy(other->s.origin,save);
 			VectorMA (other->absmin, 0.5, other->size, other->s.origin);
 			BecomeExplosion1 (other);
 		}
@@ -413,7 +408,7 @@ void Crane_Move_Final (edict_t *ent)
 			return;
 		}
 	}
-	
+
 	if (ent->moveinfo.remaining_distance == 0)
 	{
 		Crane_Move_Done (ent);
@@ -631,7 +626,7 @@ void G_FindCraneParts()
 		// moving to play
 		if(hook->speaker)
 			hook->speaker->spawnflags = 1 - (control->spawnflags & 1);
-			
+
 		// Get offset from hook origin to hoist origin, so we can
 		// correct timing problems
 		VectorSubtract(hook->s.origin,hoist->s.origin,hook->offset);
@@ -1116,7 +1111,7 @@ void crane_control_action(edict_t *control, edict_t *activator, vec3_t point)
 			beam->absmin[dir];
 		cable->crane_control = control;
 		memcpy(&cable->moveinfo,&beam->moveinfo,sizeof(moveinfo_t));
-		
+
 		if(beam->crane_onboard_control)
 		{
 			beam->crane_onboard_control->crane_dir  = dir;
@@ -1317,7 +1312,7 @@ void crane_control_action(edict_t *control, edict_t *activator, vec3_t point)
 }
 
 void Use_Crane_Control (edict_t *ent, edict_t *other, edict_t *activator)
-{ 
+{
 	ent->spawnflags ^= 1;
 	if(ent->crane_hook->speaker)
 		ent->crane_hook->speaker->spawnflags = 1 - (ent->spawnflags & 1);
@@ -1523,7 +1518,7 @@ void crane_reset_use (edict_t *self, edict_t *other, edict_t *activator)
 	edict_t *crane;
 	edict_t *control, *beam, *cable, *cargo, *hoist, *hook;
 	vec3_t  bonk, v1, v2;
-	
+
 
 	crane = G_Find (NULL, FOFS(targetname), self->target);
 	if(!crane)
@@ -1542,7 +1537,7 @@ void crane_reset_use (edict_t *self, edict_t *other, edict_t *activator)
 			gi.centerprintf(activator,"No power\n");
 		return;
 	}
-	
+
 	beam    = control->crane_beam;
 	hoist   = control->crane_hoist;
 	hook    = control->crane_hook;
@@ -1650,7 +1645,7 @@ void crane_reset_use (edict_t *self, edict_t *other, edict_t *activator)
 	cable->crane_bonk = beam->crane_bonk + cable->absmin[dir] - beam->absmin[dir];
 	cable->crane_control = control;
 	memcpy(&cable->moveinfo,&beam->moveinfo,sizeof(moveinfo_t));
-		
+
 	if(beam->crane_onboard_control)
 	{
 		beam->crane_onboard_control->crane_dir  = dir;
