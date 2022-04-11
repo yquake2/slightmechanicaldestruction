@@ -33,19 +33,28 @@ endif
 
 # Detect the architecture
 ifeq ($(OSTYPE), Windows)
-# At this time only i386 is supported on Windows
-ARCH := i386
-# seems like mingw doesn't set CC by default
-CC := gcc
-else
-# Some platforms call it "amd64" and some "x86_64"
-ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/)
+ifdef MINGW_CHOST
+ifeq ($(MINGW_CHOST), x86_64-w64-mingw32)
+ARCH ?= x86_64
+else # i686-w64-mingw32
+ARCH ?= i386
 endif
-
-# Refuse all other platforms as a firewall against PEBKAC
-# (You'll need some #ifdef for your unsupported  platform!)
-ifeq ($(findstring $(ARCH), i386 x86_64 sparc64 ia64),)
-$(error arch $(ARCH) is currently not supported)
+else # windows, but MINGW_CHOST not defined
+ifdef PROCESSOR_ARCHITEW6432
+# 64 bit Windows
+ARCH ?= $(PROCESSOR_ARCHITEW6432)
+else
+# 32 bit Windows
+ARCH ?= $(PROCESSOR_ARCHITECTURE)
+endif
+endif # windows but MINGW_CHOST not defined
+else
+ifneq ($(OSTYPE), Darwin)
+# Normalize some abiguous ARCH strings
+ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/^arm.*/arm/')
+else
+ARCH ?= $(shell uname -m)
+endif
 endif
 
 # ----------
@@ -133,7 +142,7 @@ else
  else
  FILESUFFIX := so
  endif
-  
+
 smd:
 	@echo "===> Building game.${FILESUFFIX}"
 	${Q}mkdir -p release
@@ -145,7 +154,7 @@ build/%.o: %.c
 	${Q}$(CC) -c $(CFLAGS) -o $@ $<
 
 release/game.${FILESUFFIX} : CFLAGS += -fPIC
-endif 
+endif
 
 # ----------
 
