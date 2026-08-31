@@ -1311,13 +1311,13 @@ int PatchMonsterModel (char *modelname)
 
 	// save new model
 	sprintf (outfilename, "%s/models", gamedir->string);	// make some dirs if needed
-	_mkdir (outfilename);
+	mkdir (outfilename, 755);
 	strcat (outfilename,"/monsters");
-	_mkdir (outfilename);
+	mkdir (outfilename, 755);
 	sprintf (outfilename, "%s/%s", gamedir->string, modelname);
 	p = strstr(outfilename,"/tris.md2");
 	*p = 0;
-	_mkdir (outfilename);
+	mkdir (outfilename, 755);
 
 	sprintf (outfilename, "%s/%s", gamedir->string, modelname);
 

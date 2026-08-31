@@ -133,9 +133,9 @@ int PatchPlayerModels (char *modelname)
 
 	// save new player model
 	sprintf (outfilename, "%s/players", game->string);	// make some dirs if needed
-	_mkdir (outfilename);
+	mkdir (outfilename, 755);
 	sprintf (outfilename, "%s/players/%s", game->string, modelname);
-	_mkdir (outfilename);
+	mkdir (outfilename, 755);
 	sprintf (outfilename, "%s/players/%s/tris.md2", game->string, modelname);
 
 	if ( !(outfile = fopen (outfilename, "wb")) )

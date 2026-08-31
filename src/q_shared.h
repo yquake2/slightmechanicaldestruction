@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #if (defined _M_IX86 || defined __i386__) && !defined C_ONLY && !defined __sun__
@@ -1307,7 +1308,6 @@ FOOTSTEP_LADDER4
 #ifdef __LCC__
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
-#define _mkdir mkdir
 #endif
 
 

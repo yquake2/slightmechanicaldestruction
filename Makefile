@@ -51,7 +51,7 @@ endif # windows but MINGW_CHOST not defined
 else
 ifneq ($(OSTYPE), Darwin)
 # Normalize some abiguous ARCH strings
-ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/^arm.*/arm/')
+ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/arm64/aarch64/' -e 's/^arm.*/arm/')
 else
 ARCH ?= $(shell uname -m)
 endif
@@ -79,7 +79,7 @@ endif
 # -MMD to generate header dependencies.
 ifeq ($(OSTYPE), Darwin)
 CFLAGS := -O2 -fno-strict-aliasing -fomit-frame-pointer \
-		  -Wall -pipe -g -fwrapv -arch i386 -arch x86_64
+		  -Wall -pipe -g -fwrapv -arch $(ARCH)
 else
 CFLAGS := -O0 -fno-strict-aliasing -fomit-frame-pointer \
 		  -Wall -pipe -ggdb -MMD -fwrapv
@@ -89,7 +89,7 @@ endif
 
 # Base LDFLAGS.
 ifeq ($(OSTYPE), Darwin)
-LDFLAGS := -shared -arch i386 -arch x86_64
+LDFLAGS := -shared -arch $(ARCH)
 else
 LDFLAGS := -shared
 endif
