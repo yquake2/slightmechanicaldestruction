@@ -19,42 +19,48 @@
 # - Other?      (Should compile on most Unix-like OSes) #
 # ----------------------------------------------------- #
 
-# Detect the OS
-ifdef SystemRoot
-OSTYPE := Windows
-else
-OSTYPE := $(shell uname -s)
-endif
-
-# Special case for MinGW
-ifneq (,$(findstring MINGW,$(OSTYPE)))
-OSTYPE := Windows
-endif
+# Detect the OS, normalize some abiguous YQ2_OSTYPE strings.
+YQ2_OSTYPE ?= $(shell uname -s | sed -e 's/MINGW.*/Windows/' -e 's/Windows.*/Windows/')
 
 # Detect the architecture
-ifeq ($(OSTYPE), Windows)
+ifeq ($(YQ2_OSTYPE), Windows)
 ifdef MINGW_CHOST
 ifeq ($(MINGW_CHOST), x86_64-w64-mingw32)
-ARCH ?= x86_64
+YQ2_ARCH ?= x86_64
 else # i686-w64-mingw32
-ARCH ?= i386
+YQ2_ARCH ?= i386
 endif
 else # windows, but MINGW_CHOST not defined
-ifdef PROCESSOR_ARCHITEW6432
-# 64 bit Windows
-ARCH ?= $(PROCESSOR_ARCHITEW6432)
-else
-# 32 bit Windows
-ARCH ?= $(PROCESSOR_ARCHITECTURE)
-endif
+YQ2_ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/')
 endif # windows but MINGW_CHOST not defined
 else
 ifneq ($(OSTYPE), Darwin)
-# Normalize some abiguous ARCH strings
-ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/arm64/aarch64/' -e 's/^arm.*/arm/')
+# Normalize some abiguous YQ2_ARCH strings
+YQ2_ARCH ?= $(shell uname -m | sed -e 's/i.86/i386/' -e 's/amd64/x86_64/' -e 's/arm64/aarch64/' -e 's/^arm.*/arm/')
 else
-ARCH ?= $(shell uname -m)
+YQ2_ARCH ?= $(shell uname -m)
 endif
+endif
+
+# Detect the compiler
+ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang version"), 1)
+COMPILER := clang
+COMPILERVER := $(shell $(CC)  -dumpversion | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/')
+else ifeq ($(shell $(CC) -v 2>&1 | grep -c -E "(gcc version|gcc-Version)"), 1)
+COMPILER := gcc
+COMPILERVER := $(shell $(CC)  -dumpversion | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/')
+else
+COMPILER := unknown
+endif
+
+# ASAN includes DEBUG
+ifdef ASAN
+DEBUG=1
+endif
+
+# UBSAN includes DEBUG
+ifdef UBSAN
+DEBUG=1
 endif
 
 # ----------
@@ -79,17 +85,18 @@ endif
 # -MMD to generate header dependencies.
 ifeq ($(OSTYPE), Darwin)
 CFLAGS := -O2 -fno-strict-aliasing -fomit-frame-pointer \
-		  -Wall -pipe -g -fwrapv -arch $(ARCH)
+		  -Wall -pipe -g -fwrapv -arch $(YQ2_ARCH) \
+		  -std=gnu99
 else
 CFLAGS := -O0 -fno-strict-aliasing -fomit-frame-pointer \
-		  -Wall -pipe -ggdb -MMD -fwrapv
+		  -Wall -pipe -ggdb -MMD -fwrapv -std=gnu99
 endif
 
 # ----------
 
 # Base LDFLAGS.
 ifeq ($(OSTYPE), Darwin)
-LDFLAGS := -shared -arch $(ARCH)
+LDFLAGS := -shared -arch $(YQ2_ARCH)
 else
 LDFLAGS := -shared
 endif
